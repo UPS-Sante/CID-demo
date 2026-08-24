@@ -276,6 +276,17 @@
     background:var(--surface);color:var(--body);cursor:pointer}
   .ec-cov:hover{border-color:var(--royal);color:var(--royal)}
   .ec-cov.on{background:var(--royal);color:#fff;border-color:var(--royal)}
+  .inf-q{display:grid;grid-template-columns:1fr;gap:0}
+  .inf-h{font-family:var(--font-h);font-size:15.5px;font-weight:600;color:var(--ink);margin-bottom:2px}
+  .inf-sq{font-size:11px;letter-spacing:.75px;text-transform:uppercase;color:var(--gold-d);font-weight:700;margin-bottom:5px}
+  .inf-r{display:flex;gap:14px;align-items:baseline;padding:11px 14px;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:6px;margin:9px 0}
+  .inf-r b{font-family:var(--font-h);font-size:22px;color:var(--ink);white-space:nowrap;letter-spacing:-.5px}
+  .inf-r.oui b{color:var(--rag-green)} .inf-r.non b{color:var(--muted)} .inf-r.att b{color:var(--rag-red)}
+  .inf-r span{font-size:12.5px;line-height:1.55;color:var(--body)}
+  .inf-r span strong{color:var(--ink)}
+  .inf-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:1100px){.inf-grid{grid-template-columns:1fr}}
   .header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -4277,6 +4288,7 @@ const PROGRAMS = [
     dir:"UPS-SANTÉ", groupe:"Outils transversaux",
     sub:[
       { id:"vacc-scenario", i18n_key:"sub_vacc_scenario", label:"Que produirait chaque décision", status:"yellow" },
+      { id:"inference",   label:"Tests d'inférence",     status:"green" },
       { id:"econometrie", label:"Tests économétriques", status:"green" },
     ]
   },
@@ -12074,6 +12086,242 @@ VIEWS["econometrie"] = () => {
           <div class="dd-lim"><div class="dd-lim-t">Centrage intra-province</div>Les explicatives sont exprimées en
           écart à la moyenne de leur province. Cela retire les différences structurelles entre territoires et évite
           d'attribuer à une variable ce qui relève de la taille ou de la richesse d'une province.</div></div>`)}
+    </div>` };
+};
+
+
+/* ==============================================================
+   OUTILS · TESTS D'INFERENCE
+   Chaque carte repond a une question de decision, pas a une
+   question statistique. Le test est nomme, le verdict est produit
+   a partir du calcul, et la portee du resultat est bornee.
+============================================================== */
+const INFS = { ind: "dsr:acc_qualifie", prov: "NDJ", cible: 80, rupture: null, comp: "LOO" };
+function setInf(k, v) { INFS[k] = (k === "cible") ? parseFloat(v) : (v === "" ? null : v); renderMain(); }
+
+/* loi de Student : fonction beta incomplete reguliere, algorithme de Lentz */
+function infBetaCF(a, b, x) {
+  const MAXIT = 260, EPS = 3e-14, FPMIN = 1e-300;
+  const qab = a + b, qap = a + 1, qam = a - 1;
+  let c = 1, d = 1 - qab * x / qap;
+  if (Math.abs(d) < FPMIN) d = FPMIN;
+  d = 1 / d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    const m2 = 2 * m;
+    let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; h *= d * c;
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; const del = d * c; h *= del;
+    if (Math.abs(del - 1) < EPS) break;
+  }
+  return h;
+}
+function infBetaI(a, b, x) {
+  if (x <= 0) return 0; if (x >= 1) return 1;
+  const bt = Math.exp(infLnG(a + b) - infLnG(a) - infLnG(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2) ? bt * infBetaCF(a, b, x) / a
+                                   : 1 - bt * infBetaCF(b, a, 1 - x) / b;
+}
+/* valeur p bilaterale d'un t de Student a df degres de liberte */
+function infTP(t, df) {
+  if (t == null || !isFinite(t) || !isFinite(df) || df < 1) return null;
+  return Math.max(0, Math.min(1, infBetaI(df / 2, 0.5, df / (df + t * t))));
+}
+function infLnG(z) { const g = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+  -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+  let x = z, y = z, tmp = x + 5.5; tmp -= (x + 0.5) * Math.log(tmp); let ser = 1.000000000190015;
+  for (let j = 0; j < 6; j++) ser += g[j] / ++y; return -tmp + Math.log(2.5066282746310005 * ser / x); }
+function infT95(df) { /* quantile de Student a 97,5% */
+  const z = 1.959964; return z + (Math.pow(z, 3) + z) / (4 * df) + (5 * Math.pow(z, 5) + 16 * Math.pow(z, 3) + 3 * z) / (96 * df * df); }
+
+VIEWS["inference"] = () => {
+  const crumbs = ["Outils transversaux", "Tests d'inférence"];
+  const et = `<div class="ph"><div class="ph-tag">Méthodes quantitatives · UPS-Santé</div>
+    <div class="ph-title">Six questions de décision, six tests</div>`;
+  const cat = cidCatalogue();
+  if (!cat.length) return { crumbs, html: et + `<div class="ph-sub">Catalogue en cours de chargement.</div></div>` };
+
+  const d1 = x => x == null || !isFinite(x) ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const d2 = x => x == null || !isFinite(x) ? "ND" : String(Math.round(x * 100) / 100).replace(".", ",");
+  const pf = x => x == null ? "ND" : x < 0.001 ? "< 0,001" : String(Math.round(x * 1000) / 1000).replace(".", ",");
+  const nomP = id => (PROVINCES.find(p => p.id === id) || {}).name || id;
+  const C = cat.find(c => c.id === INFS.ind);
+  const S = C ? C.serie(INFS.prov) : null;
+  const per = S ? Object.keys(S).filter(p => S[p] != null).sort() : [];
+  const y = per.map(p => S[p]);
+  const R = (cls, val, txt) => `<div class="inf-r ${cls}"><b>${val}</b><span>${txt}</span></div>`;
+  const bloc = (q, h, corps) => `<div class="inf-q"><div class="inf-sq">${q}</div><div class="inf-h">${h}</div>${corps}</div>`;
+
+  /* ---------- commandes ---------- */
+  const doms = [...new Set(cat.map(c => c.dom))];
+  const optsI = doms.map(dm => `<optgroup label="${dm}">${cat.filter(c => c.dom === dm).map(c =>
+    `<option value="${c.id}" ${c.id === INFS.ind ? "selected" : ""}>${c.libelle}</option>`).join("")}</optgroup>`).join("");
+  const optsP = k => PROVINCES.map(p => `<option value="${p.id}" ${INFS[k] === p.id ? "selected" : ""}>${p.name}</option>`).join("");
+  const optsR = `<option value="">Aucune</option>` + per.slice(4, -4).map(p =>
+    `<option value="${p}" ${INFS.rupture === p ? "selected" : ""}>${p}</option>`).join("");
+  const cmd = `<div class="ec-cmd">
+    <label>Indicateur<select class="sc-sel" onchange="setInf('ind', this.value)">${optsI}</select></label>
+    <label>Province<select class="sc-sel" onchange="setInf('prov', this.value)">${optsP("prov")}</select></label>
+    <label>Cible<input class="sc-sel" type="number" step="any" value="${INFS.cible}" onchange="setInf('cible', this.value)"></label>
+    <label>Province de comparaison<select class="sc-sel" onchange="setInf('comp', this.value)">${optsP("comp")}</select></label>
+    <label>Date d'intervention<select class="sc-sel" onchange="setInf('rupture', this.value)">${optsR}</select></label>
+  </div>`;
+
+  if (!C || y.length < 8) {
+    return { crumbs, html: et + `<div class="ph-sub">Sélectionnez un indicateur et une province disposant d'au moins huit relevés.</div></div>
+      <div class="content">${card("Paramètres", "", cmd + `<div class="dd-test-note">${y.length} relevé${y.length > 1 ? "s" : ""}
+        pour ${C ? C.libelle : "cet indicateur"} en ${nomP(INFS.prov)}. Huit au minimum.</div>`)}</div>` };
+  }
+
+  const n = y.length, m = ecoMoy(y);
+  const sd = Math.sqrt(y.reduce((a, b) => a + (b - m) * (b - m), 0) / Math.max(1, n - 1));
+  const unite = C.unite === "%" ? "%" : " " + C.unite;
+
+  /* ===== 1. Sous la cible pour de bon, ou bruit ? ===== */
+  const se1 = sd / Math.sqrt(n), t1 = se1 ? (m - INFS.cible) / se1 : null;
+  const p1 = t1 == null ? null : infTP(t1, n - 1);
+  const tc = infT95(n - 1), ic1 = [m - tc * se1, m + tc * se1];
+  const dessous = ic1[1] < INFS.cible, dessus = ic1[0] > INFS.cible;
+  const T1 = bloc("Le niveau est-il réellement sous la cible ?", "Test de Student sur un échantillon",
+    R(dessous ? "att" : dessus ? "oui" : "non",
+      dessous ? "Oui" : dessus ? "Au-dessus" : "Indécis",
+      `Moyenne observée ${d1(m)}${unite} sur ${n} relevés, intervalle de confiance à 95% de
+       <strong>${d1(ic1[0])} à ${d1(ic1[1])}</strong>. Cible ${d1(INFS.cible)}${unite}, écart ${d1(m - INFS.cible)},
+       p ${pf(p1)}.
+       ${dessous ? "L'intervalle est entièrement sous la cible : l'écart n'est pas imputable à la variation mensuelle. Une action est justifiée."
+        : dessus ? "L'intervalle est entièrement au-dessus : la cible est tenue."
+        : "L'intervalle contient la cible. Les données ne permettent pas de conclure que la province est en dessous, et déclencher une action sur cette base reviendrait à réagir au bruit."}`));
+
+  /* ===== 2. Progression réelle ? Mann-Kendall + pente ===== */
+  let Sk = 0; for (let i = 0; i < n - 1; i++) for (let j = i + 1; j < n; j++) Sk += Math.sign(y[j] - y[i]);
+  const varS = n * (n - 1) * (2 * n + 5) / 18;
+  const zMK = Sk > 0 ? (Sk - 1) / Math.sqrt(varS) : Sk < 0 ? (Sk + 1) / Math.sqrt(varS) : 0;
+  const pMK = ecoP(zMK);
+  const pentes = []; for (let i = 0; i < n - 1; i++) for (let j = i + 1; j < n; j++) pentes.push((y[j] - y[i]) / (j - i));
+  pentes.sort((a, b) => a - b);
+  const sen = pentes[Math.floor(pentes.length / 2)];
+  const T2 = bloc("La province progresse-t-elle vraiment ?", "Test de tendance de Mann-Kendall et pente de Sen",
+    R(pMK < .05 ? (sen > 0 ? "oui" : "att") : "non",
+      pMK < .05 ? (sen > 0 ? "Progression" : "Recul") : "Aucune tendance",
+      `Statistique z = ${d2(zMK)}, p ${pf(pMK)}. Pente médiane de <strong>${d2(sen)}${unite} par mois</strong>,
+       soit ${d1(sen * 12)} par an.
+       ${pMK < .05 ? (sen > 0
+         ? `À ce rythme la cible de ${d1(INFS.cible)} serait atteinte en ${sen > 0 && m < INFS.cible ? Math.ceil((INFS.cible - m) / sen) + " mois" : "moins d'un an"}, sous réserve que la tendance se maintienne.`
+         : "Le recul est statistiquement établi, il ne s'agit pas d'une mauvaise passe.")
+        : "Les hausses et les baisses se compensent. Commenter une évolution mensuelle sur cette série revient à commenter du bruit."}
+       Ce test ne suppose ni normalité ni linéarité, ce qui le rend adapté aux séries courtes et irrégulières.`));
+
+  /* ===== 3. Signal ou variation courante ? carte de contrôle ===== */
+  const mr = []; for (let i = 1; i < n; i++) mr.push(Math.abs(y[i] - y[i - 1]));
+  const mrb = ecoMoy(mr), sigma = mrb / 1.128;
+  const lsc = m + 3 * sigma, lic = m - 3 * sigma;
+  const hors = per.map((p, i) => ({ p, v: y[i] })).filter(o => o.v > lsc || o.v < lic);
+  /* serie de sept points du meme cote */
+  let run = 0, runs = [];
+  for (let i = 0; i < n; i++) { if ((y[i] > m) === (y[Math.max(0, i - 1)] > m)) run++; else run = 1;
+    if (run >= 7) runs.push(per[i]); }
+  const dern = y[n - 1], dernHors = dern > lsc || dern < lic;
+  const T3 = bloc("Le dernier mois est-il un signal ?", "Carte de contrôle à limites naturelles",
+    R(dernHors ? "att" : hors.length ? "non" : "oui",
+      dernHors ? "Signal" : "Variation courante",
+      `Dernier relevé ${d1(dern)}${unite} en ${per[n - 1]}. Limites naturelles calculées sur l'amplitude mobile :
+       <strong>${d1(lic)} à ${d1(lsc)}</strong>.
+       ${dernHors ? "Le point sort des limites : quelque chose a changé dans le processus, la cause est à chercher."
+        : "Le point est dans les limites : cet écart au mois précédent relève de la variation ordinaire du système et ne justifie pas d'explication particulière."}
+       ${hors.length ? ` Sur l'ensemble de la période, ${hors.length} relevé${hors.length > 1 ? "s sortent" : " sort"} des limites : ${hors.slice(0, 4).map(o => o.p).join(", ")}${hors.length > 4 ? "…" : ""}.` : " Aucun point hors limites sur la période."}
+       ${runs.length ? " Une séquence d'au moins sept relevés du même côté de la moyenne est présente, ce qui signale un déplacement du niveau même sans point extrême." : ""}`));
+
+  /* ===== 4. Comparaison de deux provinces, Welch ===== */
+  const S2 = C.serie(INFS.comp), per2 = S2 ? Object.keys(S2).filter(p => S2[p] != null).sort() : [];
+  const y2 = per2.map(p => S2[p]);
+  let T4;
+  if (y2.length < 8) T4 = bloc("L'écart entre les deux provinces est-il réel ?", "Test de Welch",
+    `<div class="dd-test-note">${nomP(INFS.comp)} ne dispose que de ${y2.length} relevés pour cet indicateur.</div>`);
+  else {
+    const m2 = ecoMoy(y2), n2 = y2.length;
+    const v1 = y.reduce((a, b) => a + (b - m) * (b - m), 0) / (n - 1);
+    const v2 = y2.reduce((a, b) => a + (b - m2) * (b - m2), 0) / (n2 - 1);
+    const seW = Math.sqrt(v1 / n + v2 / n2), tW = seW ? (m - m2) / seW : null;
+    const dfW = seW ? Math.pow(v1 / n + v2 / n2, 2) / (Math.pow(v1 / n, 2) / (n - 1) + Math.pow(v2 / n2, 2) / (n2 - 1)) : 1;
+    const pW = infTP(tW, dfW);
+    const dc = Math.abs(m - m2) / Math.sqrt((v1 + v2) / 2);
+    T4 = bloc("L'écart entre les deux provinces est-il réel ?", "Test de Welch, variances non supposées égales",
+      R(pW < .05 ? "att" : "non", pW < .05 ? "Écart réel" : "Non conclusif",
+        `${nomP(INFS.prov)} ${d1(m)}${unite} contre ${nomP(INFS.comp)} ${d1(m2)}${unite}, écart de
+         <strong>${d1(m - m2)}</strong>. t = ${d2(tW)}, p ${pf(pW)}, taille d'effet d = ${d2(dc)}.
+         ${pW < .05 ? "L'écart dépasse ce que la variation mensuelle des deux séries peut produire. Comparer leurs pratiques a du sens."
+          : "L'écart tient dans la variation ordinaire des deux séries. Classer ces deux provinces l'une par rapport à l'autre n'est pas fondé."}
+         ${dc < .2 ? " La taille d'effet reste faible, un écart significatif n'est pas nécessairement un écart important."
+          : dc > .8 ? " La taille d'effet est élevée, l'écart est aussi substantiel qu'il est significatif." : ""}`));
+  }
+
+  /* ===== 5. Effet d'une intervention, doubles différences ===== */
+  let T5;
+  if (!INFS.rupture) T5 = bloc("L'intervention a-t-elle produit un effet ?", "Doubles différences contre province témoin",
+    `<div class="dd-test-note">Choisissez une date d'intervention dans les paramètres. Le test compare l'évolution
+     de ${nomP(INFS.prov)} avant et après cette date à celle de ${nomP(INFS.comp)}, prise comme témoin. Il isole
+     ainsi ce qui relève de l'intervention de ce qui serait arrivé de toute façon.</div>`);
+  else if (y2.length < 8) T5 = bloc("L'intervention a-t-elle produit un effet ?", "Doubles différences",
+    `<div class="dd-test-note">La province témoin ne dispose pas d'assez de relevés.</div>`);
+  else {
+    const rows = [];
+    per.forEach((p, i) => rows.push({ y: y[i], tr: 1, post: p >= INFS.rupture ? 1 : 0 }));
+    per2.forEach((p, i) => rows.push({ y: y2[i], tr: 0, post: p >= INFS.rupture ? 1 : 0 }));
+    const grp = (tr, post) => rows.filter(r => r.tr === tr && r.post === post).map(r => r.y);
+    const ga = grp(1, 0), gb = grp(1, 1), gc = grp(0, 0), gd = grp(0, 1);
+    if ([ga, gb, gc, gd].some(g => g.length < 3)) T5 = bloc("L'intervention a-t-elle produit un effet ?", "Doubles différences",
+      `<div class="dd-test-note">Moins de trois relevés dans l'une des quatre cellules. Déplacez la date d'intervention.</div>`);
+    else {
+      const X = rows.map(r => [1, r.tr, r.post, r.tr * r.post]), Yv = rows.map(r => r.y);
+      const O = ecoOLS(X, Yv);
+      const did = O ? O.beta[3] : null, seD = O ? O.se[3] : null;
+      const tD = seD ? did / seD : null, pD = infTP(tD, O.n - O.k);
+      const dTr = ecoMoy(gb) - ecoMoy(ga), dCo = ecoMoy(gd) - ecoMoy(gc);
+      T5 = bloc("L'intervention a-t-elle produit un effet ?", "Doubles différences contre province témoin",
+        R(pD < .05 ? (did > 0 ? "oui" : "att") : "non",
+          (did > 0 ? "+" : "") + d1(did) + unite,
+          `${nomP(INFS.prov)} évolue de ${d1(dTr)} après ${INFS.rupture}, ${nomP(INFS.comp)} de ${d1(dCo)} sur la même
+           période. L'effet propre est la différence des deux : <strong>${d1(did)}${unite}</strong>,
+           écart-type ${d1(seD)}, p ${pf(pD)}.
+           ${pD < .05 ? "L'écart d'évolution dépasse ce que le hasard produit. Sous réserve que les deux provinces auraient suivi des trajectoires parallèles sans intervention, l'effet est attribuable."
+            : "L'écart d'évolution n'est pas distinguable de zéro. Cela ne prouve pas l'absence d'effet, seulement que ces données ne le détectent pas."}
+           <br><br>La validité repose entièrement sur le choix du témoin : ${nomP(INFS.comp)} doit avoir suivi la même
+           trajectoire que ${nomP(INFS.prov)} avant ${INFS.rupture}. Vérifiez ce point avant de conclure.`));
+    }
+  }
+
+  /* ===== 6. Que peut-on détecter ? puissance ===== */
+  const mde = 2.8 * sd / Math.sqrt(n);
+  const nPour = (d) => Math.ceil(Math.pow(2.8 * sd / d, 2));
+  const T6 = bloc("Quel changement ces données permettraient-elles de voir ?", "Puissance et taille d'effet détectable",
+    R(mde > Math.abs(INFS.cible - m) ? "att" : "oui", d1(mde) + unite,
+      `Avec ${n} relevés et un écart-type de ${d1(sd)}, le plus petit changement détectable à 80% de puissance est de
+       <strong>${d1(mde)}${unite}</strong>. Détecter ${d1(mde / 2)} exigerait ${nPour(mde / 2)} relevés,
+       détecter ${d1(mde * 2)} en suffirait de ${nPour(mde * 2)}.
+       ${mde > Math.abs(INFS.cible - m)
+        ? `L'écart actuel à la cible, ${d1(Math.abs(INFS.cible - m))}, est plus petit que ce que la série permet de détecter. Un test négatif sur cette série ne signifierait rien : la question posée dépasse ce que la mesure peut trancher.`
+        : "L'écart à la cible dépasse le seuil de détection : la série est assez informative pour trancher cette question."}
+       <br><br>À calculer avant de lancer une évaluation, non après. Une évaluation sous-dimensionnée conclut
+       systématiquement à l'absence d'effet, quel que soit l'effet réel.`));
+
+  return { crumbs, html: et +
+    `<div class="ph-sub">${C.libelle} · ${nomP(INFS.prov)} · ${n} relevés de ${per[0]} à ${per[n - 1]}.
+      Chaque carte pose une question de décision et y répond par un test nommé, avec la portée du résultat et sa
+      limite. Source : ${C.src}.</div></div>
+    <div class="content">
+      ${card("Paramètres", "Les six tests se recalculent à chaque changement", cmd)}
+      <div class="inf-grid">
+        ${card("Décider d'agir", "", T1)}
+        ${card("Décider de maintenir ou d'infléchir", "", T2)}
+        ${card("Décider de chercher une cause", "", T3)}
+        ${card("Décider de comparer deux territoires", "", T4)}
+      </div>
+      ${card("Décider si une intervention a marché", "", T5)}
+      ${card("Décider si la question est mesurable", "", T6)}
     </div>` };
 };
 
