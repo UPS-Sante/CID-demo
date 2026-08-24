@@ -4181,12 +4181,12 @@ const PROGRAMS = [
     id:"dsr", c:"dsr", icon:"DSR", label:"Santé Reproductive",
     dir:"DSR", groupe:"Programmes prioritaires",
     sub:[
+      { id:"dsr-apercu",     label:"Aperçu du programme",  status:"orange" },
       { id:"dsr-mat",       i18n_key:"sub_dsr_mat",      label:"Santé maternelle",     status:"red" },
       { id:"dsr-pf",        i18n_key:"sub_dsr_pf",       label:"Planification familiale",status:"orange" },
       { id:"dsr-stock",     i18n_key:"sub_dsr_stocks",   label:"Stocks produits SR",   status:"orange" },
       { id:"dsr-com",       i18n_key:"sub_dsr_com",      label:"Santé communautaire",  status:"yellow" },
             { id:"dsr-deepdive",   label:"Analyse approfondie",  status:"orange" },
-{ id:"dsr-overview",  i18n_key:"sub_dsr_overview", label:"Vue d'ensemble",       status:"orange" },
     ]
   },
   {
@@ -11617,6 +11617,116 @@ VIEWS["dpsis-dsr-qual"] = () => {
       ${card("Complétude et cohérence, province par mois", "Chaque case est un relevé mensuel d'accouchements assistés", matrice)}
       ${card("À qui adresser quoi", "Répartition des écarts par direction productrice", dirs)}
       ${card("Écarts les plus marqués", "Relevés tels qu'ils figurent dans les systèmes sources", anTable)}
+    </div>` };
+};
+
+
+/* ==============================================================
+   DSR · APERCU DU PROGRAMME (format ministre)
+   Meme grammaire que l'apercu PEV. La vue d'ensemble est reprise
+   en fin de page plutot que maintenue comme entree separee.
+============================================================== */
+VIEWS["dsr-apercu"] = () => {
+  const crumbs = ["Santé Reproductive", "Aperçu du programme"];
+  const et = `<div class="ph"><div class="ph-tag">Direction de la Santé de la Reproduction · DSR</div>
+    <div class="ph-title">Aperçu du programme</div>`;
+  if (!DSRDD) return { crumbs, html: et + `<div class="ph-sub">Aperçu en cours de chargement.</div></div>` };
+
+  const D = DSRDD, M = D.meta, I = D.inference, V = D.variance || {}, CV2 = D.convergence || {},
+        CT = D.contribution || { prov: [] }, RT = D.retention || { prov: [] }, MO = D.mortalite || {};
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const vg = x => String(x).replace(".", ",");
+  const RAGN = { g: "green", y: "yellow", o: "orange", r: "red" };
+  const par = D.quadrant.filter(q => q.deficit > 0).sort((a, b) => b.deficit - a.deficit);
+  let cu = 0, n80 = 0; for (const q of par) { cu += q.deficit; n80++; if (cu >= 0.8 * M.total_deficit) break; }
+  const rr = (RT.prov || []).slice().sort((a, b) => a.res - b.res);
+
+  /* --- veille --- */
+  const sparkline = (arr, col) => {
+    const v = arr.filter(x => x != null); if (v.length < 2) return "";
+    const mn = Math.min(...v), mx = Math.max(...v), w = 52, h = 16;
+    const pts = v.map((x, i) => `${(i / (v.length - 1) * w).toFixed(1)},${(h - (mx === mn ? h / 2 : (x - mn) / (mx - mn) * h)).toFixed(1)}`).join(" ");
+    return `<svg width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
+  };
+  const serN = k => { const d = (DSRN && DSRN.indicateurs[k]) ? DSRN.indicateurs[k].serie : {};
+    return Object.keys(d).sort().map(p => d[p]).filter(x => x != null); };
+  const rag = (v, c) => v == null ? "" : v >= c ? "g" : v >= c * .85 ? "y" : v >= c * .65 ? "o" : "r";
+  const K = (l, v, u, d, c, sp) => kpi(l, v, u, d, "", "flat", RAGN[c] || "na", false, sp || "");
+  const veille =
+    K("CPN 1", d1(D.cascade[0].v), " %", "Cible 95 · premier contact prénatal", rag(D.cascade[0].v, 95), sparkline(serN("cpn1"), "#8C4A5E")) +
+    K("Accouchements assistés", d1(D.cascade[2].v), " %", `Cible ${d1(M.cible_acc)} · personnel qualifié`, rag(D.cascade[2].v, M.cible_acc), sparkline(serN("acc_qualifie"), "#8C4A5E")) +
+    K("Naissances sans assistance", nb(M.total_deficit), "", `Semestre · ${n80} provinces en portent 80%`, "r") +
+    K("Écart entre provinces", d1(D.quintiles[4] / D.quintiles[0]), " ×", `Du quintile bas à haut, ${d1(D.quintiles[0])}% contre ${d1(D.quintiles[4])}%`, "r") +
+    K("Prévalence contraceptive", d1(D.quadrant.reduce((a, q) => a + (q.contra || 0), 0) / D.quadrant.length), " %", "Moyenne des provinces", "o") +
+    K("Indicateurs non pilotables", (D.struct || []).length, " /16", "Définition à reprendre avant toute cible", "r");
+
+  /* --- insights --- */
+  const insights = `
+    <div class="ap-i alerte"><div class="ap-i-k">Décision attendue</div>
+      <div class="ap-i-h">La rupture est entre la grossesse et la naissance, pas au recrutement</div>
+      <div class="ap-i-c">${d1(D.cascade[0].v)}% des femmes entrent en consultation prénatale,
+      ${d1(D.cascade[2].v)}% accouchent accompagnées. ${d1(D.cascade[0].v - D.cascade[2].v)} points se perdent sur
+      des femmes déjà identifiées et enregistrées. ${rr.length ? `${rr[0].pr} en perd ${d1(Math.abs(rr[0].res))}
+      de plus que son niveau de CPN 1 ne le laissait attendre.` : ""}</div></div>
+    <div class="ap-i alerte"><div class="ap-i-k">Contre-intuition</div>
+      <div class="ap-i-h">Le déficit n'est pas d'abord rural</div>
+      <div class="ap-i-c">${par[0].nom}, la mieux dotée en plateaux techniques, plafonne à ${d1(par[0].couv)}%
+      et concentre ${d1(par[0].part)}% des naissances non couvertes.
+      ${CT.prov.length ? `Pondérée par sa cohorte, elle retire ${vg(Math.abs(CT.prov[0].contrib))} point au
+      résultat national quand ${CT.prov[CT.prov.length - 1].pr} en apporte ${vg(CT.prov[CT.prov.length - 1].contrib)}.` : ""}</div></div>
+    <div class="ap-i attention"><div class="ap-i-k">Point de vigilance</div>
+      <div class="ap-i-h">Les provinces divergent, elles ne convergent pas</div>
+      <div class="ap-i-c">La dispersion entre provinces passe de ${d1(CV2.sd_debut)} à ${d1(CV2.sd_fin)} points sur
+      la période, et ${d1(Object.values(V).filter(x => x.part > 50).length ? Math.max(...Object.values(V).filter(x => x.part > 50).map(x => x.part)) : 0)}%
+      de la variation sépare les provinces entre elles plutôt que les mois. L'écart est structurel : sans ciblage
+      explicite, il se creuse.</div></div>`;
+
+  /* --- plan d'action --- */
+  const plan = [
+    ["p1", "Plan de rattrapage sur " + n80 + " provinces, " + par.slice(0, 3).map(q => q.nom).join(", ") + " en tête",
+     "Trajectoire mensuelle par province. Le déficit est concentré, un plan national uniforme dilue l'effort.",
+     "DSR et délégations", "Naissances assistées récupérées", nb(par.slice(0, n80).reduce((a, q) => a + q.deficit, 0)), "Revue mensuelle"],
+    ["p1", "Retenir les femmes déjà entrées en consultation prénatale",
+     "Orientation vers la structure d'accouchement dès la dernière CPN, rappel actif des rendez-vous manqués.",
+     "DSR", "Écart entre CPN 1 et accouchement assisté", "Moins de 15 points", "Revue mensuelle"],
+    ["p1", "Reprendre la définition des " + (D.struct || []).length + " indicateurs non pilotables",
+     "Couverture effective en accouchement à 682%, CPoN à 240%, CPN 4 à 2,6%. Formules d'agrégation et dénominateurs.",
+     "DSR et DPSIS", "Indicateurs hors bornes", "Zéro", "Avant le prochain COPIL"],
+    ["p2", "Cibler explicitement les provinces en retard",
+     "La dynamique spontanée creuse l'écart. Une cible nationale unique laisse les retardataires décrocher.",
+     "UPS-Santé et DSR", "Écart-type entre provinces", "En baisse", "Trimestriel"],
+    ["p2", "Ne pas chercher le levier dans l'approvisionnement",
+     "Le stock d'oxytocine du mois précédent n'explique pas l'activité du mois suivant. Même résultat qu'en vaccination.",
+     "DSR et DGPML", "Ruptures d'oxytocine signalées", "Suivi de veille", "Trimestriel"],
+    ["p3", "Traiter la couverture comme un facteur unique",
+     "Accouchement assisté, partogramme, GATPA et contraception corrèlent entre 0,55 et 0,90. Un plan par indicateur duplique l'effort.",
+     "DSR", "Score composite provincial", "À construire", "Semestriel"],
+  ].map(r => `<tr>
+      <td><span class="ap-pr ${r[0]}">${r[0] === "p1" ? "Priorité 1" : r[0] === "p2" ? "Priorité 2" : "Priorité 3"}</span></td>
+      <td class="ac">${r[1]}<small>${r[2]}</small></td>
+      <td>${r[3]}</td><td>${r[4]}</td><td class="ap-me">${r[5]}</td><td>${r[6]}</td></tr>`).join("");
+
+  return { crumbs, html: et +
+    `<div class="ph-sub">État du programme sur ${M.periode}, lecture pour le Cabinet. Sources :
+      ${M.source_prog} ; ${M.source_log}.</div></div>
+    <div class="content">
+      <div class="ap-band">
+        <div class="ap-band-t">Ce qu'il faut retenir</div>
+        <div class="ap-band-h">Le système identifie les femmes et les perd avant la naissance : ${nb(M.total_deficit)} accouchements sans personnel qualifié, concentrés dans ${n80} provinces</div>
+        <div class="ap-band-s">Le recrutement prénatal fonctionne, la rétention non. Le déficit n'est pas d'abord
+        rural : la capitale en porte la plus grande part. Ni le stock d'oxytocine ni la saison n'expliquent
+        l'activité, et l'écart entre provinces se creuse au lieu de se refermer. S'y ajoute une contrainte de
+        mesure : la moitié des indicateurs nationaux porte des valeurs incompatibles avec leur définition et ne
+        peut pas servir de base à une cible.</div>
+      </div>
+      <div class="kpi-grid g6">${veille}</div>
+      <div class="ap-ins">${insights}</div>
+      ${(() => { try { const v = VIEWS["dsr-overview"](state);
+          return v.html.replace(/^[\s\S]*?<div class="content">/, "").replace(/<\/div>\s*$/, "");
+        } catch (e) { return ""; } })()}
+      ${card("Plan d'action", "Décisions proposées au Cabinet, avec porteur, mesure de suivi et fréquence de revue",
+        `<table class="ap-pl"><thead><tr><th>Rang</th><th>Action</th><th>Porteur</th><th>Mesure de suivi</th><th>Cible</th><th>Revue</th></tr></thead><tbody>${plan}</tbody></table>`)}
     </div>` };
 };
 
