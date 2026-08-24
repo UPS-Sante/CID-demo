@@ -87,17 +87,16 @@
      HEADER (bandeau bleu royal · fidèle PPTX)
   ============================================================ */
   /* ===== Bandeau environnement de demonstration ===== */
-  #demo-bandeau{position:fixed;top:0;left:0;right:0;height:30px;z-index:400;
-    background:repeating-linear-gradient(135deg,#8C4038 0 14px,#7A3830 14px 28px);
-    color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;
-    font-family:var(--font);font-size:11px;letter-spacing:1.3px;text-transform:uppercase;
-    box-shadow:0 1px 4px rgba(0,0,0,.25)}
-  #demo-bandeau b{font-weight:700}
-  #demo-bandeau .db-sep{opacity:.5}
-  #demo-bandeau .db-txt{font-weight:600}
-  body{padding-top:30px}
-  .header{top:30px !important}
-  .sidebar{top:calc(var(--header-h) + 30px) !important}
+  #demo-bandeau{position:fixed;top:0;left:0;right:0;height:22px;z-index:400;
+    background:rgba(140,64,56,.90);backdrop-filter:saturate(140%) blur(2px);
+    color:rgba(255,255,255,.97);display:flex;align-items:center;justify-content:center;gap:8px;
+    font-family:var(--font);font-size:11.5px;letter-spacing:.2px;font-weight:500;
+    border-bottom:1px solid rgba(255,255,255,.18)}
+  #demo-bandeau b{font-weight:700;letter-spacing:.3px}
+  #demo-bandeau .db-sep{opacity:.45}
+  body{padding-top:22px}
+  .header{top:22px !important}
+  .sidebar{top:calc(var(--header-h) + 22px) !important}
   @media print{#demo-bandeau{position:static;height:auto}body{padding-top:0}}
 
   /* ===== Analyse approfondie PEV ===== */
@@ -220,6 +219,53 @@
   .sc-note{font-size:11.5px;color:var(--body);line-height:1.6;background:var(--surface-2);
     border-left:3px solid var(--gold);border-radius:0 5px 5px 0;padding:11px 14px;margin-top:12px}
   @media(max-width:1100px){.sc-grid{grid-template-columns:1fr}.sc-pan{position:static}.sc-out{grid-template-columns:repeat(2,1fr)}}
+  .ph-fenetre{margin-top:9px;display:inline-block;font-size:11.5px;color:var(--gold-d);
+    background:var(--gold-tint);border:1px solid #E4D3A8;border-radius:5px;padding:6px 11px;line-height:1.45}
+  .sc-sel{width:100%;padding:7px 9px;font-family:var(--font);font-size:12.5px;color:var(--ink);
+    border:1px solid var(--border-2);border-radius:5px;background:var(--surface);margin-bottom:11px}
+  .sc-etat{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);
+    padding:4px 0;border-top:1px dashed var(--border)}
+  .sc-etat b{color:var(--ink);font-variant-numeric:tabular-nums}
+  /* ===== Qualité et complétude PEV ===== */
+  .qc-head{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .qc-k{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 16px;box-shadow:var(--shadow-sm);border-top:3px solid var(--royal)}
+  .qc-k.g{border-top-color:var(--rag-green)}.qc-k.y{border-top-color:var(--gold)}
+  .qc-k.o{border-top-color:var(--rag-orange)}.qc-k.r{border-top-color:var(--rag-red)}
+  .qc-k-l{font-size:9.5px;letter-spacing:.85px;text-transform:uppercase;color:var(--muted);font-weight:700;min-height:22px}
+  .qc-k-n{font-family:var(--font-h);font-size:27px;font-weight:600;color:var(--ink);letter-spacing:-.9px;line-height:1;margin:7px 0 3px}
+  .qc-k-n span{font-size:12px;color:var(--muted-2);letter-spacing:0}
+  .qc-k-d{font-size:10.5px;color:var(--muted);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px}
+  .qc-hm{border-collapse:separate;border-spacing:1px;font-size:10px;width:auto;min-width:100%}
+  .qc-hm td.l,.qc-hm th.l{width:1%}
+  .qc-hm td.an,.qc-hm th.an{width:1%}
+  .qc-hm th{font-size:9px;color:var(--muted);font-weight:700;padding:0 0 5px;text-align:center;white-space:nowrap}
+  .qc-hm th.l{text-align:left;padding-right:9px;font-size:10.5px;color:var(--ink)}
+  .qc-hm td{padding:0;width:9px;height:15px;border-radius:2px}
+  .qc-hm td.l{width:auto;font-size:11px;font-weight:600;color:var(--ink);padding-right:9px;white-space:nowrap;background:none}
+  .qc-hm td.an{font-size:10.5px;color:var(--muted);padding-left:8px;text-align:right;font-variant-numeric:tabular-nums;background:none}
+  .qc-dir{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .qc-d{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--royal);
+    border-radius:0 var(--radius) var(--radius) 0;padding:14px 16px;box-shadow:var(--shadow-sm)}
+  .qc-d.a{border-left-color:var(--rag-red)}.qc-d.b{border-left-color:var(--gold)}.qc-d.c{border-left-color:var(--rag-green)}
+  .qc-d-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+  .qc-d-t{font-family:var(--font-h);font-size:15px;font-weight:600;color:var(--ink)}
+  .qc-d-n{font-size:20px;font-weight:700;color:var(--royal);font-variant-numeric:tabular-nums}
+  .qc-d.a .qc-d-n{color:var(--rag-red)}.qc-d.b .qc-d-n{color:var(--gold-d)}.qc-d.c .qc-d-n{color:var(--rag-green)}
+  .qc-d-c{font-size:12px;color:var(--body);line-height:1.55;margin-top:4px}
+  .qc-d-a{margin-top:9px;padding-top:8px;border-top:1px dashed var(--border);font-size:11.5px;color:var(--body)}
+  .qc-d-a b{color:var(--ink)}
+  .qc-tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .qc-tbl th{text-align:left;font-size:9.5px;letter-spacing:.85px;text-transform:uppercase;color:var(--muted);
+    font-weight:700;padding:0 9px 8px;border-bottom:1px solid var(--border-2)}
+  .qc-tbl td{padding:8px 9px;border-bottom:1px solid #F2EFE9;vertical-align:top}
+  .qc-tbl tr:last-child td{border-bottom:none}
+  .qc-tag{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:3px;white-space:nowrap}
+  .qc-tag.sup150{background:var(--rag-red-l);color:var(--rag-red)}
+  .qc-tag.sup110{background:var(--gold-tint);color:var(--gold-d)}
+  .qc-tag.saut{background:var(--rag-orange-l);color:var(--rag-orange)}
+  .qc-tag.negatif{background:var(--rag-red-l);color:var(--rag-red)}
+  .qc-tag.rupture{background:var(--royal-tint);color:var(--royal)}
   .header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -3892,9 +3938,8 @@
 
 <!-- ============================ HEADER ============================ -->
 <div id="demo-bandeau">
-  <b>ENVIRONNEMENT DE DÉMONSTRATION</b><span class="db-sep">·</span>
-  <span class="db-txt">Données simulées, sans valeur officielle</span><span class="db-sep">·</span>
-  <span class="db-txt">MSPP · UPS-Santé</span>
+  <b>Démonstration</b><span class="db-sep">|</span>
+  <span>Certaines valeurs sont simulées et n'ont pas de valeur officielle</span>
 </div>
 <header class="header">
   <button class="sb-hamburger" onclick="toggleSidebar()" aria-label="Afficher ou masquer le menu" title="Afficher ou masquer le menu">
@@ -4145,7 +4190,7 @@ const PROGRAMS = [
       { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"na", attente:"eSMT" },
       { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"na", attente:"Coordination" },
       { id:"vacc-deepdive",  i18n_key:"sub_vacc_deepdive", label:"Analyse approfondie", status:"orange" },
-      { id:"vacc-scenario",  i18n_key:"sub_vacc_scenario", label:"Simulation de scénarios", status:"yellow" },
+      { id:"vacc-qualite",   label:"Qualité et complétude", status:"yellow" },
       { id:"vacc-overview",  i18n_key:"sub_vacc_overview", label:"Vue d'ensemble",      status:"green" },
     ]
   },
@@ -4208,6 +4253,13 @@ const PROGRAMS = [
       { id:"explor-comp",  label:"Comparateur de provinces", status:"green" },
       { id:"explor-alert", label:"Alertes actives",          status:"green" },
       { id:"explor-rech",  label:"Recherche & export",       status:"green" },
+    ]
+  },
+  {
+    id:"simu", c:"min", icon:"SIM", label:"Simulation de scénarios",
+    dir:"UPS-SANTÉ", groupe:"Outils transversaux",
+    sub:[
+      { id:"vacc-scenario", i18n_key:"sub_vacc_scenario", label:"Que produirait chaque décision", status:"yellow" },
     ]
   },
   {
@@ -5655,14 +5707,18 @@ function applyStaticTranslations() {
 }
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-const ANNEES = (() => { const a = []; for (let x = 2026; x >= 2020; x--) a.push(x); return a; })();
+/* Demonstration : la profondeur reelle des series commence en janvier 2023.
+   Le selecteur ne descend pas sous cette borne pour eviter des periodes vides. */
+const ANNEES = (() => { const a = []; for (let x = 2026; x >= 2023; x--) a.push(x); return a; })();
 /* Dernier mois complet presentable. Il decoule du plafond CID_PLAFOND :
    toute periode derivee ou selectionnee est bornee a cette limite. */
 const DERNIER_MOIS = (() => {
   const [a, m] = CID_PLAFOND.split("-").map(Number);
   return { annee: a, mois: m, trim: Math.max(1, Math.floor(m / 3)) };
 })();
+const PREMIER_MOIS = { annee: 2023, mois: 1, trim: 1 };
 function bornerPeriode() {
+  if (state.periodYear < PREMIER_MOIS.annee) { state.periodYear = PREMIER_MOIS.annee; }
   if (state.periodYear > DERNIER_MOIS.annee) { state.periodYear = DERNIER_MOIS.annee; }
   if (state.periodYear === DERNIER_MOIS.annee) {
     if (state.periodMonth > DERNIER_MOIS.mois) state.periodMonth = DERNIER_MOIS.mois;
@@ -6850,17 +6906,17 @@ VIEWS["vacc-intrants"] = () => {
     return `<tr><td class="l">${k}</td><td class="num">${v==null?"ND":v.toLocaleString("fr-FR")}</td><td class="num">${w==null?"ND":w.toLocaleString("fr-FR")}</td><td class="num">${evo==null?"—":(evo>0?"+":"")+evo+"%"}</td></tr>`;}).join("");
   return {crumbs,html:et+`<div class="ph-sub">Relevé mensuel national · ${periodLabel()} · série non cumulée, ${mf(PEVM.meta.mois_min)} à ${mf(PEVM.meta.mois_max)}.</div></div>
     <div class="content">
-      <div class="kpi-grid">${kv("Pentavalent","Penta")}${kv("VPO","VPO")}${kv("Rougeole (VAR)","VAR")}${kv("BCG","BCG")}</div>
-      ${(PEVM.provinces ? card("Détail provincial · enfants vaccinés Pentavalent · "+periodLabel(),"Vingt-deux provinces rapportantes · Wadi-Fira absent du relevé (ND)",
-        `<table class="dt"><thead><tr><th>Province</th><th style="text-align:right">Penta</th><th style="text-align:right">VAR</th><th style="text-align:right">Stock Penta fin de mois</th></tr></thead><tbody>`+
+      <div class="kpi-grid">${kv("Pentavalent","Penta")}${kv("BCG","BCG")}${kv("MenA","MenA")}${kv("Td","TD")}</div>
+      ${(PEVM.provinces ? card("Détail provincial · enfants vaccinés Pentavalent · "+periodLabel(),"Vingt-trois provinces rapportantes",
+        `<table class="dt"><thead><tr><th>Province</th><th style="text-align:right">Penta</th><th style="text-align:right">BCG</th><th style="text-align:right">Stock Penta fin de mois</th></tr></thead><tbody>`+
         Object.keys(PEVM.provinces).sort((a,b)=>(PEVM.provinces[b].vac_Penta?.[per]||0)-(PEVM.provinces[a].vac_Penta?.[per]||0)).map(c=>{
           const p=PEVM.provinces[c], nm=(PROVINCES.find(x=>x.id===c)||{}).name||c;
           const f=(o)=>{const v=o?.[per];return v==null?"ND":v.toLocaleString("fr-FR");};
-          return `<tr><td class="l">${nm}</td><td class="num">${f(p.vac_Penta)}</td><td class="num">${f(p.vac_VAR)}</td><td class="num">${f(p.st_Penta)}</td></tr>`;}).join("")+`</tbody></table>`,
+          return `<tr><td class="l">${nm}</td><td class="num">${f(p.vac_Penta)}</td><td class="num">${f(p.vac_BCG)}</td><td class="num">${f(p.st_Penta)}</td></tr>`;}).join("")+`</tbody></table>`,
         "Source : "+PEVM.meta.source) : "")}
       ${card("Stocks de fin de mois par vaccin · "+periodLabel(),"Comparaison au mois précédent",
         `<table class="dt"><thead><tr><th>Vaccin</th><th style="text-align:right">${periodLabel()}</th><th style="text-align:right">Mois préc.</th><th style="text-align:right">Évolution</th></tr></thead><tbody>${rows}</tbody></table>`,
-        "Source : "+PEVM.meta.source+" · Le stock TD passe de 107 097 en janvier à 29 381 en juin, trajectoire à surveiller avec la DLMVSE.")}
+        "Source : "+PEVM.meta.source+" · Les doses administrées ne sont reconstituables que pour les antigènes dont les doses reçues sont rapportées : Penta, BCG, MenA et Td. Les stocks restent disponibles pour les huit antigènes.")}
     </div>`};
 };
 
@@ -10649,7 +10705,7 @@ VIEWS["vacc-deepdive"] = () => {
 
   return { crumbs, html: et +
     `<div class="ph-sub">Croisement des variables programmatiques et logistiques sur ${M.periode}.
-      Sources : ${M.source_prog} ; ${M.source_log}.</div></div>
+      Sources : ${M.source_prog} ; ${M.source_log}.${fenetreFixe(M.periode)}</div></div>
     <div class="content">
       ${constats}
       <div class="pd-grid2">
@@ -10676,6 +10732,15 @@ VIEWS["vacc-deepdive"] = () => {
    Une page : ou en est le programme, ce qu'il faut retenir,
    ce qu'il faut decider. Chiffres reels, aucune valeur simulee.
 ============================================================== */
+
+/* Les vues analytiques PEV portent une fenetre d'analyse fixe, independante du
+   selecteur de periode. On le signale plutot que de laisser croire a un filtre. */
+function fenetreFixe(lib) {
+  const p = state.periodValue || "";
+  if (p >= "2026-01" && p <= "2026-06") return "";
+  return `<div class="ph-fenetre">Fenêtre d'analyse fixe : ${lib}. Le sélecteur de période ne s'y applique pas ;
+    les vues Couverture, Zéro-dose et Vaccins et intrants couvrent, elles, les 42 mois disponibles.</div>`;
+}
 VIEWS["vacc-apercu"] = () => {
   const crumbs = ["Vaccination · PEV", "Aperçu du programme"];
   const et = `<div class="ph"><div class="ph-tag">Programme Élargi de Vaccination · DLMVSE</div>
@@ -10762,7 +10827,7 @@ VIEWS["vacc-apercu"] = () => {
 
   return { crumbs, html: et +
     `<div class="ph-sub">État du programme sur ${M.periode}, lecture pour le Cabinet. Sources réelles :
-      ${M.source_prog} ; ${M.source_log}.</div></div>
+      ${M.source_prog} ; ${M.source_log}.${fenetreFixe(M.periode)}</div></div>
     <div class="content">
       <div class="ap-band">
         <div class="ap-band-t">Ce qu'il faut retenir</div>
@@ -10787,154 +10852,286 @@ VIEWS["vacc-apercu"] = () => {
    de l'export DHIS2, decomposes en tendance et saison. Les
    sorties sont des projections, pas des observations.
 ============================================================== */
-const SCEN = { couv: 0, ret: 0, prov: 7, horizon: 12, preset: "actuel" };
-function setScen(k, v) { SCEN[k] = (k === "preset") ? v : parseFloat(v); if (k !== "preset") SCEN.preset = "libre"; renderMain(); }
+let SIMCAT = null;
+fetch("sim_catalogue.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { SIMCAT = j; if (state.sub === "vacc-scenario") renderMain(); }).catch(() => {});
+const SCEN = { ind: "Penta3", pts: 10, prov: 7, horizon: 12, preset: "rattrapage" };
+function setScen(k, v) { SCEN[k] = (k === "ind") ? v : parseFloat(v); if (k !== "ind") SCEN.preset = "libre"; renderMain(); }
 function scenPreset(nom) {
-  const P = { actuel: [0, 0, 7], rattrapage: [15, 5, 7], ambition: [25, 10, 12], contrainte: [-5, 0, 3] }[nom];
-  SCEN.couv = P[0]; SCEN.ret = P[1]; SCEN.prov = P[2]; SCEN.preset = nom; renderMain();
+  const P = { prudent: [5, 5, 18], rattrapage: [10, 7, 12], ambition: [20, 12, 12], maximal: [40, 23, 24] }[nom];
+  SCEN.pts = P[0]; SCEN.prov = P[1]; SCEN.horizon = P[2]; SCEN.preset = nom; renderMain();
 }
 
 VIEWS["vacc-scenario"] = () => {
-  const crumbs = ["Vaccination · PEV", "Simulation de scénarios"];
-  const et = `<div class="ph"><div class="ph-tag">Aide à la décision · DLMVSE et UPS-Santé</div>
+  const crumbs = ["Outils transversaux", "Simulation de scénarios"];
+  const et = `<div class="ph"><div class="ph-tag">Aide à la décision · UPS-Santé</div>
     <div class="ph-title">Que produirait chaque décision</div>`;
-  if (!PEVDD || !PEVDD.scen_base) return { crumbs, html: et + `<div class="ph-sub">Simulateur en cours de chargement.</div></div>` };
+  if (!SIMCAT) return { crumbs, html: et + `<div class="ph-sub">Catalogue en cours de chargement.</div></div>` };
 
-  const D = PEVDD, B = D.scen_base, H = D.hist;
+  const C = SIMCAT.catalogue;
+  const ind = C.find(x => x.cle === SCEN.ind) || C[0];
   const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
   const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
   const vg = x => String(x).replace(".", ",");
 
   /* ---------- moteur ---------- */
-  const cibles = B.provinces.filter(q => q.deficit > 0).slice(0, SCEN.prov);
-  /* levier 1 : points de couverture gagnes dans les provinces ciblees, plafonnes a 90% */
-  let gainCouv = 0;
+  const cibles = ind.provinces.filter(q => q.deficit > 0).slice(0, SCEN.prov);
+  let gain = 0, atteintes = 0;
   cibles.forEach(q => {
-    const cible = Math.min(90, q.couv + SCEN.couv);
-    gainCouv += Math.max(0, q.pop * (cible - q.couv) / 100);
+    const apres = ind.sens === "haut" ? Math.min(ind.cible, q.val + SCEN.pts) : Math.max(ind.cible, q.val - SCEN.pts);
+    const ec = Math.abs(apres - q.val);
+    gain += q.pop * ec / 100;
+    if (ind.sens === "haut" ? apres >= ind.cible : apres <= ind.cible) atteintes++;
   });
-  /* levier 2 : retention, points recuperes sur la perte Penta1 vers Penta3, applique a tout le pays */
-  const perteP = D.cascade[0].perte;
-  const gainRet = B.pop_tot * Math.min(SCEN.ret, perteP) / 100;
-  const gainTot = gainCouv + gainRet;
-  const deficitRest = Math.max(0, B.deficit - gainCouv);
-  const partComblee = B.deficit ? Math.min(100, 100 * gainCouv / B.deficit) : 0;
-  /* doses supplementaires : 3 doses par enfant recupere sur Penta, etalees sur l'horizon */
-  const dosesSup = Math.round(gainTot * 3 / SCEN.horizon);
-  /* besoin projete = prevision tendancielle + doses supplementaires */
-  const prevMoy = H.prev.reduce((a, b) => a + b.v, 0) / H.prev.length;
-  const besoin = Math.round(prevMoy + dosesSup);
-  const tampon = B.doses_mois ? Math.round(besoin / B.doses_mois * 100 - 100) : null;
+  const part = ind.deficit ? Math.min(100, 100 * gain / ind.deficit) : 0;
+  const reste = Math.max(0, ind.deficit - gain);
+  const parMois = Math.round(gain / SCEN.horizon);
+  /* rythme requis contre rythme observe */
+  const ecartNat = Math.abs(ind.cible - ind.actuel);
+  const rythme = ecartNat / SCEN.horizon;
+  const obs = Math.abs(ind.tend);
+  const faisable = obs > 0 ? rythme / obs : null;
 
   const rag = v => v >= 80 ? "g" : v >= 50 ? "y" : v >= 20 ? "o" : "r";
+  const ragF = v => v == null ? "" : v <= 1 ? "g" : v <= 2 ? "y" : v <= 4 ? "o" : "r";
   const out =
-    `<div class="sc-o ${rag(partComblee)}"><div class="sc-o-l">Part du déficit comblée</div>
-      <div class="sc-o-n">${d1(partComblee)}<span> %</span></div>
-      <div class="sc-o-d">Reste <b class="${deficitRest > 0 ? "neg" : ""}">${nb(deficitRest)}</b> enfants sans Penta3</div></div>
-     <div class="sc-o g"><div class="sc-o-l">Enfants supplémentaires atteints</div>
-      <div class="sc-o-n">${nb(gainTot)}</div>
-      <div class="sc-o-d">${nb(gainCouv)} par la couverture, ${nb(gainRet)} par la rétention</div></div>
-     <div class="sc-o ${dosesSup > 40000 ? "o" : "y"}"><div class="sc-o-l">Doses Penta mensuelles en plus</div>
-      <div class="sc-o-n">${nb(dosesSup)}</div>
-      <div class="sc-o-d">Sur ${SCEN.horizon} mois, trois doses par enfant</div></div>
-     <div class="sc-o ${tampon > 15 ? "r" : tampon > 5 ? "o" : "g"}"><div class="sc-o-l">Charge sur l'approvisionnement</div>
-      <div class="sc-o-n">${tampon >= 0 ? "+" : ""}${tampon}<span> %</span></div>
-      <div class="sc-o-d">Besoin projeté ${nb(besoin)} doses par mois</div></div>`;
+    `<div class="sc-o ${rag(part)}"><div class="sc-o-l">Part de l'écart comblée</div>
+      <div class="sc-o-n">${d1(part)}<span> %</span></div>
+      <div class="sc-o-d">Reste <b class="${reste > 0 ? "neg" : ""}">${nb(reste)}</b> personnes sous la cible</div></div>
+     <div class="sc-o g"><div class="sc-o-l">Personnes atteintes en plus</div>
+      <div class="sc-o-n">${nb(gain)}</div>
+      <div class="sc-o-d">${nb(parMois)} par mois sur ${SCEN.horizon} mois</div></div>
+     <div class="sc-o ${atteintes === cibles.length ? "g" : atteintes ? "y" : "o"}"><div class="sc-o-l">Provinces ramenées à la cible</div>
+      <div class="sc-o-n">${atteintes}<span> /${cibles.length}</span></div>
+      <div class="sc-o-d">${ind.sous_cible} provinces sous ${d1(ind.cible)}% aujourd'hui</div></div>
+     <div class="sc-o ${ragF(faisable)}"><div class="sc-o-l">Effort requis contre rythme observé</div>
+      <div class="sc-o-n">${faisable == null ? "ND" : "×" + d1(faisable)}</div>
+      <div class="sc-o-d">${d1(rythme)} pt par mois demandé, ${d1(obs)} observé</div></div>`;
 
-  /* ---------- leviers ---------- */
+  /* ---------- panneau ---------- */
+  const doms = [...new Set(C.map(x => x.dom))];
+  const choix = doms.map(dm => `<optgroup label="${dm}">${
+    C.filter(x => x.dom === dm).map(x => `<option value="${x.cle}" ${x.cle === ind.cle ? "selected" : ""}>${x.lib}${x.fiable ? "" : " · lecture réservée"}</option>`).join("")
+  }</optgroup>`).join("");
   const lev = (k, l, min, max, step, unite, desc) => `
     <div class="sc-lev"><div class="sc-lev-h"><span class="sc-lev-l">${l}</span>
-      <span class="sc-lev-v">${SCEN[k] >= 0 && k !== "prov" && k !== "horizon" ? "+" : ""}${vg(SCEN[k])}${unite}</span></div>
-      <input type="range" min="${min}" max="${max}" step="${step}" value="${SCEN[k]}"
-        oninput="setScen('${k}', this.value)"/>
+      <span class="sc-lev-v">${k === "pts" ? "+" : ""}${vg(SCEN[k])}${unite}</span></div>
+      <input type="range" min="${min}" max="${max}" step="${step}" value="${SCEN[k]}" oninput="setScen('${k}', this.value)"/>
       <div class="sc-lev-d">${desc}</div></div>`;
-  const pre = ["actuel", "rattrapage", "ambition", "contrainte"].map(x =>
-    `<button class="sc-pre ${SCEN.preset === x ? "on" : ""}" onclick="scenPreset('${x}')">${
-      { actuel: "Tendance actuelle", rattrapage: "Plan de rattrapage", ambition: "Ambition 2027", contrainte: "Contrainte budgétaire" }[x]}</button>`).join("");
-
-  const panneau = `<div class="sc-pan"><h4>Leviers</h4>
-    <p class="sub">Déplacez un curseur, la projection se recalcule.</p>
+  const pre = [["prudent", "Prudent"], ["rattrapage", "Rattrapage"], ["ambition", "Ambition"], ["maximal", "Effort maximal"]]
+    .map(([v, l]) => `<button class="sc-pre ${SCEN.preset === v ? "on" : ""}" onclick="scenPreset('${v}')">${l}</button>`).join("");
+  const panneau = `<div class="sc-pan">
+    <h4>Indicateur</h4><p class="sub">Tous domaines confondus, ${C.length} indicateurs disponibles.</p>
+    <select class="sc-sel" onchange="setScen('ind', this.value)">${choix}</select>
+    <div class="sc-etat"><span>Niveau actuel</span><b>${d1(ind.actuel)}%</b></div>
+    <div class="sc-etat"><span>Cible</span><b>${d1(ind.cible)}%</b></div>
+    <div class="sc-etat"><span>Historique</span><b>${ind.n} mois</b></div>
+    <h4 style="margin-top:18px">Leviers</h4><p class="sub">Déplacez un curseur, la projection se recalcule.</p>
     <div class="sc-presets">${pre}</div>
-    ${lev("couv", "Points de couverture gagnés", -10, 40, 1, " pts", "Appliqué aux provinces ciblées, plafonné à la cible de 90%.")}
-    ${lev("ret", "Points de rétention récupérés", 0, 12, 1, " pts", `Sur la perte actuelle de ${d1(perteP)} points entre Penta1 et Penta3, à l'échelle nationale.`)}
-    ${lev("prov", "Provinces ciblées", 1, 15, 1, "", "Classées par volume de déficit, la première étant celle qui en porte le plus.")}
-    ${lev("horizon", "Horizon", 6, 24, 3, " mois", "Étalement de l'effort, il détermine la charge mensuelle sur la chaîne.")}
+    ${lev("pts", "Points gagnés dans les provinces ciblées", 0, 40, 1, " pts", `Plafonné à la cible de ${d1(ind.cible)}%. Au-delà, aucun gain supplémentaire n'est compté.`)}
+    ${lev("prov", "Provinces ciblées", 1, 23, 1, "", "Classées par volume d'écart, la première étant celle qui en porte le plus.")}
+    ${lev("horizon", "Horizon", 6, 36, 3, " mois", "Étalement de l'effort. Il détermine le rythme mensuel à tenir.")}
     </div>`;
 
-  /* ---------- tableau par province ---------- */
-  const rows = cibles.map(q => {
-    const c2 = Math.min(90, q.couv + SCEN.couv);
-    const g = Math.max(0, q.pop * (c2 - q.couv) / 100);
-    return `<tr><td>${q.nom}</td><td>${nb(q.pop)}</td><td>${d1(q.couv)}%</td><td>${d1(c2)}%</td>
-      <td class="gain">${g > 0 ? "+" + nb(g) : "—"}</td><td>${nb(Math.max(0, q.deficit - g))}</td>
-      <td>${q.mos == null ? "ND" : d1(q.mos)}</td></tr>`; }).join("");
-
-  /* ---------- projection graphique ---------- */
-  const per = H.per, obs = per.map(x => H.conso.Penta[x]);
-  const W = 700, HT = 250, PL = 62, PR = 14, PT = 16, PB = 40;
+  /* ---------- graphique ---------- */
+  const per = Object.keys(ind.serie).sort(), obs2 = per.map(x => ind.serie[x]);
+  const W = 700, HT = 250, PL = 52, PR = 14, PT = 16, PB = 40;
   const iw = W - PL - PR, ih = HT - PT - PB;
-  const all = obs.concat(H.prev.map(x => x.hi)).concat([besoin]);
-  const mx = Math.max(...all) * 1.06, mn = Math.min(...obs) * .82;
-  const tot = per.length + H.prev.length;
-  const X = i => PL + iw * i / (tot - 1);
-  const Y = v => PT + ih - ih * (v - mn) / (mx - mn);
+  const all = obs2.concat(ind.prev.map(x => x.hi)).concat([ind.cible]);
+  const mx = Math.max(...all) * 1.05, mn = Math.min(...obs2.concat(ind.prev.map(x => x.lo)), ind.cible) * .9;
+  const tot = per.length + ind.prev.length;
+  const X = i => PL + iw * i / (tot - 1), Y = v => PT + ih - ih * (v - mn) / (mx - mn);
   let g = "";
   for (let k = 0; k <= 4; k++) { const yy = PT + ih - ih * k / 4;
     g += `<line x1="${PL}" y1="${yy}" x2="${PL + iw}" y2="${yy}" stroke="#E4E0D5"/>
-          <text x="${PL - 7}" y="${yy + 4}" text-anchor="end" class="pd-ax">${nb(mn + (mx - mn) * k / 4)}</text>`; }
-  per.forEach((x, i) => { if (x.slice(4) === "01") {
+          <text x="${PL - 7}" y="${yy + 4}" text-anchor="end" class="pd-ax">${d1(mn + (mx - mn) * k / 4)}</text>`; }
+  per.forEach((x, i) => { if (x.slice(5) === "01") {
     g += `<line x1="${X(i)}" y1="${PT}" x2="${X(i)}" y2="${PT + ih}" stroke="#CEC8BA" stroke-dasharray="3 3"/>
-          <text x="${X(i)}" y="${PT + ih + 16}" text-anchor="middle" class="axy" style="font-size:11px;fill:#1F3864;font-weight:700">${x.slice(0, 4)}</text>`; } });
-  /* bande d'incertitude */
-  const hiPts = H.prev.map((q, k) => `${X(per.length + k).toFixed(1)},${Y(q.hi).toFixed(1)}`).join(" ");
-  const loPts = H.prev.map((q, k) => `${X(per.length + k).toFixed(1)},${Y(q.lo).toFixed(1)}`).reverse().join(" ");
-  g += `<polygon points="${X(per.length - 1).toFixed(1)},${Y(obs[obs.length - 1]).toFixed(1)} ${hiPts} ${loPts} ${X(per.length - 1).toFixed(1)},${Y(obs[obs.length - 1]).toFixed(1)}" fill="#1F3864" opacity=".11"/>`;
-  g += `<polyline points="${obs.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}" fill="none" stroke="#1F3864" stroke-width="1.9"/>`;
-  g += `<polyline points="${X(per.length - 1).toFixed(1)},${Y(obs[obs.length - 1]).toFixed(1)} ${H.prev.map((q, k) => `${X(per.length + k).toFixed(1)},${Y(q.v).toFixed(1)}`).join(" ")}" fill="none" stroke="#1F3864" stroke-width="1.9" stroke-dasharray="5 3"/>`;
-  /* trajectoire du scenario */
-  g += `<polyline points="${X(per.length - 1).toFixed(1)},${Y(obs[obs.length - 1]).toFixed(1)} ${H.prev.map((q, k) => `${X(per.length + k).toFixed(1)},${Y(q.v + dosesSup).toFixed(1)}`).join(" ")}" fill="none" stroke="#B4913C" stroke-width="2.4"/>`;
-  H.atypiques.forEach(q => { const i = per.indexOf(q.p); if (i < 0) return;
-    g += `<circle cx="${X(i).toFixed(1)}" cy="${Y(q.v).toFixed(1)}" r="4" fill="none" stroke="#A02233" stroke-width="1.6"><title>${q.p} · mois atypique, écart de ${nb(q.e)} doses</title></circle>`; });
-  g += `<text x="${PL + iw / 2}" y="${HT - 6}" text-anchor="middle" class="pd-axt">Doses Pentavalent consommées par mois</text>`;
+          <text x="${X(i)}" y="${PT + ih + 16}" text-anchor="middle" style="font-size:11px;fill:#1F3864;font-weight:700">${x.slice(0, 4)}</text>`; } });
+  g += `<line x1="${PL}" y1="${Y(ind.cible).toFixed(1)}" x2="${PL + iw}" y2="${Y(ind.cible).toFixed(1)}" stroke="#2E6B3F" stroke-width="1.4" stroke-dasharray="6 3"/>
+        <text x="${PL + iw - 4}" y="${(Y(ind.cible) - 5).toFixed(1)}" text-anchor="end" style="font-size:10.5px;fill:#2E6B3F;font-weight:700">Cible ${d1(ind.cible)}%</text>`;
+  const hi = ind.prev.map((q, k) => `${X(per.length + k).toFixed(1)},${Y(q.hi).toFixed(1)}`).join(" ");
+  const lo = ind.prev.map((q, k) => `${X(per.length + k).toFixed(1)},${Y(q.lo).toFixed(1)}`).reverse().join(" ");
+  const anc = `${X(per.length - 1).toFixed(1)},${Y(obs2[obs2.length - 1]).toFixed(1)}`;
+  g += `<polygon points="${anc} ${hi} ${lo} ${anc}" fill="#1F3864" opacity=".1"/>
+        <polyline points="${obs2.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}" fill="none" stroke="#1F3864" stroke-width="1.9"/>
+        <polyline points="${anc} ${ind.prev.map((q, k) => `${X(per.length + k).toFixed(1)},${Y(q.v).toFixed(1)}`).join(" ")}" fill="none" stroke="#1F3864" stroke-width="1.8" stroke-dasharray="5 3"/>`;
+  const pas = SCEN.pts * (cibles.reduce((a, q) => a + q.pop, 0) / (ind.provinces.reduce((a, q) => a + q.pop, 0) || 1)) / SCEN.horizon;
+  g += `<polyline points="${anc} ${ind.prev.map((q, k) => `${X(per.length + k).toFixed(1)},${Y(Math.min(mx, q.v + pas * (k + 1))).toFixed(1)}`).join(" ")}" fill="none" stroke="#B4913C" stroke-width="2.4"/>`;
+  g += `<text x="${PL + iw / 2}" y="${HT - 6}" text-anchor="middle" class="pd-axt">${ind.lib} · ${ind.unite}</text>`;
   const graph = `<svg viewBox="0 0 ${W} ${HT}" style="width:100%;height:auto;display:block">${g}</svg>
-    <div class="pd-leg"><span><i style="background:#1F3864"></i>Observé, 42 mois réels</span>
-      <span><i style="background:#8898B8"></i>Prévision tendancielle et saisonnière</span>
+    <div class="pd-leg"><span><i style="background:#1F3864"></i>Observé, ${ind.n} mois</span>
+      <span><i style="background:#8898B8"></i>Prévision et intervalle à 95%</span>
       <span><i style="background:#B4913C"></i>Trajectoire du scénario</span>
-      <span><i style="border:1.5px solid #A02233;background:none"></i>Mois atypique</span></div>`;
+      <span><i style="background:#2E6B3F"></i>Cible</span></div>`;
+
+  const rows = cibles.map(q => {
+    const ap = ind.sens === "haut" ? Math.min(ind.cible, q.val + SCEN.pts) : Math.max(ind.cible, q.val - SCEN.pts);
+    const gg = q.pop * Math.abs(ap - q.val) / 100;
+    return `<tr><td>${q.nom}</td><td>${nb(q.pop)}</td><td>${d1(q.val)}%</td><td>${d1(ap)}%</td>
+      <td class="gain">${gg >= 1 ? "+" + nb(gg) : "—"}</td><td>${nb(Math.max(0, q.deficit - gg))}</td></tr>`; }).join("");
+
+  const reserve = ind.fiable ? "" :
+    `<div class="sc-note" style="border-left-color:var(--rag-red);margin-bottom:12px">
+      <strong>Lecture réservée.</strong> Niveau observé de ${d1(ind.actuel)}% pour une cible de ${d1(ind.cible)}% :
+      ${ind.motif || "écart de plausibilité"}. L'anomalie porte sur la source, pas sur la performance. Les pourcentages
+      restent lisibles, les volumes projetés sont à traiter comme des ordres de grandeur et l'anomalie est à
+      transmettre à la direction concernée.</div>`;
 
   return { crumbs, html: et +
-    `<div class="ph-sub">Simulateur adossé à 42 mois réels de consommation Pentavalent issus de l'export DHIS2,
-      décomposés en tendance et saison. Les sorties sont des projections sous hypothèses, non des observations.</div></div>
+    `<div class="ph-sub">Simulateur transversal. Chaque indicateur est adossé à sa propre série observée,
+      décomposée en tendance et saison, avec projection à six mois. Les sorties sont des projections sous
+      hypothèses, non des observations.</div></div>
     <div class="content">
-      <div class="sc-grid">
-        ${panneau}
-        <div>
+      <div class="sc-grid">${panneau}
+        <div>${reserve}
           <div class="sc-out">${out}</div>
-          ${card("Trajectoire de la demande", `Tendance de ${nb(H.tend)} doses par mois, saison d'amplitude ${nb(Math.max(...Object.values(H.saison)) - Math.min(...Object.values(H.saison)))} doses`, graph)}
-          ${card("Effet province par province", `Les ${SCEN.prov} provinces ciblées, classées par déficit`,
-            `<table class="sc-tbl"><thead><tr><th>Province</th><th>Enfants</th><th>Couverture</th><th>Après</th><th>Gain</th><th>Déficit restant</th><th>Mois de stock</th></tr></thead><tbody>${rows}</tbody></table>
-             <div class="sc-note"><strong>Comment lire.</strong> Le gain est plafonné à la cible de 90% : au-delà,
-             pousser la couverture d'une province déjà conforme ne récupère aucun enfant supplémentaire, ce que la
-             colonne Gain marque par un tiret. La colonne Mois de stock indique si la province peut absorber
-             l'activité supplémentaire sans rupture : sous un mois, l'effort doit être précédé d'un
-             réapprovisionnement.</div>`)}
+          ${card("Trajectoire de l'indicateur", `${ind.dom} · ${ind.src}`, graph)}
+          ${card("Effet province par province", `Les ${cibles.length} provinces ciblées, classées par écart à la cible`,
+            `<table class="sc-tbl"><thead><tr><th>Province</th><th>${ind.denom_lib.charAt(0).toUpperCase() + ind.denom_lib.slice(1)}</th><th>Niveau</th><th>Après</th><th>Gain</th><th>Écart restant</th></tr></thead><tbody>${rows}</tbody></table>
+             <div class="sc-note"><strong>Comment lire.</strong> Le gain est plafonné à la cible : pousser une province
+             déjà conforme ne récupère personne, ce que la colonne Gain marque par un tiret. Le compteur
+             « effort requis contre rythme observé » compare le rythme mensuel qu'exige la cible au rythme
+             effectivement constaté sur l'historique. Au-delà de deux, l'ambition suppose une rupture de rythme,
+             pas une accélération.</div>`)}
           ${card("Ce que le modèle suppose", "Hypothèses et limites, à énoncer avant toute décision",
             `<div class="dd-limites">
-              <div class="dd-lim"><div class="dd-lim-t">Socle</div>La décomposition porte sur ${per.length} mois réels
-              (${per[0].slice(0,4)}-${per[0].slice(4)} à ${per[per.length-1].slice(0,4)}-${per[per.length-1].slice(4)}).
-              La tendance explique ${vg(Math.round(H.r2 * 100))}% de la variance désaisonnalisée, la saison pèse
-              ${vg(H.F)} fois la composante irrégulière. L'écart-type résiduel est de ${nb(H.sd)} doses par mois.</div>
-              <div class="dd-lim"><div class="dd-lim-t">Mois atypiques</div>${H.atypiques.map(q => q.p.slice(0,4) + "-" + q.p.slice(4)).join(" et ")}
-              s'écartent de plus de deux écarts-types. Ils sont conservés dans la série et signalés sur le graphique,
-              non retirés du calcul.</div>
-              <div class="dd-lim"><div class="dd-lim-t">Linéarité</div>Le modèle suppose qu'un point de couverture
-              gagné coûte le même effort du premier au dernier. Les derniers points sont en pratique les plus
-              coûteux : la projection est optimiste dans sa partie haute.</div>
-              <div class="dd-lim"><div class="dd-lim-t">Ce qui n'est pas modélisé</div>La capacité en personnel, la
-              chaîne du froid, la disponibilité financière et l'acceptation communautaire. Le simulateur dit ce qu'il
-              faudrait atteindre, pas si les moyens le permettent.</div></div>`)}
+              <div class="dd-lim"><div class="dd-lim-t">Socle</div>${ind.n} mois observés. La tendance explique
+                ${vg(Math.round(ind.r2 * 100))}% de la variance désaisonnalisée, l'écart-type résiduel est de
+                ${d1(ind.se)} point. ${ind.note || ""}</div>
+              <div class="dd-lim"><div class="dd-lim-t">Dénominateur</div>Les volumes sont exprimés en
+                ${ind.denom_lib}. Un dénominateur de population erroné déplace proportionnellement tous les
+                volumes projetés, sans changer les pourcentages.</div>
+              <div class="dd-lim"><div class="dd-lim-t">Linéarité</div>Un point gagné est supposé coûter le même
+                effort du premier au dernier. Les derniers points sont en pratique les plus coûteux : la projection
+                est optimiste dans sa partie haute.</div>
+              <div class="dd-lim"><div class="dd-lim-t">Ce qui n'est pas modélisé</div>Personnel, chaîne
+                d'approvisionnement, financement et acceptation communautaire. Le simulateur dit ce qu'il faudrait
+                atteindre, pas si les moyens le permettent.</div></div>`)}
         </div>
       </div>
+    </div>` };
+};
+
+
+/* ==============================================================
+   PEV · QUALITE ET COMPLETUDE
+   Le CID accompagne les directions sur la qualite de leurs
+   donnees. Cette vue expose ce qui manque, ce qui detonne, et a
+   qui l'adresser. Aucune valeur n'est corrigee.
+============================================================== */
+let PEVPROV = null;
+fetch("pev_mensuel_prov.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { PEVPROV = j; if (state.sub === "vacc-qualite") renderMain(); }).catch(() => {});
+let PEVQ = null;
+fetch("pev_qualite.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { PEVQ = j; if (state.sub === "vacc-qualite") renderMain(); }).catch(() => {});
+
+VIEWS["vacc-qualite"] = () => {
+  const crumbs = ["Vaccination · PEV", "Qualité et complétude"];
+  const et = `<div class="ph"><div class="ph-tag">Accompagnement des directions · CID</div>
+    <div class="ph-title">Ce que disent les données sur la façon dont elles sont produites</div>`;
+  if (!PEVQ || !PEVPROV) return { crumbs, html: et + `<div class="ph-sub">Contrôle en cours de chargement.</div></div>` };
+
+  const Q = PEVQ, PPv = PEVPROV;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const PER = (() => { const a = []; for (let y = 2023; y <= 2026; y++) for (let m = 1; m <= 12; m++) {
+    const p = `${y}-${String(m).padStart(2, "0")}`; if (p <= "2026-06") a.push(p); } return a; })();
+
+  const den = Q.par_type.sup110 + Q.par_type.sup150;
+  const sai = (Q.par_type.saut || 0) + (Q.par_type.negatif || 0);
+  const rup = Q.par_type.rupture || 0;
+
+  const kk = (l, v, u, d, c) => `<div class="qc-k ${c}"><div class="qc-k-l">${l}</div>
+    <div class="qc-k-n">${v}<span>${u}</span></div><div class="qc-k-d">${d}</div></div>`;
+  const tete =
+    kk("Complétude des séries", "99,1", " %", `${nb(Q.total)} observations contrôlées sur 42 mois`, "g") +
+    kk("Observations signalées", d1(Q.part), " %", `${nb(Q.anomalies.length)} écarts relevés, aucun corrigé`, Q.part > 20 ? "r" : Q.part > 10 ? "y" : "g") +
+    kk("Non disponibles documentés", Q.nd.length, " prov.", "Rota 3 avant son déploiement, ND légitime", "g") +
+    kk("Directions concernées", "3", "", "DPSIS et INSEED, DLMVSE, DGPML", "y");
+
+  /* ---------- matrice de complétude, provinces x mois ---------- */
+  const provs = Object.keys(PPv.provinces).sort();
+  const NOMP = id => (PROVINCES.find(x => x.id === id) || {}).name || id;
+  const anParProv = Q.par_id || {};
+  const cell = (v, an) => v == null ? "#E9E6DE" : an ? (v > 150 ? "#A02233" : "#DCC084") : "#8FBF9F";
+  const lignes = provs.map(pr => {
+    const s = PPv.provinces[pr].couv.Penta3 || {};
+    const anSet = new Set(Q.anomalies.filter(a => a.id === pr && a.i === "Penta3").map(a => a.p));
+    const tds = PER.map(p => {
+      const v = s[p];
+      const c = cell(v, anSet.has(p));
+      const t = v == null ? "non disponible" : `${d1(v)}%${anSet.has(p) ? " · signalé" : ""}`;
+      return `<td style="background:${c}" title="${NOMP(pr)} · ${p} · ${t}"></td>`;
+    }).join("");
+    return `<tr><td class="l">${NOMP(pr)}</td>${tds}<td class="an">${anParProv[pr] || 0}</td></tr>`;
+  }).join("");
+  const entete = PER.map(p => p.slice(5) === "01"
+    ? `<th style="color:#1F3864">${p.slice(0, 4)}</th>` : `<th></th>`).join("");
+  const matrice = `<div style="overflow-x:auto"><table class="qc-hm">
+    <thead><tr><th class="l">Province</th>${entete}<th class="an" style="font-size:9px">Signalés</th></tr></thead>
+    <tbody>${lignes}</tbody></table></div>
+    <div class="pd-leg"><span><i style="background:#8FBF9F"></i>Renseigné et cohérent</span>
+      <span><i style="background:#DCC084"></i>Renseigné, au-dessus de 110%</span>
+      <span><i style="background:#A02233"></i>Renseigné, au-dessus de 150%</span>
+      <span><i style="background:#E9E6DE"></i>Non disponible</span>
+      <span>Couverture Penta 3, ${PER.length} mois</span></div>`;
+
+  /* ---------- routage par direction ---------- */
+  const topProv = Object.entries(Q.par_prov).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]).join(", ");
+  const directions = `<div class="qc-dir">
+    <div class="qc-d a"><div class="qc-d-h"><span class="qc-d-t">DPSIS et INSEED</span><span class="qc-d-n">${nb(den)}</span></div>
+      <div class="qc-d-c">Couvertures au-dessus de 110%, dont ${nb(Q.par_type.sup150)} au-dessus de 150%. L'écart tient
+      aux projections de population, non à une sur-vaccination : le numérateur est plausible, le dénominateur ne l'est pas.
+      Concentré sur ${topProv}.</div>
+      <div class="qc-d-a"><b>Ce que le CID propose.</b> Recaler les projections 0-11 mois sur le fichier Population
+      du dépôt, puis rejouer la série sur les 42 mois pour mesurer l'effet du recalage avant publication.</div></div>
+    <div class="qc-d b"><div class="qc-d-h"><span class="qc-d-t">DLMVSE</span><span class="qc-d-n">${nb(sai)}</span></div>
+      <div class="qc-d-c">Ruptures de série d'un mois sur l'autre et ${Q.par_type.negatif || 0} soldes négatifs.
+      Une variation de plus de 150% en un mois relève le plus souvent d'une saisie décalée ou d'un rattrapage
+      imputé au mauvais mois, non d'une variation d'activité.</div>
+      <div class="qc-d-a"><b>Ce que le CID propose.</b> Contrôle de vraisemblance à la saisie dans DHIS2 : alerte
+      dès qu'une valeur s'écarte de plus de moitié du mois précédent, avec commentaire obligatoire.</div></div>
+    <div class="qc-d c"><div class="qc-d-h"><span class="qc-d-t">DGPML</span><span class="qc-d-n">${nb(rup)}</span></div>
+      <div class="qc-d-c">Aucune rupture détectable dans cet export. Les colonnes de rupture au niveau centre de
+      santé sont à zéro sur les 42 mois, les 23 provinces et les sept antigènes : l'indicateur n'est pas saisi,
+      il n'est pas nul.</div>
+      <div class="qc-d-a"><b>Ce que le CID propose.</b> Ouvrir la saisie de cet indicateur ou le retirer du
+      formulaire. Un champ vide en permanence coûte du temps de saisie et fabrique une fausse assurance.</div></div>
+  </div>`;
+
+  /* ---------- ND documentes ---------- */
+  const ndTable = `<table class="qc-tbl"><thead><tr><th>Province</th><th>Indicateur</th><th>Premier relevé</th>
+    <th>Mois en ND</th><th>Lecture</th></tr></thead><tbody>${
+    Q.nd.slice().sort((a, b) => b.manque - a.manque).slice(0, 8).map(x =>
+      `<tr><td><b>${x.pr}</b></td><td>${x.i}</td><td>${x.depuis}</td><td>${x.manque}</td>
+       <td>Antigène non déployé avant cette date. Le ND est la valeur juste, aucune rétropolation n'est appliquée.</td></tr>`).join("")}
+    </tbody></table>`;
+
+  /* ---------- echantillon d'anomalies ---------- */
+  const ordre = { sup150: 0, negatif: 1, saut: 2, sup110: 3, rupture: 4 };
+  const lib = { sup150: "Au-dessus de 150%", sup110: "Au-dessus de 110%", saut: "Rupture de série",
+                negatif: "Solde négatif", rupture: "Rupture de stock" };
+  const ech = Q.anomalies.slice().sort((a, b) => (ordre[a.t] - ordre[b.t]) || (b.v - a.v)).slice(0, 12);
+  const anTable = `<table class="qc-tbl"><thead><tr><th>Type</th><th>Province</th><th>Indicateur</th>
+    <th>Période</th><th>Valeur</th><th>Lecture</th></tr></thead><tbody>${
+    ech.map(a => `<tr><td><span class="qc-tag ${a.t}">${lib[a.t] || a.t}</span></td><td><b>${a.pr}</b></td>
+      <td>${a.i}</td><td>${a.p}</td><td>${d1(a.v)}${a.t.startsWith("sup") ? "%" : ""}</td><td>${a.d}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="sc-note">Échantillon des douze écarts les plus marqués sur ${nb(Q.anomalies.length)} relevés.
+    Aucune valeur n'est plafonnée, lissée ni retirée. Le tableau de bord affiche ce que les systèmes produisent,
+    et signale l'écart à la direction qui peut le corriger à la source.</div>`;
+
+  return { crumbs, html: et +
+    `<div class="ph-sub">Contrôle systématique des séries PEV sur 42 mois et 23 provinces. Le CID ne corrige pas les
+      données des directions : il rend l'écart visible, le qualifie et l'adresse.</div></div>
+    <div class="content">
+      <div class="qc-head">${tete}</div>
+      ${card("Complétude et cohérence, province par mois", "Chaque case est un relevé mensuel de couverture Penta 3", matrice)}
+      ${card("À qui adresser quoi", "Répartition des écarts par direction productrice, avec la proposition d'accompagnement", directions)}
+      ${card("Non disponibles documentés", "Absences légitimes, à distinguer des trous de saisie", ndTable)}
+      ${card("Écarts les plus marqués", "Relevés tels qu'ils figurent dans les systèmes sources", anTable)}
     </div>` };
 };
 
