@@ -99,6 +99,50 @@
   .header{top:30px !important}
   .sidebar{top:calc(var(--header-h) + 30px) !important}
   @media print{#demo-bandeau{position:static;height:auto}body{padding-top:0}}
+
+  /* ===== Analyse approfondie PEV ===== */
+  .pd-grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-bottom:14px}
+  .pd-scatter{position:relative}
+  .pd-zone-lbl{font-size:9.5px;fill:var(--muted-2);letter-spacing:.7px;text-transform:uppercase;font-weight:600}
+  .pd-ax{font-size:10px;fill:var(--muted)}
+  .pd-axt{font-size:10.5px;fill:var(--body);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+  .pd-pt-lbl{font-size:9.5px;fill:var(--ink);font-weight:600}
+  .pd-par{display:grid;grid-template-columns:118px 1fr 78px;align-items:center;gap:10px;padding:5px 0}
+  .pd-par+.pd-par{border-top:1px solid #F2EFE9}
+  .pd-par-n{font-size:12.5px;font-weight:600;color:var(--ink)}
+  .pd-par-t{height:11px;background:#EFECE5;border-radius:3px;position:relative;overflow:hidden}
+  .pd-par-f{display:block;height:100%;border-radius:3px}
+  .pd-par-v{font-size:12px;text-align:right;font-variant-numeric:tabular-nums;color:var(--body)}
+  .pd-par-v b{color:var(--ink)}
+  .pd-casc{display:flex;flex-direction:column;gap:12px}
+  .pd-c-row{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center}
+  .pd-c-lbl{font-size:12.5px;font-weight:600;color:var(--ink)}
+  .pd-c-lbl small{display:block;font-weight:400;color:var(--muted);font-size:10.5px;margin-top:1px}
+  .pd-c-bars{position:relative;height:34px}
+  .pd-c-b{position:absolute;height:14px;border-radius:3px;display:flex;align-items:center;padding:0 6px;
+    font-size:10px;font-weight:700;color:#fff}
+  .pd-c-b.b1{top:0;background:var(--royal-l)}
+  .pd-c-b.b2{top:19px;background:var(--royal)}
+  .pd-c-perte{position:absolute;right:0;top:6px;font-size:11.5px;font-weight:700;color:var(--rag-red)}
+  .pd-hm{border-collapse:collapse;width:100%;font-size:11.5px}
+  .pd-hm th{padding:5px 4px;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);
+    font-weight:600;text-align:center;border-bottom:1px solid var(--border-2)}
+  .pd-hm th:first-child{text-align:left}
+  .pd-hm td{padding:0;text-align:center;border:1px solid #fff}
+  .pd-hm td:first-child{text-align:left;padding:5px 7px;font-weight:600;color:var(--ink);background:none;font-size:12px}
+  .pd-cell{display:block;padding:6px 2px;font-variant-numeric:tabular-nums;font-weight:600}
+  .pd-act{border-left:3px solid var(--royal);padding:11px 14px;background:var(--surface-2);border-radius:0 5px 5px 0}
+  .pd-act+.pd-act{margin-top:9px}
+  .pd-act-t{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px}
+  .pd-act-c{font-size:12.5px;color:var(--body);line-height:1.5}
+  .pd-act-m{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:.6px;text-transform:uppercase}
+  .pd-act-m span{background:var(--royal-tint);color:var(--royal);padding:2px 7px;border-radius:3px;font-weight:600}
+  .pd-act.p1{border-left-color:var(--rag-red)} .pd-act.p1 .pd-act-m span{background:var(--rag-red-l);color:var(--rag-red)}
+  .pd-act.p2{border-left-color:var(--gold)}   .pd-act.p2 .pd-act-m span{background:var(--gold-tint);color:var(--gold-d)}
+  .pd-leg{display:flex;gap:15px;flex-wrap:wrap;font-size:10.5px;color:var(--muted);margin-top:11px;
+    padding-top:10px;border-top:1px dashed var(--border)}
+  .pd-leg i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:-1px}
+  @media(max-width:1000px){.pd-grid2{grid-template-columns:1fr}}
   .header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -4022,6 +4066,7 @@ const PROGRAMS = [
       { id:"vacc-pda",       i18n_key:"sub_vacc_pda",      label:"PDA · Protocole d'Accord", status:"yellow", pda:true },
       { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"na", attente:"eSMT" },
       { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"na", attente:"Coordination" },
+      { id:"vacc-deepdive",  i18n_key:"sub_vacc_deepdive", label:"Analyse approfondie", status:"orange" },
       { id:"vacc-overview",  i18n_key:"sub_vacc_overview", label:"Vue d'ensemble",      status:"green" },
     ]
   },
@@ -4945,6 +4990,7 @@ const I18N = {
     sub_sao_league: "Classement des provinces",
     sub_vacc_palu: "Vaccin antipaludique",
     sub_vacc_overview: "Vue d'ensemble",
+    sub_vacc_deepdive: "Analyse approfondie",
     sub_vacc_couv: "Couverture vaccinale",
     sub_vacc_zd: "Zéro-dose",
     sub_vacc_surv: "Surveillance épidémio.",
@@ -5139,6 +5185,7 @@ const I18N = {
     sub_sao_league: "Provincial ranking",
     sub_vacc_palu: "Malaria vaccine",
     sub_vacc_overview: "Overview",
+    sub_vacc_deepdive: "Deep dive",
     sub_vacc_couv: "Vaccination coverage",
     sub_vacc_zd: "Zero-dose",
     sub_vacc_surv: "Epi surveillance",
@@ -5333,6 +5380,7 @@ const I18N = {
     sub_sao_league: "ترتيب المقاطعات",
     sub_vacc_palu: "لقاح الملاريا",
     sub_vacc_overview: "نظرة عامة",
+    sub_vacc_deepdive: "تحليل معمق",
     sub_vacc_couv: "تغطية التطعيم",
     sub_vacc_zd: "صفر جرعة",
     sub_vacc_surv: "المراقبة الوبائية",
@@ -10229,6 +10277,238 @@ VIEWS["explor-rech"] = () => {
 
   if (typeof renderMain === "function") try { renderMain(); } catch (e) {}
 })();
+
+
+/* ==============================================================
+   PEV · ANALYSE APPROFONDIE
+   Croisement des variables programmatiques (couverture, doses,
+   retention) et logistiques (stock de fin de mois, mois de
+   couverture, ruptures district). Lecture de type unite de
+   livraison : ou est le deficit, quel goulot le produit, quelle
+   action le deplace.
+============================================================== */
+let PEVDD = null;
+fetch("pev_deepdive.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { PEVDD = j; if (state.sub === "vacc-deepdive") renderMain(); }).catch(() => {});
+
+VIEWS["vacc-deepdive"] = () => {
+  const crumbs = ["Vaccination · PEV", "Analyse approfondie"];
+  const et = `<div class="ph"><div class="ph-tag">Programme Élargi de Vaccination · DLMVSE et DGPML</div>
+    <div class="ph-title">Où se perd la vaccination, et pourquoi</div>`;
+  if (!PEVDD) return { crumbs, html: et + `<div class="ph-sub">Analyse en cours de chargement.</div></div>` };
+
+  const D = PEVDD, Q = D.quadrant.filter(q => q.mos != null), M = D.meta;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+
+  /* ---------- constats ---------- */
+  const abond = Q.filter(q => q.mos >= 1.5 && q.couv < 90).sort((a, b) => b.mos - a.mos);
+  const tendu = Q.filter(q => q.mos < 0.5).sort((a, b) => a.mos - b.mos);
+  const par = D.quadrant.filter(q => q.deficit > 0).sort((a, b) => b.deficit - a.deficit);
+  let c = 0, n80 = 0; for (const q of par) { c += q.deficit; n80++; if (c >= 0.8 * M.total_deficit) break; }
+  const casMax = D.cascade.slice().sort((a, b) => b.perte - a.perte)[0];
+
+  const constats = `<div class="dd-constats">
+    <div class="dd-constat dd-c1"><div class="dd-num">01</div><div class="dd-txt">
+      <strong>Le vaccin est là où l'on ne vaccine pas.</strong> La corrélation entre couverture Penta3 et mois de
+      stock est de ${String(M.correlation_couv_mos).replace(".", ",")} sur ${M.n_prov} provinces : plus une province
+      vaccine, moins elle garde de tampon. ${abond.length ? `${abond[0].nom} conserve ${d1(abond[0].mos)} mois de
+      Penta pour une couverture de ${d1(abond[0].couv)}%` : "Le contraste est net"}, quand
+      ${tendu.length ? `${tendu[0].nom} tourne à ${d1(tendu[0].mos)} mois` : "les meilleures provinces tournent sous un demi-mois"}.
+      Le déficit de couverture ne vient pas d'un manque de doses.
+    </div></div>
+    <div class="dd-constat dd-c2"><div class="dd-num">02</div><div class="dd-txt">
+      <strong>${n80} provinces sur ${D.quadrant.length} portent quatre cinquièmes du déficit.</strong>
+      ${nb(M.total_deficit)} enfants n'ont pas reçu leur Penta3 sur le semestre. ${par[0].nom} en concentre
+      ${d1(par[0].part)}% à elle seule. Une action nationale uniforme dépense l'essentiel de son effort là où
+      l'écart est déjà refermé.
+    </div></div>
+    <div class="dd-constat dd-c3"><div class="dd-num">03</div><div class="dd-txt">
+      <strong>Le système capte les enfants, il ne les retient pas.</strong> Le premier contact dépasse la cible,
+      la perte se joue aux doses suivantes : ${casMax.paire} coûte ${d1(casMax.perte)} points. La rétention entre
+      contacts, non le recrutement initial, commande la couverture complète.
+    </div></div></div>`;
+
+  /* ---------- nuage couverture x mois de stock ---------- */
+  /* Echelle logarithmique en ordonnee : les mois de stock s'etalent de 0,3 a 3,9
+     et la lecture lineaire ecrase le peloton sous un mois, la ou se joue le risque. */
+  const W = 680, H = 420, PL = 58, PR = 116, PT = 26, PB = 48;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const xMax = 140, yMin = 0.25, yMax = 4.5;
+  const lg = v => Math.log(Math.max(yMin, Math.min(yMax, v)));
+  const X = v => PL + iw * Math.min(v, xMax) / xMax;
+  const Y = v => PT + ih - ih * (lg(v) - lg(yMin)) / (lg(yMax) - lg(yMin));
+  const rMax = Math.max(...Q.map(q => q.pop));
+  let g = `<rect x="${PL}" y="${PT}" width="${X(90) - PL}" height="${Y(1) - PT}" fill="#FBEEE3" opacity=".5"/>
+           <rect x="${PL}" y="${Y(1)}" width="${X(90) - PL}" height="${PT + ih - Y(1)}" fill="#F3D8DA" opacity=".38"/>
+           <rect x="${X(90)}" y="${Y(1)}" width="${PL + iw - X(90)}" height="${PT + ih - Y(1)}" fill="#F6EED6" opacity=".5"/>
+           <rect x="${X(90)}" y="${PT}" width="${PL + iw - X(90)}" height="${Y(1) - PT}" fill="#D8EBDD" opacity=".4"/>`;
+  [0.25, 0.5, 1, 2, 4].forEach(v => {
+    g += `<line x1="${PL}" y1="${Y(v)}" x2="${PL + iw}" y2="${Y(v)}" stroke="#E4E0D5"/>
+          <text x="${PL - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end" class="pd-ax">${String(v).replace(".", ",")}</text>`; });
+  [0, 30, 60, 90, 120].forEach(v => {
+    g += `<line x1="${X(v)}" y1="${PT}" x2="${X(v)}" y2="${PT + ih}" stroke="#E4E0D5"/>
+          <text x="${X(v)}" y="${PT + ih + 16}" text-anchor="middle" class="pd-ax">${v}%</text>`; });
+  g += `<line x1="${X(90)}" y1="${PT}" x2="${X(90)}" y2="${PT + ih}" stroke="#1F3864" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <text x="${X(90) + 5}" y="${PT + 11}" class="pd-zone-lbl" fill="#1F3864">Cible 90%</text>
+        <line x1="${PL}" y1="${Y(1)}" x2="${PL + iw}" y2="${Y(1)}" stroke="#1F3864" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <text x="${PL + iw - 6}" y="${(Y(1) - 6).toFixed(1)}" text-anchor="end" class="pd-zone-lbl" fill="#1F3864">1 mois de stock</text>
+        <text x="${PL + 8}" y="${(Y(1) - 22).toFixed(1)}" class="pd-zone-lbl">Goulot d'accès · les doses sont là</text>
+        <text x="${PL + 8}" y="${PT + ih - 10}" class="pd-zone-lbl">Goulot d'approvisionnement</text>
+        <text x="${PL + iw - 6}" y="${PT + 26}" text-anchor="end" class="pd-zone-lbl">Conforme et couvert</text>
+        <text x="${PL + iw - 6}" y="${(Y(1) + 16).toFixed(1)}" text-anchor="end" class="pd-zone-lbl">Performant mais tendu</text>`;
+  /* placement des etiquettes avec evitement simple des collisions */
+  const poses = [];
+  const libelles = [];
+  Q.slice().sort((a, b) => b.pop - a.pop).forEach(q => {
+    const r = 5 + 13 * Math.sqrt(q.pop / rMax);
+    const cx = X(q.couv), cy = Y(q.mos);
+    const col = q.couv < 90 ? (q.mos >= 1 ? "#AF4E10" : "#A02233") : (q.mos < 0.5 ? "#B4913C" : "#2E6B3F");
+    g += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${col}" fill-opacity=".58"
+            stroke="${col}" stroke-width="1.4"><title>${q.nom} · couverture ${d1(q.couv)}% · ${d1(q.mos)} mois de stock · ${nb(q.pop)} enfants de moins d'un an</title></circle>`;
+    /* on nomme les cas qui portent la lecture : hors cible, tampon critique, ou gros effectif */
+    if (!(q.couv < 90 || q.mos < 0.45 || q.mos >= 1.5 || q.pop > 60000)) return;
+    let ly = cy + 3.5, lx = cx + r + 5, anc = "start";
+    if (lx + q.nom.length * 5.2 > PL + iw + PR - 6) { lx = cx - r - 5; anc = "end"; }
+    let k = 0;
+    while (poses.some(o => Math.abs(o.y - ly) < 11 && Math.abs(o.x - lx) < 76) && k < 8) { ly += 11.5; k++; }
+    poses.push({ x: lx, y: ly });
+    libelles.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${(anc === "start" ? lx - 2 : lx + 2).toFixed(1)}" y2="${(ly - 3).toFixed(1)}" stroke="${col}" stroke-width=".8" opacity=".45"/>
+      <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anc}" class="pd-pt-lbl">${q.nom}</text>`);
+  });
+  g += libelles.join("");
+  g += `<text x="${PL + iw / 2}" y="${H - 8}" text-anchor="middle" class="pd-axt">Couverture Penta3, moyenne du semestre</text>
+        <text transform="translate(15,${PT + ih / 2}) rotate(-90)" text-anchor="middle" class="pd-axt">Mois de stock Penta · échelle log</text>`;
+  const nuage = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${g}</svg>
+    <div class="pd-leg">
+      <span><i style="background:#A02233"></i>Sous cible, tampon sous un mois</span>
+      <span><i style="background:#AF4E10"></i>Sous cible, stock abondant</span>
+      <span><i style="background:#B4913C"></i>Sur cible, moins d'un demi-mois</span>
+      <span><i style="background:#2E6B3F"></i>Sur cible, tampon suffisant</span>
+      <span>Aire du cercle : effectif des moins d'un an</span>
+    </div>`;
+
+  /* ---------- concentration du deficit ---------- */
+  let cum = 0;
+  const pareto = par.slice(0, 10).map(q => {
+    cum += q.part;
+    const w = 100 * q.deficit / par[0].deficit;
+    const col = cum <= 80 ? "#A02233" : "#CEC8BA";
+    return `<div class="pd-par"><span class="pd-par-n">${q.nom}</span>
+      <span class="pd-par-t"><span class="pd-par-f" style="width:${w.toFixed(1)}%;background:${col}"></span></span>
+      <span class="pd-par-v"><b>${nb(q.deficit)}</b> · ${d1(cum)}%</span></div>`; }).join("");
+
+  /* ---------- cascade des doses ---------- */
+  const casc = D.cascade.map(c => {
+    const mx = 125;
+    return `<div class="pd-c-row"><div class="pd-c-lbl">${c.paire}<small>${c.lib}</small></div>
+      <div class="pd-c-bars">
+        <span class="pd-c-b b1" style="width:${(100 * c.d1 / mx).toFixed(1)}%">${d1(c.d1)}%</span>
+        <span class="pd-c-b b2" style="width:${(100 * c.d2 / mx).toFixed(1)}%">${d1(c.d2)}%</span>
+        <span class="pd-c-perte">− ${d1(c.perte)} pts</span>
+      </div></div>`; }).join("");
+
+  /* ---------- mois de stock par antigene ---------- */
+  const moisLbl = M.mois.map(m => ["", "Janv", "Févr", "Mars", "Avr", "Mai", "Juin"][parseInt(m.slice(5), 10)]);
+  const cellCol = v => v == null ? ["#E9E6DE", "#655F52"] : v < 0.5 ? ["#F3D8DA", "#A02233"]
+    : v < 1 ? ["#FBEEE3", "#AF4E10"] : v < 2 ? ["#F6EED6", "#7D5C07"] : ["#D8EBDD", "#2E6B3F"];
+  const heat = `<table class="pd-hm"><thead><tr><th>Antigène</th>${moisLbl.map(l => `<th>${l}</th>`).join("")}</tr></thead>
+    <tbody>${Object.entries(D.mos_antigene).map(([a, v]) => `<tr><td>${a}</td>${v.map(x => {
+      const [bg, fg] = cellCol(x);
+      return `<td><span class="pd-cell" style="background:${bg};color:${fg}">${x == null ? "ND" : d1(x)}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table>
+    <div class="pd-leg"><span><i style="background:#F3D8DA"></i>Moins d'un demi-mois</span>
+      <span><i style="background:#FBEEE3"></i>Un demi-mois à un mois</span>
+      <span><i style="background:#F6EED6"></i>Un à deux mois</span>
+      <span><i style="background:#D8EBDD"></i>Deux mois et plus</span>
+      <span><i style="background:#E9E6DE"></i>Non disponible</span></div>`;
+
+  /* ---------- ruptures district ---------- */
+  const ls = D.log_serie.filter(x => x.districts);
+  const dern = ls[ls.length - 1];
+  const antTop = Object.entries(dern.antigenes).filter(([, o]) => o.taux_rupture != null)
+    .sort((a, b) => b[1].taux_rupture - a[1].taux_rupture).slice(0, 5);
+  const rupt = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px">
+    ${antTop.map(([a, o]) => `<div style="border:1px solid var(--border);border-radius:6px;padding:9px 11px;background:var(--surface-2)">
+      <div style="font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:600">${a}</div>
+      <div style="font-family:var(--font-h);font-size:22px;font-weight:600;color:var(--ink);margin-top:3px">${d1(o.taux_rupture)}<span style="font-size:12px;color:var(--muted-2)">%</span></div>
+      <div style="font-size:10.5px;color:var(--muted);margin-top:2px">${o.rupture} districts à zéro</div></div>`).join("")}</div>`;
+
+  /* ---------- lecture delivrologie ---------- */
+  const sousCible = Q.filter(q => q.couv < 90);
+  const combine = sousCible.filter(q => q.mos < 1).sort((a, b) => b.deficit - a.deficit);
+  const etJoin = a => a.length <= 1 ? (a[0] || "") : a.slice(0, -1).join(", ") + " et " + a[a.length - 1];
+  const nomsAbond = etJoin(abond.map(q => q.nom));
+  const nomsComb = etJoin(combine.map(q => q.nom));
+  const cible = par.slice(0, n80).map(q => q.nom).join(", ");
+  const actions = `
+    <div class="pd-act p1"><div class="pd-act-t">${nomsAbond} : ouvrir l'accès, pas la commande</div>
+      <div class="pd-act-c">Ces provinces détiennent ${d1(abond[0].mos)} et ${d1(abond[abond.length - 1].mos)} mois de Penta
+      pour des couvertures de ${d1(abond[0].couv)}% et ${d1(abond[abond.length - 1].couv)}%. Le stock est là, la
+      vaccination ne se fait pas. Une dotation supplémentaire ne déplacera aucun indicateur. Le levier est la tenue
+      effective des séances avancées dans les aires sans passage mensuel. Mesure de suivi : séances avancées réalisées
+      sur planifiées, relevé chaque mois.</div>
+      <div class="pd-act-m"><span>Priorité 1</span><span>DLMVSE et délégations sanitaires</span><span>Revue mensuelle</span></div></div>
+    <div class="pd-act p1"><div class="pd-act-t">${nomsComb} : contrainte double, traiter les deux bouts</div>
+      <div class="pd-act-c">Sous la cible et sous un mois de tampon, ces provinces cumulent un problème de service et
+      un problème d'approvisionnement. ${combine[0].nom} porte à elle seule ${d1(combine[0].part)}% du déficit national
+      avec ${d1(combine[0].mos)} mois de stock. Agir sur la seule logistique ne suffira pas, agir sur la seule offre se
+      heurtera à la rupture.</div>
+      <div class="pd-act-m"><span>Priorité 1</span><span>DLMVSE et DGPML conjointement</span><span>Revue mensuelle</span></div></div>
+    <div class="pd-act p1"><div class="pd-act-t">Concentrer la trajectoire sur ${n80} provinces</div>
+      <div class="pd-act-c">${cible} portent quatre cinquièmes des ${nb(M.total_deficit)} enfants non couverts.
+      La moyenne nationale dépasse la cible et masque cette concentration. Fixer une trajectoire par province avec
+      point de passage mensuel, plutôt qu'une cible nationale unique déjà atteinte.</div>
+      <div class="pd-act-m"><span>Priorité 1</span><span>UPS-Santé et DLMVSE</span><span>Trajectoire trimestrielle</span></div></div>
+    <div class="pd-act p2"><div class="pd-act-t">Reconstituer le tampon sur Penta et VPO avant qu'il ne casse</div>
+      <div class="pd-act-c">Les deux antigènes les plus consommés tiennent sous un demi-mois de couverture depuis
+      janvier, quand BCG, MenA et VAA disposent d'une fois et demie à deux mois. Le tampon est alloué à l'inverse des
+      volumes. Les provinces les plus performantes sont les plus exposées : ${tendu.length ? `${tendu[0].nom} vaccine
+      ${d1(tendu[0].couv)}% de sa cohorte avec ${d1(tendu[0].mos)} mois d'avance` : "une livraison retardée"} suffit à
+      convertir une bonne performance en rupture.</div>
+      <div class="pd-act-m"><span>Priorité 2</span><span>DGPML</span><span>Plan de réapprovisionnement</span></div></div>
+    <div class="pd-act p2"><div class="pd-act-t">Porter l'effort sur la rétention entre doses</div>
+      <div class="pd-act-c">Le premier contact dépasse la cible sur tous les antigènes. Les pertes se concentrent sur
+      les doses suivantes, jusqu'à ${d1(casMax.perte)} points sur ${casMax.paire}. Un rappel actif des rendez-vous
+      manqués agit sur un vivier d'enfants que le système a déjà identifiés et enregistrés.</div>
+      <div class="pd-act-m"><span>Priorité 2</span><span>DLMVSE</span><span>Suivi des perdus de vue</span></div></div>`;
+
+  /* ---------- reserves ---------- */
+  const sup100 = D.quadrant.filter(q => q.couv > 110).map(q => q.nom);
+  const ndAnt = Object.entries(D.mos_antigene).filter(([, v]) => v.every(x => x == null)).map(([a]) => a);
+  const reserves = `<div class="dd-limites">
+    <div class="dd-lim"><div class="dd-lim-t">Dénominateurs</div>
+      ${sup100.length} provinces dépassent 110% de couverture Penta3 (${sup100.join(", ")}). L'écart tient aux
+      projections de population, pas à une sur-vaccination. Les valeurs sont affichées telles quelles et signalées
+      à la DPSIS ; aucune n'est plafonnée.</div>
+    <div class="dd-lim"><div class="dd-lim-t">Stock ${ndAnt.length ? ndAnt.join(" et ") : "VPI"}</div>
+      Aucun solde de fin de mois n'est remonté pour ${ndAnt.length ? ndAnt.join(" et ") : "cet antigène"} sur le semestre.
+      La ligne reste en ND ; elle n'est ni interpolée, ni reportée depuis le mois précédent.</div>
+    <div class="dd-lim"><div class="dd-lim-t">Périmètre</div>
+      Le croisement porte sur ${M.n_prov} provinces disposant à la fois du relevé de couverture et du solde de stock.
+      Les provinces absentes de l'un des deux exports sont exclues du nuage, pas du décompte du déficit.</div>
+    <div class="dd-lim"><div class="dd-lim-t">Mois de stock</div>
+      Rapport entre le solde de fin de mois et les doses administrées le même mois. La mesure suppose une
+      consommation stable ; elle surestime le tampon dans les provinces où l'activité remonte.</div></div>`;
+
+  return { crumbs, html: et +
+    `<div class="ph-sub">Croisement des variables programmatiques et logistiques sur ${M.periode}.
+      Sources : ${M.source_prog} ; ${M.source_log}.</div></div>
+    <div class="content">
+      ${constats}
+      <div class="pd-grid2">
+        ${card("Couverture et tampon logistique", "Chaque cercle est une province · l'aire vaut l'effectif des moins d'un an", `<div class="pd-scatter">${nuage}</div>`)}
+        <div>
+          ${card("Concentration du déficit", `${nb(M.total_deficit)} enfants sans Penta3 sur le semestre`, pareto)}
+          ${card("Ruptures en district", `Part des dépôts à solde nul · ${dern.periode}`, rupt)}
+        </div>
+      </div>
+      ${card("Rétention entre doses", "Couverture au premier contact et à la dose suivante, cumul du semestre",
+             `<div class="pd-casc">${casc}</div>`)}
+      ${card("Mois de stock par antigène", "Solde de fin de mois rapporté aux doses administrées le même mois", heat)}
+      ${card("Lecture et priorités", "Ce que les données commandent de faire, dans l'ordre", actions)}
+      ${card("Réserves de lecture", "Ce que cette analyse ne permet pas de conclure", reserves)}
+    </div>` };
+};
 
 </script>
 </body>
