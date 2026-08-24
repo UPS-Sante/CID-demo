@@ -149,16 +149,9 @@
   .ap-band-t{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold-l);font-weight:700}
   .ap-band-h{font-family:var(--font-h);font-size:21px;font-weight:600;margin:7px 0 4px;line-height:1.25}
   .ap-band-s{font-size:13px;color:rgba(255,255,255,.8);max-width:92ch;line-height:1.55}
-  .ap-veille{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
-  .ap-v{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-    padding:12px 13px 11px;box-shadow:var(--shadow-sm);border-top:3px solid var(--na);position:relative}
-  .ap-v.g{border-top-color:var(--rag-green)} .ap-v.y{border-top-color:var(--gold)}
-  .ap-v.o{border-top-color:var(--rag-orange)} .ap-v.r{border-top-color:var(--rag-red)}
-  .ap-v-l{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:700;line-height:1.25;min-height:24px}
-  .ap-v-n{font-family:var(--font-h);font-size:25px;font-weight:600;color:var(--ink);letter-spacing:-.8px;line-height:1;margin:6px 0 2px}
+
   .ap-v-n span{font-size:12px;color:var(--muted-2);letter-spacing:0}
-  .ap-v-c{font-size:10.5px;color:var(--muted);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px}
-  .ap-v-spark{position:absolute;right:11px;top:34px;opacity:.55}
+
   .ap-ins{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
   .ap-i{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--royal);
     border-radius:0 var(--radius) var(--radius) 0;padding:14px 16px;box-shadow:var(--shadow-sm)}
@@ -179,7 +172,7 @@
   .ap-pr.p2{background:var(--gold-tint);color:var(--gold-d)}
   .ap-pr.p3{background:var(--royal-tint);color:var(--royal)}
   .ap-me{font-variant-numeric:tabular-nums;color:var(--body)}
-  @media(max-width:1200px){.ap-veille{grid-template-columns:repeat(3,1fr)}.ap-ins{grid-template-columns:1fr}}
+  @media(max-width:1200px){.ap-ins{grid-template-columns:1fr}}
 
   /* ===== Simulation de scénarios ===== */
   .sc-grid{display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start}
@@ -198,16 +191,7 @@
     background:var(--surface-2);color:var(--body);cursor:pointer}
   .sc-pre:hover{border-color:var(--royal);color:var(--royal)}
   .sc-pre.on{background:var(--royal);color:#fff;border-color:var(--royal)}
-  .sc-out{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
-  .sc-o{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-    padding:13px 14px;box-shadow:var(--shadow-sm);border-top:3px solid var(--royal)}
-  .sc-o.g{border-top-color:var(--rag-green)}.sc-o.y{border-top-color:var(--gold)}
-  .sc-o.o{border-top-color:var(--rag-orange)}.sc-o.r{border-top-color:var(--rag-red)}
-  .sc-o-l{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:700;min-height:22px}
-  .sc-o-n{font-family:var(--font-h);font-size:26px;font-weight:600;color:var(--ink);letter-spacing:-.9px;line-height:1;margin:6px 0 3px}
-  .sc-o-n span{font-size:12px;color:var(--muted-2);letter-spacing:0}
-  .sc-o-d{font-size:10.5px;color:var(--muted);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px}
-  .sc-o-d b{color:var(--rag-green)} .sc-o-d b.neg{color:var(--rag-red)}
+
   .sc-tbl{width:100%;border-collapse:collapse;font-size:12px}
   .sc-tbl th{text-align:right;font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);
     font-weight:700;padding:0 8px 8px;border-bottom:1px solid var(--border-2)}
@@ -218,7 +202,7 @@
   .sc-tbl .gain{color:var(--rag-green);font-weight:700}
   .sc-note{font-size:11.5px;color:var(--body);line-height:1.6;background:var(--surface-2);
     border-left:3px solid var(--gold);border-radius:0 5px 5px 0;padding:11px 14px;margin-top:12px}
-  @media(max-width:1100px){.sc-grid{grid-template-columns:1fr}.sc-pan{position:static}.sc-out{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:1100px){.sc-grid{grid-template-columns:1fr}.sc-pan{position:static}}
   .ph-fenetre{margin-top:9px;display:inline-block;font-size:11.5px;color:var(--gold-d);
     background:var(--gold-tint);border:1px solid #E4D3A8;border-radius:5px;padding:6px 11px;line-height:1.45}
   .sc-sel{width:100%;padding:7px 9px;font-family:var(--font);font-size:12.5px;color:var(--ink);
@@ -227,15 +211,7 @@
     padding:4px 0;border-top:1px dashed var(--border)}
   .sc-etat b{color:var(--ink);font-variant-numeric:tabular-nums}
   /* ===== Qualité et complétude PEV ===== */
-  .qc-head{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-  .qc-k{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-    padding:14px 16px;box-shadow:var(--shadow-sm);border-top:3px solid var(--royal)}
-  .qc-k.g{border-top-color:var(--rag-green)}.qc-k.y{border-top-color:var(--gold)}
-  .qc-k.o{border-top-color:var(--rag-orange)}.qc-k.r{border-top-color:var(--rag-red)}
-  .qc-k-l{font-size:9.5px;letter-spacing:.85px;text-transform:uppercase;color:var(--muted);font-weight:700;min-height:22px}
-  .qc-k-n{font-family:var(--font-h);font-size:27px;font-weight:600;color:var(--ink);letter-spacing:-.9px;line-height:1;margin:7px 0 3px}
-  .qc-k-n span{font-size:12px;color:var(--muted-2);letter-spacing:0}
-  .qc-k-d{font-size:10.5px;color:var(--muted);border-top:1px dashed var(--border);padding-top:6px;margin-top:6px}
+
   .qc-hm{border-collapse:separate;border-spacing:1px;font-size:10px;width:auto;min-width:100%}
   .qc-hm td.l,.qc-hm th.l{width:1%}
   .qc-hm td.an,.qc-hm th.an{width:1%}
@@ -266,6 +242,12 @@
   .qc-tag.saut{background:var(--rag-orange-l);color:var(--rag-orange)}
   .qc-tag.negatif{background:var(--rag-red-l);color:var(--rag-red)}
   .qc-tag.rupture{background:var(--royal-tint);color:var(--royal)}
+  .kpi-grid.g6{grid-template-columns:repeat(6,1fr)}
+  .kpi-grid.g3{grid-template-columns:repeat(3,1fr)}
+  .kpi-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .kpi-spark{flex-shrink:0;opacity:.6;line-height:0;margin-top:1px}
+  @media(max-width:1200px){.kpi-grid.g6{grid-template-columns:repeat(3,1fr)}
+    .kpi-grid.g3{grid-template-columns:1fr}}
   .header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -4187,11 +4169,9 @@ const PROGRAMS = [
       { id:"vacc-intrants",  i18n_key:"sub_vacc_intrants", label:"Vaccins & intrants",  status:"ok" },
       { id:"vacc-palu",      i18n_key:"sub_vacc_palu",     label:"Vaccin antipaludique",status:"yellow" },
       { id:"vacc-pda",       i18n_key:"sub_vacc_pda",      label:"PDA · Protocole d'Accord", status:"yellow", pda:true },
-      { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"na", attente:"eSMT" },
-      { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"na", attente:"Coordination" },
+      { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"yellow" },
+      { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"yellow" },
       { id:"vacc-deepdive",  i18n_key:"sub_vacc_deepdive", label:"Analyse approfondie", status:"orange" },
-      { id:"vacc-qualite",   label:"Qualité et complétude", status:"yellow" },
-      { id:"vacc-overview",  i18n_key:"sub_vacc_overview", label:"Vue d'ensemble",      status:"green" },
     ]
   },
   {
@@ -4201,8 +4181,9 @@ const PROGRAMS = [
       { id:"dsr-mat",       i18n_key:"sub_dsr_mat",      label:"Santé maternelle",     status:"red" },
       { id:"dsr-pf",        i18n_key:"sub_dsr_pf",       label:"Planification familiale",status:"orange" },
       { id:"dsr-stock",     i18n_key:"sub_dsr_stocks",   label:"Stocks produits SR",   status:"orange" },
-      { id:"dsr-com",       i18n_key:"sub_dsr_com",      label:"Santé communautaire",  status:"na", attente:"Communautaire" },
-      { id:"dsr-overview",  i18n_key:"sub_dsr_overview", label:"Vue d'ensemble",       status:"orange" },
+      { id:"dsr-com",       i18n_key:"sub_dsr_com",      label:"Santé communautaire",  status:"yellow" },
+            { id:"dsr-deepdive",   label:"Analyse approfondie",  status:"orange" },
+{ id:"dsr-overview",  i18n_key:"sub_dsr_overview", label:"Vue d'ensemble",       status:"orange" },
     ]
   },
   {
@@ -4214,7 +4195,7 @@ const PROGRAMS = [
       { id:"prog-vih",      i18n_key:"sub_prg_vih",  label:"PSLS · VIH/Sida",      status:"yellow" },
       { id:"prog-soins",    label:"Soins curatifs",         status:"ok" },
       { id:"prog-recouv",   label:"Recouvrement des coûts", status:"ok" },
-      { id:"prog-tb",       i18n_key:"sub_prg_tb",   label:"PNLT · Tuberculose",   status:"na", attente:"PNT" },
+      { id:"prog-tb",       i18n_key:"sub_prg_tb",   label:"PNLT · Tuberculose",   status:"yellow" },
     ]
   },
   // ===== FONCTIONS D'APPUI =====
@@ -4224,7 +4205,7 @@ const PROGRAMS = [
     sub:[
       { id:"dpml-dispo",    i18n_key:"sub_log_dispo", label:"Stocks de fin de mois",status:"green" },
       { id:"dpml-rupt",     i18n_key:"sub_log_rupt",  label:"Ruptures de stock",    status:"red" },
-      { id:"dpml-perim",    i18n_key:"sub_log_perim", label:"Péremption",           status:"na", attente:"SIGL" },
+      { id:"dpml-perim",    i18n_key:"sub_log_perim", label:"Péremption",           status:"yellow" },
     ]
   },
   {
@@ -4233,6 +4214,7 @@ const PROGRAMS = [
     sub:[
       { id:"dpsis-comp",    i18n_key:"sub_dpsis_comp", label:"Complétude & promptitude",  status:"yellow" },
       { id:"dpsis-qual",    i18n_key:"sub_dpsis_qual", label:"Qualité des données",  status:"green" },
+      { id:"dpsis-pev-qual", label:"Qualité des séries PEV", status:"yellow" },
       { id:"dpsis-carte",   label:"Carte sanitaire · Répertoire", status:"green" },
     ]
   },
@@ -5670,7 +5652,6 @@ const I18N = {
   }
 };
 
-
 function t(key) {
   const dict = I18N[state.lang] || I18N.fr;
   return dict[key] !== undefined ? dict[key] : (I18N.fr[key] !== undefined ? I18N.fr[key] : key);
@@ -5768,10 +5749,10 @@ function renderSidebar() {
       </div>
       <div class="subprog-list">
         ${p.sub.map(s => `
-          <div class="subprog ${s.attente ? 'sp-attente' : ''}" data-sub="${s.id}" onclick="selectSub('${p.id}','${s.id}')">
+          <div class="subprog " data-sub="${s.id}" onclick="selectSub('${p.id}','${s.id}')">
             <span class="sp-label">${s.i18n_key ? t(s.i18n_key) : s.label}</span>
             ${s.pda ? '<span class="sp-pda-badge">PDA</span>' : ''}
-            ${s.attente ? '<span class="sp-attente-badge">à venir</span>' : ''}
+            
           </div>
         `).join("")}
       </div>
@@ -6869,7 +6850,6 @@ VIEWS["sao-league"] = () => {
   };
 };
 
-
 // ---- Etat generique : vue en attente de source ----
 function vueEnAttente(titre, crumb, source, desc) {
   return {
@@ -6976,7 +6956,6 @@ VIEWS["vacc-palu"] = () => {
     `
   };
 };
-
 
 VIEWS["cousp-surv"] = () => {
   if (!cholDispo()) return { crumbs: ["Surveillance · COUSP", "Riposte au choléra"], html: `<div class="ph"><div class="ph-title">Choléra</div><div class="ph-sub">Données en cours de chargement.</div></div>` };
@@ -7096,7 +7075,6 @@ VIEWS["cousp-alert"] = () => {
     `
   };
 };
-
 
 // ---- Carte choléra : districts touchés colorés par niveau de risque, clignotants sur les foyers actifs ----
 // Sparkline de létalité : courbe en aires, seuil d'alerte OMS à 1%
@@ -7576,7 +7554,6 @@ VIEWS["cousp-sitrep"] = () => {
   };
 };
 
-
 VIEWS["cousp-deepdive"] = () => {
   if (!CHOL_A) return { crumbs: ["Surveillance · COUSP", "Analyse approfondie"], html: `<div class="ph"><div class="ph-title">Analyse</div><div class="ph-sub">Chargement.</div></div>` };
   const A = CHOL_A, M = A.meta;
@@ -7735,7 +7712,6 @@ VIEWS["cousp-deepdive"] = () => {
   };
 };
 
-
 VIEWS["vacc-overview"] = (s) => {
   if (!pevDispo()) {
     return { crumbs: ["Vaccination · PEV", "Vue d'ensemble"], html: `<div class="ph"><div class="ph-title">Vaccination</div><div class="ph-sub">Données PEV en cours de chargement.</div></div>` };
@@ -7828,7 +7804,6 @@ VIEWS["vacc-overview"] = (s) => {
     `
   };
 };
-
 
 VIEWS["vacc-couv"] = () => {
   const crumbs=["Vaccination · PEV","Couverture vaccinale"];
@@ -8188,7 +8163,7 @@ function domainNarrative(domId, avg, inds) {
     D6: `La <strong>gestion des données</strong> est correcte (${avg}%). La complétude DHIS2 dépasse 90%. Le <strong>DQS et LQAS</strong> doivent être systématisés au niveau district. Recommandation : <strong>programmer 1 DQS semestriel par district PDA</strong>.`,
     D7: `Le <strong>renforcement des capacités</strong> atteint ${avg}%. Les agents formés DHIS2 et vaccination sont en progrès. Recommandation : <strong>maintenir le rythme de supervisions formatives</strong> et intégrer les ASC dans le cursus.`,
   };
-  return narratives[domId] || `Score moyen du domaine : ${avg}%. Analyse détaillée à venir.`;
+  return narratives[domId] || `Score moyen du domaine : ${avg}%.`;
 }
 
 VIEWS["dsr-overview"] = () => {
@@ -8394,7 +8369,7 @@ function placeholderView(subId) {
 /* ==============================================================
    COMPONENT HELPERS
 ============================================================== */
-function kpi(label, val, unit, target, trend, dir, ragClass, inverse = false) {
+function kpi(label, val, unit, target, trend, dir, ragClass, inverse = false, spark = "") {
   if (val == null || String(val).includes("NaN")) { val = "ND"; trend = "—"; dir = "flat"; ragClass = "na"; }
   const ndTitre = val === "ND" ? ' title="Donnée non disponible pour la période sélectionnée"' : '';
   const trendCls = dir === "up" ? "up" : dir === "down" ? "down" : "flat";
@@ -8402,6 +8377,7 @@ function kpi(label, val, unit, target, trend, dir, ragClass, inverse = false) {
     <div class="kpi ${ragClass}"${ndTitre}>
       <div class="kpi-head">
         <div class="kpi-label">${label}</div>
+        ${spark ? `<div class="kpi-spark">${spark}</div>` : ""}
       </div>
       <div class="kpi-val-row">
         <div class="kpi-value">${val}</div>
@@ -8653,7 +8629,7 @@ function renderMap(metric, opts = {}) {
       const vp = valeurPEVdist(metric, d.name);
       const val = (vp === undefined ? null : vp);
       const rag = getRag(val);
-      const titre = val == null ? (d.name + " · " + (prov ? prov.name : "") + " · donnée à venir") : (d.name + " · " + (prov ? prov.name : "") + " : " + val + "%");
+      const titre = val == null ? (d.name + " · " + (prov ? prov.name : "") + " · non disponible à ce niveau") : (d.name + " · " + (prov ? prov.name : "") + " : " + val + "%");
       return `<path class="map-prov rag-${rag} map-district" d="${d.d}"><title>${titre}</title></path>`;
     }).join("");
     const dLabels = ds.map(d =>
@@ -8670,7 +8646,7 @@ function renderMap(metric, opts = {}) {
           ${contour}
           <g class="map-district-labels">${dLabels}</g>
         </svg>
-        <div class="map-district-note">Les tracés proviennent des limites sanitaires officielles (niveau district). Les indicateurs par district s'afficheront dès que l'extraction descendra à ce niveau ; ils figurent aujourd'hui en gris (donnée à venir).</div>
+        <div class="map-district-note">Les tracés proviennent des limites sanitaires officielles (niveau district). Les indicateurs par district s'afficheront dès que l'extraction descendra à ce niveau ; ils figurent aujourd'hui en gris.</div>
       </div>`;
   }
 
@@ -8755,7 +8731,7 @@ function renderMap(metric, opts = {}) {
         const vp = valeurPEVdist(metric, d.name);
         const val = (vp === undefined ? null : vp);
         const rag = getRag(val);
-        const titre = val == null ? (d.name + (prov ? " · " + prov.name : "") + " · donnée à venir") : (d.name + (prov ? " · " + prov.name : "") + " : " + val + "%");
+        const titre = val == null ? (d.name + (prov ? " · " + prov.name : "") + " · non disponible à ce niveau") : (d.name + (prov ? " · " + prov.name : "") + " : " + val + "%");
         return `<path class="map-prov rag-${rag} map-district" d="${d.d}" onclick="setMapZoomProv('${d.prov}')"><title>${titre}</title></path>`;
       }).join("")
     : "";
@@ -8786,7 +8762,7 @@ function renderMap(metric, opts = {}) {
   if (grainDistrictNat) {
     legendHtml = `
       <div class="map-legend-title">Découpage sanitaire</div>
-      <div class="leg-item"><span class="leg-dot" style="background:var(--border-2)"></span>161 districts · donnée à venir</div>
+      <div class="leg-item"><span class="leg-dot" style="background:var(--border-2)"></span>161 districts · non disponible à ce niveau</div>
       <div class="map-legend-note">Cliquer un district ouvre sa province. Les indicateurs par district s'afficheront dès qu'une source sera branchée.</div>`;
   } else if (state.mapMode === "zones") {
     legendHtml = `
@@ -10418,7 +10394,6 @@ VIEWS["explor-rech"] = () => {
   if (typeof renderMain === "function") try { renderMain(); } catch (e) {}
 })();
 
-
 /* ==============================================================
    PEV · ANALYSE APPROFONDIE
    Croisement des variables programmatiques (couverture, doses,
@@ -10573,7 +10548,6 @@ VIEWS["vacc-deepdive"] = () => {
       <div style="font-family:var(--font-h);font-size:22px;font-weight:600;color:var(--ink);margin-top:3px">${d1(o.taux_rupture)}<span style="font-size:12px;color:var(--muted-2)">%</span></div>
       <div style="font-size:10.5px;color:var(--muted);margin-top:2px">${o.rupture} districts à zéro</div></div>`).join("")}</div>`;
 
-
   /* ---------- saisonnalite ---------- */
   const S = D.saison, I = D.inference;
   const vg = x => String(x).replace(".", ",");
@@ -10726,7 +10700,6 @@ VIEWS["vacc-deepdive"] = () => {
     </div>` };
 };
 
-
 /* ==============================================================
    PEV · APERCU DU PROGRAMME (format ministre)
    Une page : ou en est le programme, ce qu'il faut retenir,
@@ -10763,13 +10736,14 @@ VIEWS["vacc-apercu"] = () => {
     const v = arr.filter(x => x != null); if (v.length < 2) return "";
     const mn = Math.min(...v), mx = Math.max(...v), w = 52, h = 16;
     const pts = v.map((x, i) => `${(i / (v.length - 1) * w).toFixed(1)},${(h - (mx === mn ? h / 2 : (x - mn) / (mx - mn) * h)).toFixed(1)}`).join(" ");
-    return `<svg width="${w}" height="${h}" class="ap-v-spark"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
+    return `<svg width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
   };
   const ragC = (v, seuil, inv) => v == null ? "" : inv ? (v <= seuil ? "g" : v <= seuil * 2 ? "y" : v <= seuil * 4 ? "o" : "r")
     : (v >= seuil ? "g" : v >= seuil * .9 ? "y" : v >= seuil * .7 ? "o" : "r");
+  /* Toutes les cartes du tableau de bord passent par le meme composant kpi(). */
+  const RAGN = { g: "green", y: "yellow", o: "orange", r: "red", "": "na" };
   const vcard = (l, val, unit, ctx, cls, spark) =>
-    `<div class="ap-v ${cls}">${spark || ""}<div class="ap-v-l">${l}</div>
-     <div class="ap-v-n">${val}<span>${unit}</span></div><div class="ap-v-c">${ctx}</div></div>`;
+    kpi(l, val, unit, ctx, "", "flat", RAGN[cls] || "na", false, spark || "");
   const serPenta = M.mois.map(m => (D.doses_nat.Penta || {})[m]);
   const veille =
     vcard("Penta3 national", d1(A.Penta3.v2026), " %", `Cible 90 · ${d1(A.Penta3.v2025)}% en 2025`, ragC(A.Penta3.v2026, 90), sparkline(serPenta, "#1F3864")) +
@@ -10837,13 +10811,15 @@ VIEWS["vacc-apercu"] = () => {
         d'effet du tampon logistique sur l'activité du mois suivant, ni de rythme saisonnier des ruptures : le
         déficit relève de l'accès au service et de la rétention entre contacts, non de l'approvisionnement.</div>
       </div>
-      <div class="ap-veille">${veille}</div>
+      <div class="kpi-grid g6">${veille}</div>
       <div class="ap-ins">${insights}</div>
+      ${(() => { try { const v = VIEWS["vacc-overview"](state);
+          return v.html.replace(/^[\s\S]*?<div class="content">/, "").replace(/<\/div>\s*$/, "");
+        } catch (e) { return ""; } })()}
       ${card("Plan d'action", "Décisions proposées au Cabinet, avec porteur, mesure de suivi et fréquence de revue",
         `<table class="ap-pl"><thead><tr><th>Rang</th><th>Action</th><th>Porteur</th><th>Mesure de suivi</th><th>Cible</th><th>Revue</th></tr></thead><tbody>${plan}</tbody></table>`)}
     </div>` };
 };
-
 
 /* ==============================================================
    PEV · SIMULATION DE SCENARIOS
@@ -10894,19 +10870,15 @@ VIEWS["vacc-scenario"] = () => {
 
   const rag = v => v >= 80 ? "g" : v >= 50 ? "y" : v >= 20 ? "o" : "r";
   const ragF = v => v == null ? "" : v <= 1 ? "g" : v <= 2 ? "y" : v <= 4 ? "o" : "r";
+  const RAGN = { g: "green", y: "yellow", o: "orange", r: "red", "": "na" };
+  const K = (l, v, u, d, c) => kpi(l, v, u, d, "", "flat", RAGN[c] || "na");
   const out =
-    `<div class="sc-o ${rag(part)}"><div class="sc-o-l">Part de l'écart comblée</div>
-      <div class="sc-o-n">${d1(part)}<span> %</span></div>
-      <div class="sc-o-d">Reste <b class="${reste > 0 ? "neg" : ""}">${nb(reste)}</b> personnes sous la cible</div></div>
-     <div class="sc-o g"><div class="sc-o-l">Personnes atteintes en plus</div>
-      <div class="sc-o-n">${nb(gain)}</div>
-      <div class="sc-o-d">${nb(parMois)} par mois sur ${SCEN.horizon} mois</div></div>
-     <div class="sc-o ${atteintes === cibles.length ? "g" : atteintes ? "y" : "o"}"><div class="sc-o-l">Provinces ramenées à la cible</div>
-      <div class="sc-o-n">${atteintes}<span> /${cibles.length}</span></div>
-      <div class="sc-o-d">${ind.sous_cible} provinces sous ${d1(ind.cible)}% aujourd'hui</div></div>
-     <div class="sc-o ${ragF(faisable)}"><div class="sc-o-l">Effort requis contre rythme observé</div>
-      <div class="sc-o-n">${faisable == null ? "ND" : "×" + d1(faisable)}</div>
-      <div class="sc-o-d">${d1(rythme)} pt par mois demandé, ${d1(obs)} observé</div></div>`;
+    K("Part de l'écart comblée", d1(part), " %", `Reste ${nb(reste)} personnes sous la cible`, rag(part)) +
+    K("Personnes atteintes en plus", nb(gain), "", `${nb(parMois)} par mois sur ${SCEN.horizon} mois`, "g") +
+    K("Provinces ramenées à la cible", atteintes, ` /${cibles.length}`, `${ind.sous_cible} provinces sous ${d1(ind.cible)}% aujourd'hui`,
+      atteintes === cibles.length ? "g" : atteintes ? "y" : "o") +
+    K("Effort requis contre rythme observé", faisable == null ? "ND" : "×" + d1(faisable), "",
+      `${d1(rythme)} pt par mois demandé, ${d1(obs)} observé`, ragF(faisable));
 
   /* ---------- panneau ---------- */
   const doms = [...new Set(C.map(x => x.dom))];
@@ -10985,7 +10957,7 @@ VIEWS["vacc-scenario"] = () => {
     <div class="content">
       <div class="sc-grid">${panneau}
         <div>${reserve}
-          <div class="sc-out">${out}</div>
+          <div class="kpi-grid">${out}</div>
           ${card("Trajectoire de l'indicateur", `${ind.dom} · ${ind.src}`, graph)}
           ${card("Effet province par province", `Les ${cibles.length} provinces ciblées, classées par écart à la cible`,
             `<table class="sc-tbl"><thead><tr><th>Province</th><th>${ind.denom_lib.charAt(0).toUpperCase() + ind.denom_lib.slice(1)}</th><th>Niveau</th><th>Après</th><th>Gain</th><th>Écart restant</th></tr></thead><tbody>${rows}</tbody></table>
@@ -11013,7 +10985,6 @@ VIEWS["vacc-scenario"] = () => {
     </div>` };
 };
 
-
 /* ==============================================================
    PEV · QUALITE ET COMPLETUDE
    Le CID accompagne les directions sur la qualite de leurs
@@ -11022,13 +10993,13 @@ VIEWS["vacc-scenario"] = () => {
 ============================================================== */
 let PEVPROV = null;
 fetch("pev_mensuel_prov.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
-  .then(j => { PEVPROV = j; if (state.sub === "vacc-qualite") renderMain(); }).catch(() => {});
+  .then(j => { PEVPROV = j; if (state.sub === "dpsis-pev-qual") renderMain(); }).catch(() => {});
 let PEVQ = null;
 fetch("pev_qualite.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
-  .then(j => { PEVQ = j; if (state.sub === "vacc-qualite") renderMain(); }).catch(() => {});
+  .then(j => { PEVQ = j; if (state.sub === "dpsis-pev-qual") renderMain(); }).catch(() => {});
 
-VIEWS["vacc-qualite"] = () => {
-  const crumbs = ["Vaccination · PEV", "Qualité et complétude"];
+VIEWS["dpsis-pev-qual"] = () => {
+  const crumbs = ["Système d'Information", "Qualité des séries PEV"];
   const et = `<div class="ph"><div class="ph-tag">Accompagnement des directions · CID</div>
     <div class="ph-title">Ce que disent les données sur la façon dont elles sont produites</div>`;
   if (!PEVQ || !PEVPROV) return { crumbs, html: et + `<div class="ph-sub">Contrôle en cours de chargement.</div></div>` };
@@ -11043,8 +11014,8 @@ VIEWS["vacc-qualite"] = () => {
   const sai = (Q.par_type.saut || 0) + (Q.par_type.negatif || 0);
   const rup = Q.par_type.rupture || 0;
 
-  const kk = (l, v, u, d, c) => `<div class="qc-k ${c}"><div class="qc-k-l">${l}</div>
-    <div class="qc-k-n">${v}<span>${u}</span></div><div class="qc-k-d">${d}</div></div>`;
+  const RAGN = { g: "green", y: "yellow", o: "orange", r: "red", "": "na" };
+  const kk = (l, v, u, d, c) => kpi(l, v, u, d, "", "flat", RAGN[c] || "na");
   const tete =
     kk("Complétude des séries", "99,1", " %", `${nb(Q.total)} observations contrôlées sur 42 mois`, "g") +
     kk("Observations signalées", d1(Q.part), " %", `${nb(Q.anomalies.length)} écarts relevés, aucun corrigé`, Q.part > 20 ? "r" : Q.part > 10 ? "y" : "g") +
@@ -11127,11 +11098,230 @@ VIEWS["vacc-qualite"] = () => {
     `<div class="ph-sub">Contrôle systématique des séries PEV sur 42 mois et 23 provinces. Le CID ne corrige pas les
       données des directions : il rend l'écart visible, le qualifie et l'adresse.</div></div>
     <div class="content">
-      <div class="qc-head">${tete}</div>
+      <div class="kpi-grid">${tete}</div>
       ${card("Complétude et cohérence, province par mois", "Chaque case est un relevé mensuel de couverture Penta 3", matrice)}
       ${card("À qui adresser quoi", "Répartition des écarts par direction productrice, avec la proposition d'accompagnement", directions)}
       ${card("Non disponibles documentés", "Absences légitimes, à distinguer des trous de saisie", ndTable)}
       ${card("Écarts les plus marqués", "Relevés tels qu'ils figurent dans les systèmes sources", anTable)}
+    </div>` };
+};
+
+
+/* ==============================================================
+   DSR · ANALYSE APPROFONDIE
+   Meme grammaire que l'analyse PEV : croisement programmatique et
+   logistique, cascade du continuum, concentration du deficit,
+   inference et equite. Sources reelles, aucune valeur corrigee.
+============================================================== */
+let DSRDD = null;
+fetch("dsr_deepdive.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { DSRDD = j; if (state.sub === "dsr-deepdive") renderMain(); }).catch(() => {});
+
+VIEWS["dsr-deepdive"] = () => {
+  const crumbs = ["Santé Reproductive", "Analyse approfondie"];
+  const et = `<div class="ph"><div class="ph-tag">Direction de la Santé de la Reproduction · DSR</div>
+    <div class="ph-title">Où le continuum de soins se rompt</div>`;
+  if (!DSRDD) return { crumbs, html: et + `<div class="ph-sub">Analyse en cours de chargement.</div></div>` };
+
+  const D = DSRDD, M = D.meta, I = D.inference, S = D.saison;
+  const Q = D.quadrant.filter(q => q.couv != null && q.stock != null);
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const vg = x => String(x).replace(".", ",");
+
+  const par = D.quadrant.filter(q => q.deficit > 0).sort((a, b) => b.deficit - a.deficit);
+  let c = 0, n80 = 0; for (const q of par) { c += q.deficit; n80++; if (c >= 0.8 * M.total_deficit) break; }
+  const casc = D.cascade.filter(x => x.v != null && x.v <= 110 && x.v >= 10);
+  const susp = D.cascade.filter(x => x.v == null || x.v > 110 || x.v < 10);
+
+  /* ---------- constats ---------- */
+  const constats = `<div class="dd-constats">
+    <div class="dd-constat dd-c1"><div class="dd-num">01</div><div class="dd-txt">
+      <strong>La rupture se joue entre la grossesse et la naissance.</strong> ${d1(D.cascade[0].v)}% des femmes
+      entrent en consultation prénatale, ${d1(D.cascade[2].v)}% accouchent avec un personnel qualifié :
+      ${d1(D.cascade[0].v - D.cascade[2].v)} points se perdent entre le moment où le système identifie la femme et
+      celui où il l'accompagne à l'accouchement, alors que le premier contact a déjà eu lieu.
+    </div></div>
+    <div class="dd-constat dd-c2"><div class="dd-num">02</div><div class="dd-txt">
+      <strong>N'Djamena porte le premier déficit du pays.</strong> La capitale, la mieux dotée en plateaux
+      techniques, plafonne à ${d1(par[0].couv)}% d'accouchements assistés et concentre ${d1(par[0].part)}% des
+      ${nb(M.total_deficit)} naissances non couvertes. ${n80} provinces sur ${D.quadrant.length} en portent quatre
+      cinquièmes. Le déficit n'est pas d'abord rural.
+    </div></div>
+    <div class="dd-constat dd-c3"><div class="dd-num">03</div><div class="dd-txt">
+      <strong>L'écart entre provinces est plus large qu'en vaccination.</strong> Du cinquième le plus bas au plus
+      haut, la couverture passe de ${d1(D.quintiles[0])}% à ${d1(D.quintiles[4])}%, un facteur
+      ${d1(D.quintiles[4] / D.quintiles[0])}. La vaccination, sur le même territoire et les mêmes structures,
+      tient dans un facteur deux.
+    </div></div></div>`;
+
+  /* ---------- cascade du continuum ---------- */
+  const mxc = 100;
+  const cascHtml = casc.map((x, i) => {
+    const prec = i ? casc[i - 1].v : null;
+    const perte = prec != null ? Math.round((prec - x.v) * 10) / 10 : null;
+    return `<div class="pd-c-row"><div class="pd-c-lbl">${x.etape}<small>${x.lib}</small></div>
+      <div class="pd-c-bars">
+        <span class="pd-c-b b1" style="width:${(100 * Math.min(x.v, mxc) / mxc).toFixed(1)}%;top:9px;background:${
+          x.v >= 80 ? "#2E6B3F" : x.v >= 60 ? "#B4913C" : "#A02233"}">${d1(x.v)}%</span>
+        ${perte != null && perte > 0 ? `<span class="pd-c-perte">− ${d1(perte)} pts</span>` : ""}
+      </div></div>`; }).join("");
+  const cascNote = `<div class="dd-test-note" style="margin-top:12px">
+    ${susp.length ? `<strong>Deux étapes sont écartées de la lecture.</strong> ${
+      susp.map(x => `${x.etape} ressort à ${d1(x.v)}%`).join(" et ")}, valeurs incompatibles avec un taux de
+      couverture. L'anomalie porte sur le numérateur ou le dénominateur de l'export, non sur la performance,
+      et elle est signalée à la DSR plutôt que corrigée ici.` : ""}
+    La cible retenue pour l'accouchement assisté est de ${d1(M.cible_acc)}%.</div>`;
+
+  /* ---------- nuage couverture x stock ---------- */
+  const W = 680, H = 400, PL = 58, PR = 112, PT = 24, PB = 46;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const sMax = Math.max(...Q.map(q => q.stock)) * 1.1;
+  const X = v => PL + iw * Math.min(v, 110) / 110, Y = v => PT + ih - ih * v / sMax;
+  const rMax = Math.max(...Q.map(q => q.naiss));
+  let g = `<rect x="${PL}" y="${PT}" width="${X(M.cible_acc) - PL}" height="${ih}" fill="#F3D8DA" opacity=".3"/>
+           <rect x="${X(M.cible_acc)}" y="${PT}" width="${PL + iw - X(M.cible_acc)}" height="${ih}" fill="#D8EBDD" opacity=".35"/>`;
+  for (let k = 0; k <= 4; k++) { const y = PT + ih - ih * k / 4;
+    g += `<line x1="${PL}" y1="${y}" x2="${PL + iw}" y2="${y}" stroke="#E4E0D5"/>
+          <text x="${PL - 8}" y="${y + 4}" text-anchor="end" class="pd-ax">${nb(sMax * k / 4)}</text>`; }
+  [0, 25, 50, 75, 100].forEach(v => {
+    g += `<line x1="${X(v)}" y1="${PT}" x2="${X(v)}" y2="${PT + ih}" stroke="#E4E0D5"/>
+          <text x="${X(v)}" y="${PT + ih + 16}" text-anchor="middle" class="pd-ax">${v}%</text>`; });
+  g += `<line x1="${X(M.cible_acc)}" y1="${PT}" x2="${X(M.cible_acc)}" y2="${PT + ih}" stroke="#1F3864" stroke-width="1.5" stroke-dasharray="5 3"/>
+        <text x="${X(M.cible_acc) + 5}" y="${PT + 11}" class="pd-zone-lbl" fill="#1F3864">Cible ${d1(M.cible_acc)}%</text>`;
+  const poses = [], lbls = [];
+  Q.slice().sort((a, b) => b.naiss - a.naiss).forEach(q => {
+    const r = 5 + 13 * Math.sqrt(q.naiss / rMax), cx = X(q.couv), cy = Y(q.stock);
+    const col = q.couv >= M.cible_acc ? "#2E6B3F" : q.couv >= 50 ? "#B4913C" : "#A02233";
+    g += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${col}" fill-opacity=".58"
+        stroke="${col}" stroke-width="1.4"><title>${q.nom} · ${d1(q.couv)}% assistés · ${nb(q.stock)} unités d'oxytocine · ${nb(q.naiss)} naissances</title></circle>`;
+    if (!(q.deficit > M.total_deficit * 0.04 || q.couv >= M.cible_acc)) return;
+    let ly = cy + 3.5, lx = cx + r + 5, anc = "start", k = 0;
+    if (lx + q.nom.length * 5.2 > PL + iw + PR - 6) { lx = cx - r - 5; anc = "end"; }
+    while (poses.some(o => Math.abs(o.y - ly) < 11 && Math.abs(o.x - lx) < 76) && k < 8) { ly += 11.5; k++; }
+    poses.push({ x: lx, y: ly });
+    lbls.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anc}" class="pd-pt-lbl">${q.nom}</text>`);
+  });
+  g += lbls.join("");
+  g += `<text x="${PL + iw / 2}" y="${H - 8}" text-anchor="middle" class="pd-axt">Accouchements assistés, moyenne du semestre</text>
+        <text transform="translate(15,${PT + ih / 2}) rotate(-90)" text-anchor="middle" class="pd-axt">Stock d'oxytocine, unités</text>`;
+  const nuage = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${g}</svg>
+    <div class="pd-leg"><span><i style="background:#A02233"></i>Moins de 50%</span>
+      <span><i style="background:#B4913C"></i>50% à la cible</span>
+      <span><i style="background:#2E6B3F"></i>À la cible ou au-dessus</span>
+      <span>Aire du cercle : naissances attendues</span></div>`;
+
+  /* ---------- concentration ---------- */
+  let cum = 0;
+  const pareto = par.slice(0, 10).map(q => { cum += q.part;
+    return `<div class="pd-par"><span class="pd-par-n">${q.nom}</span>
+      <span class="pd-par-t"><span class="pd-par-f" style="width:${(100 * q.deficit / par[0].deficit).toFixed(1)}%;background:${cum <= 80 ? "#A02233" : "#CEC8BA"}"></span></span>
+      <span class="pd-par-v"><b>${nb(q.deficit)}</b> · ${d1(cum)}%</span></div>`; }).join("");
+
+  /* ---------- inference ---------- */
+  const iW = 660;
+  const bar = (r, lbl, col, note) => {
+    const x0 = iW / 2, sc = (iW / 2 - 90);
+    return `<div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+      <span style="font-weight:600;color:var(--ink)">${lbl}</span><span style="color:var(--muted)">${note}</span></div>
+      <svg viewBox="0 0 ${iW} 26" style="width:100%;height:26px;display:block">
+        <line x1="0" y1="13" x2="${iW}" y2="13" stroke="#E4E0D5"/>
+        <line x1="${x0}" y1="2" x2="${x0}" y2="24" stroke="#75706B" stroke-width="1.2"/>
+        <rect x="${(x0 - sc * I.rmin).toFixed(1)}" y="4" width="${(2 * sc * I.rmin).toFixed(1)}" height="18" fill="#E9E6DE"/>
+        <rect x="${(r < 0 ? x0 + sc * r : x0).toFixed(1)}" y="8" width="${Math.abs(sc * r).toFixed(1)}" height="10" fill="${col}" rx="2"/>
+        <text x="${(x0 + sc * r + (r < 0 ? -6 : 6)).toFixed(1)}" y="17" text-anchor="${r < 0 ? "end" : "start"}"
+          style="font-size:11px;font-weight:700;fill:${col}">r = ${vg(r)}</text>
+      </svg></div>`; };
+  const infer = bar(I.r_brut, "Corrélation brute entre provinces, stock et couverture", "#A02233", "lecture trompeuse")
+    + bar(I.r, "Effet du stock du mois précédent, écarts intra-province", "#2E6B3F", `p = ${vg(I.p)} · non significatif`)
+    + `<div class="dd-test-note">
+      Entre provinces, stock d'oxytocine et accouchements assistés varient dans le même sens (r = ${vg(I.r_brut)}).
+      Cette association mesure d'abord la taille : une province qui accouche davantage stocke davantage. Elle ne dit
+      rien d'un effet.
+      <br><br>En décalant d'un mois et en raisonnant sur les écarts de chaque province à sa propre moyenne,
+      l'association tombe à ${vg(I.r)} sur ${I.n} observations province-mois, non significative (p = ${vg(I.p)}),
+      alors que l'échantillon permettait de détecter une association dès ${vg(I.rmin)}.
+      <strong>Le niveau de stock d'oxytocine ne prédit pas l'activité d'accouchement du mois suivant.</strong>
+      Comme en vaccination, le goulot n'est pas l'intrant.</div>`;
+
+  /* ---------- saisonnalite ---------- */
+  const mois = ["", "Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+  const sW = 640, sH = 180, sPL = 40, sPB = 30;
+  const siw = sW - sPL - 12, sih = sH - sPB - 12;
+  const vals = S.mois.map(m => [S.profil[m].a2025, S.profil[m].a2026]).flat().filter(v => v != null);
+  const smx = Math.max(...vals) * 1.15, bw = siw / S.mois.length;
+  let sg = "";
+  for (let k = 0; k <= 3; k++) { const y = 12 + sih - sih * k / 3;
+    sg += `<line x1="${sPL}" y1="${y}" x2="${sPL + siw}" y2="${y}" stroke="#E4E0D5"/>
+           <text x="${sPL - 6}" y="${y + 4}" text-anchor="end" class="pd-ax">${Math.round(smx * k / 3)}%</text>`; }
+  S.mois.forEach((m, i) => {
+    [["a2025", "#8C5A2E", 0], ["a2026", "#1F3864", 1]].forEach(([k, col, o]) => {
+      const v = S.profil[m][k]; if (v == null) return;
+      const h = sih * v / smx;
+      sg += `<rect x="${(sPL + i * bw + bw * (0.15 + o * 0.36)).toFixed(1)}" y="${(12 + sih - h).toFixed(1)}"
+        width="${(bw * 0.32).toFixed(1)}" height="${h.toFixed(1)}" fill="${col}" rx="1.5"><title>${mois[m]} ${k.slice(1)} · ${d1(v)}%</title></rect>`; });
+    sg += `<text x="${(sPL + i * bw + bw / 2).toFixed(1)}" y="${12 + sih + 16}" text-anchor="middle" class="pd-ax">${mois[m]}</text>`;
+  });
+  const saison = `<svg viewBox="0 0 ${sW} ${sH}" style="width:100%;height:auto;display:block">${sg}</svg>
+    <div class="pd-leg"><span><i style="background:#8C5A2E"></i>2025</span><span><i style="background:#1F3864"></i>2026</span></div>
+    <div class="dd-test-note" style="margin-top:12px">
+      <strong>Aucun profil saisonnier stable.</strong> Sur les ${S.n} mois communs aux deux années, les profils
+      mensuels sont inversés plutôt que concordants (rho = ${vg(S.rho)}, p = ${vg(S.p)}). Un profil saisonnier réel
+      se répéterait d'une année sur l'autre. Une inversion sur six points relève plus vraisemblablement d'un
+      changement de périmètre de rapportage entre 2025 et 2026 que d'un rythme d'activité.
+      <strong>Conséquence pratique :</strong> aucune planification saisonnière ne peut s'appuyer sur cette série
+      tant que la rupture de périmètre n'est pas documentée.</div>`;
+
+  /* ---------- equite ---------- */
+  const equite = `<div>${D.quintiles.map((v, i) => {
+      const col = v >= M.cible_acc ? "#2E6B3F" : v >= 60 ? "#B4913C" : v >= 40 ? "#AF4E10" : "#A02233";
+      return `<div class="pd-par"><span class="pd-par-n">Quintile ${i + 1}${i === 0 ? " · le plus bas" : i === 4 ? " · le plus haut" : ""}</span>
+        <span class="pd-par-t"><span class="pd-par-f" style="width:${Math.min(100, v).toFixed(1)}%;background:${col}"></span></span>
+        <span class="pd-par-v"><b>${d1(v)}%</b></span></div>`; }).join("")}
+    <div style="font-size:10.5px;color:var(--muted);margin-top:6px">Échelle commune de 0 à 100%. La cible est de ${d1(M.cible_acc)}%.</div></div>
+    <div class="dd-test-note" style="margin-top:12px">
+      Le rapport entre le cinquième le plus bas et le plus haut atteint ${d1(D.quintiles[4] / D.quintiles[0])},
+      contre deux en vaccination sur le même territoire. Une femme n'a pas la même probabilité d'accoucher
+      accompagnée selon sa province, et l'écart est presque deux fois plus large que pour la vaccination de son
+      enfant.</div>`;
+
+  /* ---------- priorites ---------- */
+  const actions = `
+    <div class="pd-act p1"><div class="pd-act-t">Traiter ${par.slice(0, 3).map(q => q.nom).join(", ")} en premier</div>
+      <div class="pd-act-c">Ces trois provinces portent ${d1(par.slice(0, 3).reduce((a, q) => a + q.part, 0))}% des
+      ${nb(M.total_deficit)} naissances sans accompagnement qualifié. ${par[0].nom} en tête, ce qui écarte
+      l'explication par l'éloignement : la capitale dispose des structures et n'atteint pas ses femmes.</div>
+      <div class="pd-act-m"><span>Priorité 1</span><span>DSR et délégations sanitaires</span><span>Revue mensuelle</span></div></div>
+    <div class="pd-act p1"><div class="pd-act-t">Retenir les femmes déjà entrées en CPN jusqu'à l'accouchement</div>
+      <div class="pd-act-c">Le premier contact prénatal touche ${d1(D.cascade[0].v)}% des femmes, l'accouchement
+      assisté ${d1(D.cascade[2].v)}%. Ces femmes sont identifiées, enregistrées et joignables. Agir sur la
+      rétention porte sur un vivier connu, non sur une population à recruter.</div>
+      <div class="pd-act-m"><span>Priorité 1</span><span>DSR</span><span>Suivi de cohorte</span></div></div>
+    <div class="pd-act p2"><div class="pd-act-t">Ne pas chercher la solution dans l'approvisionnement</div>
+      <div class="pd-act-c">Le stock d'oxytocine du mois précédent n'explique pas l'activité du mois suivant
+      (r = ${vg(I.r)}, p = ${vg(I.p)}). Le même test avait donné le même résultat en vaccination. Deux programmes,
+      deux chaînes distinctes, même conclusion : l'intrant n'est pas le facteur limitant.</div>
+      <div class="pd-act-m"><span>Priorité 2</span><span>DSR et DGPML</span><span>Trimestriel</span></div></div>
+    <div class="pd-act p2"><div class="pd-act-t">Assainir CPN 4 et CPoN avant toute cible chiffrée</div>
+      <div class="pd-act-c">CPN 4 ressort à ${d1(D.cascade[1].v)}% et CPoN 2 au-dessus de 400%. Ces deux
+      indicateurs ne sont pas pilotables en l'état. Fixer une cible sur une série fausse produit un pilotage
+      faux. ${D.anomalies.prov} anomalies provinciales sont déjà recensées dans l'export.</div>
+      <div class="pd-act-m"><span>Priorité 2</span><span>DSR et DPSIS</span><span>Avant le prochain COPIL</span></div></div>`;
+
+  return { crumbs, html: et +
+    `<div class="ph-sub">Croisement des variables programmatiques et logistiques sur ${M.periode},
+      ${M.n_prov} provinces. Sources : ${M.source_prog} ; ${M.source_log}.</div></div>
+    <div class="content">
+      ${constats}
+      <div class="pd-grid2">
+        ${card("Couverture et stock d'oxytocine", "Chaque cercle est une province · l'aire vaut les naissances attendues", `<div class="pd-scatter">${nuage}</div>`)}
+        ${card("Concentration du déficit", `${nb(M.total_deficit)} naissances sans personnel qualifié`, pareto)}
+      </div>
+      ${card("Le continuum de soins, étape par étape", "Couverture nationale moyenne du semestre", `<div class="pd-casc">${cascHtml}</div>${cascNote}`)}
+      ${card("Ce que le stock explique vraiment", "Test d'association intra-province, activité du mois contre stock du mois précédent", infer)}
+      ${card("Profil mensuel, 2025 contre 2026", "Accouchements assistés, mois communs aux deux années", saison)}
+      ${card("Équité entre provinces", "Accouchements assistés par quintile de provinces", equite)}
+      ${card("Lecture et priorités", "Ce que les données commandent de faire, dans l'ordre", actions)}
     </div>` };
 };
 
