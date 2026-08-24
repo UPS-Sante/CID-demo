@@ -296,6 +296,28 @@
   .tst-b.att{background:var(--rag-red-l);color:var(--rag-red)}
   .tst strong{color:var(--ink)}
   .tst a{color:var(--royal);text-decoration:underline;cursor:pointer}
+  .chol-map-lbl text{font-family:var(--font);font-size:8.5px;font-weight:600;fill:#fff;
+    paint-order:stroke;stroke:rgba(27,26,22,.62);stroke-width:2.4px;stroke-linejoin:round}
+  .chol-map-lbl text.v{font-size:11.5px;font-weight:800}
+  @keyframes cholAlerteBornee{0%,100%{opacity:1}50%{opacity:.42}}
+  .cf-pulse{animation:cholAlerteBornee .75s ease-in-out 4}
+  .cd-bar{display:flex;height:15px;border-radius:3px;overflow:hidden;background:#F4F2EC}
+  .cd-bar span{display:block;height:100%}
+  .cd-lgd{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:10px}
+  .cd-lgd i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  .cd-t{font-size:9.5px;letter-spacing:.85px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:7px}
+  .cd-hd{display:grid;grid-template-columns:120px 62px 62px 1fr 92px;gap:10px;font-size:9px;letter-spacing:.7px;
+    text-transform:uppercase;color:var(--muted);font-weight:700;padding-bottom:6px;margin-bottom:4px;
+    border-bottom:1px solid var(--border-2)}
+  .cd-hd span:nth-child(2),.cd-hd span:nth-child(3),.cd-hd span:nth-child(5){text-align:right}
+  .chol-grappes{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:6px}
+  .chol-grappe{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px 6px}
+  .chol-grappe-t{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;font-weight:700;
+    letter-spacing:.6px;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+  .chol-grappe-t span{font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
+  .chol-grappe .chol-carte{width:100%;max-height:260px;display:block}
+  @media(max-width:1000px){.chol-grappes{grid-template-columns:1fr}}
+
   .header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -3840,7 +3862,6 @@
   .chc-min, .chc-max { font-size:10px; color:var(--muted); }
   .chc-bar { height:10px; width:120px; border-radius:5px; background:linear-gradient(90deg, rgba(160,34,51,.18), rgba(160,34,51,.9)); display:inline-block; }
   @keyframes cholAlerte { 0%,100% { filter:none; } 50% { filter:drop-shadow(0 0 7px rgba(179,55,47,.95)); } }
-  .cf-pulse { animation:cholAlerte 1.5s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) { .cf-pulse { animation:none; } }
   /* ============================================================
      BANDEAU DE PILOTAGE
@@ -7289,6 +7310,9 @@ function setCholCarte(mode) { state.cholCarte = mode; renderMain(); }
 
 /* Carte de la zone épidémique choléra, un seul indicateur à la fois,
    recadrée sur le foyer, avec codage couleur et alerte rouge pulsée. */
+const CHOL_CADRES = {"Karal": {"vb": [79.6, 129.7, 266.7, 177.2], "noms": ["Karal", "Mani", "Massaguet"]}, "N'Djamena": {"vb": [142.7, 367.9, 121.4, 75.2], "noms": ["Ndjamena-Nord", "Ndjamena-Centre", "Ndjamena-Est", "Ndjamena-Sud"]}};
+const CHOL_VB = [76, 122, 274, 344];
+const CHOL_CENTROIDES = {"Ndjamena-Est": [224.8, 405.1], "Ndjamena-Centre": [208.8, 422.6], "Ndjamena-Sud": [229.8, 432.1], "Ndjamena-Nord": [190.9, 403.6], "Dourbali": [395.9, 510.0], "Mani": [153.2, 247.8], "Karal": [212.9, 218.3], "Massakory": [410.8, 178.9], "Massaguet": [358.1, 323.6], "Bokoro": [685.1, 407.0], "N'Djamena Bilala": [839.1, 220.2]};
 function carteCholeraChoix() {
   if (!CHOL_A || !CARTE_FOCUS) return "";
   const mode = state.cholCarte || "cas";
@@ -7305,14 +7329,25 @@ function carteCholeraChoix() {
   const vals = CHOL_A.districts.map(valeur).filter(v => v != null);
   const vmax = vals.length ? Math.max(...vals) : 1;
   const teinte = (v) => v == null ? null : `rgba(160,34,51,${(0.18 + Math.max(0, Math.min(1, v / vmax)) * 0.72).toFixed(2)})`;
+  const formesParNom = {}, etiqParNom = {};
   const formes = CARTE_FOCUS.districts.map(d => {
     const info = parTrace[d.nom];
-    if (!info) return `<path class="cf-hors" d="${d.d}"><title>${d.nom} · aucun cas</title></path>`;
+    if (!info) { const h0 = `<path class="cf-hors" d="${d.d}"><title>${d.nom} · aucun cas</title></path>`;
+      formesParNom[d.nom] = h0; return h0; }
     let fill, cls = "cf-choix", tip;
     if (mode === "statut") {
-      fill = info.actif ? "#B3372F" : "#2E7D32";
-      if (info.actif) cls += " cf-pulse";
-      tip = `${info.nom} · ${info.actif ? "transmission active, confirmation culture" : "foyer éteint depuis 10 jours sans notification"}`;
+      /* Rouge confirmation par culture, orange TDR positif, jaune suspect,
+         vert foyer sans notification depuis dix jours. Le niveau de preuve
+         disponible par district est porte par CHOL_CONF. */
+      const cf2 = (CHOL_CONF && CHOL_CONF[info.nom]) || (info.actif ? "suspect" : "eteint");
+      const st = info.actif ? cf2 : "eteint";
+      fill = st === "culture" ? "#B3372F" : st === "tdr" ? "#D97B29" : st === "suspect" ? "#C9A227" : "#2E7D32";
+      if (st === "culture") cls += " cf-pulse";
+      const lib = { culture: "transmission active, confirmée par culture",
+        tdr: "transmission active, TDR positif sans culture",
+        suspect: "cas suspects sans confirmation biologique",
+        eteint: "aucune notification depuis dix jours, foyer déclaré éteint" }[st];
+      tip = `${info.nom} · ${lib}`;
     } else {
       const v = valeur(info);
       fill = teinte(v) || "#E7E2D8";
@@ -7320,7 +7355,30 @@ function carteCholeraChoix() {
       tip = `${info.nom} · ${lib}`;
       if (mode !== "attaque" && info.niveau === "critique") cls += " cf-pulse";
     }
-    return `<path class="${cls}" style="fill:${fill}" d="${d.d}"><title>${tip}</title></path>`;
+    const h = `<path class="${cls}" style="fill:${fill}" d="${d.d}"><title>${tip}</title></path>`;
+    formesParNom[d.nom] = h; return h;
+  }).join("");
+  /* Etiquettes portees sur la carte : nom du district et valeur, pour que la
+     lecture ne depende pas du survol lors d'une projection en salle. */
+  const etiquettes = CARTE_FOCUS.districts.map(d => {
+    const ctr = CHOL_CENTROIDES[d.nom]; if (!ctr) return "";
+    const info = parTrace[d.nom];
+    const court = d.nom.replace("Ndjamena-", "NDJ ").replace("N'Djamena ", "NDJ ");
+    let val;
+    if (!info) val = "0";
+    else if (mode === "statut") { const c2 = (CHOL_CONF && CHOL_CONF[info.nom]) || (info.actif ? "suspect" : "eteint");
+      val = !info.actif ? "éteint" : c2 === "culture" ? "culture" : c2 === "tdr" ? "TDR" : "suspect"; }
+    else { const v = valeur(info);
+      val = v == null ? "ND" : mode === "cas" ? String(v)
+        : mode === "attaque" ? Math.round(v) : String(Math.round(v * 10) / 10).replace(".", ",") + "%"; }
+    /* La taille du texte suit la largeur du cadre : une meme valeur en pixels
+       serait minuscule sur la grappe large et illisible sur la grappe serree. */
+    etiqParNom[d.nom] = (ech) => `<g class="chol-map-lbl" pointer-events="none">
+      <text x="${ctr[0]}" y="${(ctr[1] - 0.9 * ech).toFixed(1)}" text-anchor="middle"
+        style="font-size:${(2.1 * ech).toFixed(2)}px;stroke-width:${(0.62 * ech).toFixed(2)}px">${court}</text>
+      <text x="${ctr[0]}" y="${(ctr[1] + 2.6 * ech).toFixed(1)}" text-anchor="middle" class="v"
+        style="font-size:${(2.8 * ech).toFixed(2)}px;stroke-width:${(0.62 * ech).toFixed(2)}px">${val}</text></g>`;
+    return "";
   }).join("");
   const onglet = (m, l) => `<button class="chc-tab ${mode === m ? "on" : ""}" onclick="setCholCarte('${m}')">${l}</button>`;
   const barre = `<div class="chc-tabs">${onglet("cas", "Nombre de cas")}${onglet("attaque", "Taux d'attaque")}${onglet("letalite", "Taux de létalité")}${onglet("statut", "Statut épidémiologique")}</div>`;
@@ -7338,14 +7396,28 @@ function carteCholeraChoix() {
         <span class="chc-max">${mode === "cas" ? vmax + " cas" : mode === "attaque" ? Math.round(vmax) + " /100k" : Math.round(vmax) + " %"}</span>
         <span class="cl-item"><span class="cl-pastille cl-hors"></span> ${mode === "attaque" ? "population ND" : "aucun cas"}</span>
       </div>`;
+  /* Le foyer compte deux grappes distantes de plus de deux cents kilometres.
+     Une seule carte les separerait par une plage vide et rendrait N'Djamena
+     illisible : chaque grappe recoit donc son propre cadre, a son echelle. */
+  const grappes = Object.entries(CHOL_CADRES).map(([nom, cd]) => {
+    const dedans = CARTE_FOCUS.districts.filter(d => cd.noms.includes(d.nom));
+    const fm = dedans.map(d => {
+      const info = parTrace[d.nom];
+      if (!info) return `<path class="cf-hors" d="${d.d}"><title>${d.nom} · aucun cas</title></path>`;
+      return (formesParNom[d.nom] || "");
+    }).join("");
+    const ech = cd.vb[2] / 105;
+    const lb = dedans.map(d => (typeof etiqParNom[d.nom] === "function" ? etiqParNom[d.nom](ech) : "")).join("");
+    const nCas = dedans.reduce((a, d) => a + (parTrace[d.nom] ? parTrace[d.nom].cas : 0), 0);
+    return `<div class="chol-grappe">
+      <div class="chol-grappe-t">${nom}<span>${nCas} cas</span></div>
+      <svg class="chol-carte" viewBox="${cd.vb.join(" ")}" preserveAspectRatio="xMidYMid meet"
+        aria-label="Grappe de ${nom}"><g>${fm}</g><g>${lb}</g></svg></div>`;
+  }).join("");
   return `<div class="chol-choix">
     ${barre}
-    <div class="chol-carte-wrap">
-      <svg class="chol-carte" viewBox="0 0 ${CARTE_FOCUS.w} ${CARTE_FOCUS.h}" preserveAspectRatio="xMidYMid meet" aria-label="Carte de la zone épidémique">
-        <g>${formes}</g>
-      </svg>
-      ${legende}
-    </div>
+    <div class="chol-grappes">${grappes}</div>
+    ${legende}
   </div>`;
 }
 function decalerCholPeriode(pas) {
@@ -7588,15 +7660,21 @@ VIEWS["cousp-sitrep"] = () => {
         </div>
         <div class="grid-2">
           ${card("Évolution hebdomadaire des cas et décès", "Semaines épidémiologiques " + hebdo[0].sem + " à " + hebdo[hebdo.length - 1].sem, courbe, "")}
+          ${card("Courbe journalière par province", "Cas et décès notifiés chaque jour, cumul des deux provinces atteintes", cholCourbeProv("jour"),
+            "Le détail quotidien met en évidence les jours de forte notification, souvent liés à une équipe de recherche active plutôt qu'à une reprise de transmission.")}
+          ${card("Courbe hebdomadaire par province", "Même série agrégée par semaine épidémiologique", cholCourbeProv("semaine"),
+            "L'agrégation hebdomadaire lisse l'effet des jours sans notification et sert de base au suivi de tendance.")}
           ${card("Cartographie de la zone épidémique", "Un indicateur à la fois, recadré sur le foyer", carteCholeraChoix(),
             "Choisir l'indicateur à cartographier dans la barre. En statut, les foyers en transmission active confirmée sont signalés par une alerte rouge pulsée ; un foyer sans notification depuis dix jours est déclaré éteint.")}
         </div>
         <div class="grid-2 sr-page-3">
+          ${card("État de déshydratation, par semaine et par province", dTot + " cas documentés", cholDeshydratation(), "")}
           ${card("État de déshydratation à l'admission", dTot + " cas documentés", desh,
             "Source : liste linéaire de surveillance du COUSP. La part des formes modérées et sévères mesure la précocité du recours aux soins.")}
           ${card("Évolution des cas", eTot + " cas suivis", evol, "")}
         </div>
         <div class="grid-2">
+          ${card("Âge des cas rapporté à la structure du pays", "Sur-représentation par tranche, corrigée de l'effet de taille", cholPyramideNationale(), "")}
           ${card("Répartition par tranche d'âge et par sexe", C.cas + " cas notifiés", pyr,
             "Source : liste linéaire de surveillance du COUSP. Les hommes prédominent chez les 5 à 14 ans, les femmes dans la tranche 15 à 44 ans.")}
           ${card("Taux d'attaque pour 100 000 habitants", "Rapporté aux populations de district", attaque,
@@ -12568,6 +12646,130 @@ function cidTestSignal(indId, prov) {
      ${hors ? "Le point sort des limites : le processus a changé, la cause est à chercher."
             : "Le point tient dans les limites : cet écart au mois précédent relève de la variation ordinaire et n'appelle pas d'explication particulière."}`,
     { ind: indId, prov: prov || null, cible: null });
+}
+
+let CHOL_C = null, CHOL_CONF = null;
+fetch("chol_complement.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { CHOL_C = j; CHOL_CONF = j && j.conf; if (state.program === "cousp") renderMain(); }).catch(() => {});
+
+/* ==============================================================
+   CHOLERA · COURBES PAR PROVINCE, DESHYDRATATION, PYRAMIDE
+============================================================== */
+const CHOL_PROVC = { "Hadjer Lamis": "#8C5A2E", "N'Djamena": "#1F3864" };
+/* Courbe journaliere ou hebdomadaire des cas et deces, par province.
+   Les deces sont portes en negatif sous l'axe pour rester lisibles a cote
+   de volumes de cas dix fois superieurs. */
+function cholCourbeProv(gran) {
+  if (!CHOL_P) return "";
+  const src = gran === "jour" ? CHOL_P.jour : CHOL_P.semaine;
+  const cles = Object.keys(src).sort();
+  if (cles.length < 2) return "";
+  const provs = [...new Set(cles.flatMap(k => (src[k].periode.provinces || []).map(x => x.nom)))];
+  const val = (k, pr, ch) => { const o = (src[k].periode.provinces || []).find(x => x.nom === pr); return o ? o[ch] : 0; };
+  const totC = cles.map(k => provs.reduce((a, pr) => a + val(k, pr, "cas"), 0));
+  const totD = cles.map(k => provs.reduce((a, pr) => a + val(k, pr, "deces"), 0));
+  const mxC = Math.max(...totC, 1), mxD = Math.max(...totD, 1);
+  const W = 900, H = 300, PL = 46, PR = 14, PT = 16, PB = 46;
+  const iw = W - PL - PR, hC = (H - PT - PB) * 0.68, hD = (H - PT - PB) * 0.32;
+  const y0 = PT + hC, bw = iw / cles.length;
+  let g = "";
+  for (let k = 0; k <= 3; k++) { const yy = y0 - hC * k / 3;
+    g += `<line x1="${PL}" y1="${yy.toFixed(1)}" x2="${PL + iw}" y2="${yy.toFixed(1)}" stroke="#E4E0D5"/>
+      <text x="${PL - 6}" y="${(yy + 4).toFixed(1)}" text-anchor="end" class="pd-ax">${Math.round(mxC * k / 3)}</text>`; }
+  g += `<line x1="${PL}" y1="${y0.toFixed(1)}" x2="${PL + iw}" y2="${y0.toFixed(1)}" stroke="#75706B" stroke-width="1.2"/>`;
+  [0, mxD].forEach((v, i) => { const yy = y0 + hD * (i ? 1 : 0);
+    if (i) g += `<line x1="${PL}" y1="${yy.toFixed(1)}" x2="${PL + iw}" y2="${yy.toFixed(1)}" stroke="#E4E0D5"/>
+      <text x="${PL - 6}" y="${(yy + 4).toFixed(1)}" text-anchor="end" class="pd-ax">${mxD}</text>`; });
+  cles.forEach((k, i) => {
+    let cum = 0;
+    provs.forEach(pr => { const v = val(k, pr, "cas"); if (!v) return;
+      const h = hC * v / mxC;
+      g += `<rect x="${(PL + i * bw + bw * .16).toFixed(1)}" y="${(y0 - cum - h).toFixed(1)}"
+        width="${(bw * .68).toFixed(1)}" height="${h.toFixed(1)}" fill="${CHOL_PROVC[pr] || "#A09A93"}" rx="1">
+        <title>${k} · ${pr} · ${v} cas</title></rect>`; cum += h; });
+    let cd = 0;
+    provs.forEach(pr => { const v = val(k, pr, "deces"); if (!v) return;
+      const h = hD * v / mxD;
+      g += `<rect x="${(PL + i * bw + bw * .16).toFixed(1)}" y="${(y0 + cd).toFixed(1)}"
+        width="${(bw * .68).toFixed(1)}" height="${h.toFixed(1)}" fill="${CHOL_PROVC[pr] || "#A09A93"}" fill-opacity=".55"
+        stroke="#A02233" stroke-width=".6" rx="1"><title>${k} · ${pr} · ${v} décès</title></rect>`; cd += h; });
+    const pas = gran === "jour" ? Math.ceil(cles.length / 13) : 1;
+    if (i % pas === 0) g += `<text x="${(PL + i * bw + bw / 2).toFixed(1)}" y="${(y0 + hD + 18).toFixed(1)}"
+      text-anchor="middle" class="pd-ax">${gran === "jour" ? k.slice(8) + "/" + k.slice(5, 7) : k.slice(5)}</text>`;
+  });
+  g += `<text transform="translate(13,${(PT + hC / 2).toFixed(1)}) rotate(-90)" text-anchor="middle" class="pd-axt">Cas</text>
+    <text transform="translate(13,${(y0 + hD / 2).toFixed(1)}) rotate(-90)" text-anchor="middle" class="pd-axt">Décès</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">${g}</svg>
+    <div class="pd-leg">${provs.map(pr => `<span><i style="background:${CHOL_PROVC[pr] || "#A09A93"}"></i>${pr}</span>`).join("")}
+      <span>Décès portés sous l'axe, échelle propre</span></div>`;
+}
+/* Deshydratation : profil par semaine et par province. La part des formes
+   severes mesure la precocite du recours aux soins, pas la virulence. */
+function cholDeshydratation() {
+  if (!CHOL_C) return "";
+  const DW = CHOL_C.desh_hebdo.filter(x => x.n > 0), MX = CHOL_C.mix;
+  const d1 = x => String(Math.round(x * 10) / 10).replace(".", ",");
+  const COL = { legere: "#2E7D32", moderee: "#D97B29", severe: "#A02233" };
+  const barre = (o, lbl, tot) => {
+    const seg = ["legere", "moderee", "severe"].map(k => {
+      const pct = tot ? 100 * o[k] / tot : 0;
+      return pct <= 0 ? "" : `<span style="width:${pct.toFixed(2)}%;background:${COL[k]}"
+        title="${lbl} · ${k} · ${o[k]} cas, ${d1(pct)}%"></span>`; }).join("");
+    return `<div class="pd-par" style="grid-template-columns:112px 1fr 118px">
+      <span class="pd-par-n">${lbl}</span>
+      <span class="cd-bar">${seg}</span>
+      <span class="pd-par-v"><b>${d1(tot ? 100 * o.severe / tot : 0)}%</b> sévères · ${tot} cas</span></div>`; };
+  const hebdo = DW.map(x => barre(x, x.sem.slice(5), x.legere + x.moderee + x.severe)).join("");
+  const parProv = MX.map(x => barre(x, x.prov, x.legere + x.moderee + x.severe)).join("");
+  const sevMax = DW.reduce((a, b) => (b.severe / Math.max(1, b.legere + b.moderee + b.severe)) >
+    (a.severe / Math.max(1, a.legere + a.moderee + a.severe)) ? b : a, DW[0]);
+  const ecart = MX.length === 2
+    ? Math.abs(100 * MX[0].severe / MX[0].n - 100 * MX[1].severe / MX[1].n) : null;
+  return `<div class="cd-lgd"><span><i style="background:${COL.legere}"></i>Légère</span>
+      <span><i style="background:${COL.moderee}"></i>Modérée</span>
+      <span><i style="background:${COL.severe}"></i>Sévère</span></div>
+    <div class="cd-t">Par semaine épidémiologique</div>${hebdo}
+    <div class="cd-t" style="margin-top:14px">Par province</div>${parProv}
+    <div class="dd-test-note" style="margin-top:12px">
+      La part des formes sévères à l'admission mesure le délai de recours aux soins, non la gravité de la souche.
+      Elle culmine en ${sevMax.sem.slice(5)} à ${d1(100 * sevMax.severe / (sevMax.legere + sevMax.moderee + sevMax.severe))}%.
+      ${ecart != null ? `L'écart entre les deux provinces atteint ${d1(ecart)} points, ce qui oriente vers une
+      différence d'accès aux sites de prise en charge plutôt que vers une différence de terrain.` : ""}</div>`;
+}
+/* Age des cas rapporte a la structure de population du pays. Un rapport
+   superieur a 1 signale une tranche sur-representee parmi les cas. */
+function cholPyramideNationale() {
+  if (!CHOL_A || !CHOL_C) return "";
+  const ref = CHOL_C.structure_nationale, prof = CHOL_A.profil;
+  const d1 = x => String(Math.round(x * 10) / 10).replace(".", ",");
+  const d2 = x => String(Math.round(x * 100) / 100).replace(".", ",");
+  const lignes = prof.map(o => {
+    const r = ref.find(x => x.tranche === o.tranche);
+    const rap = r && r.pct ? o.pct / r.pct : null;
+    const col = rap == null ? "#A09A93" : rap >= 1.5 ? "#A02233" : rap >= 1 ? "#D97B29" : "#2E7D32";
+    const w = rap == null ? 0 : Math.min(100, 50 * rap);
+    return `<div class="pd-par" style="grid-template-columns:120px 62px 62px 1fr 92px">
+      <span class="pd-par-n">${o.tranche}</span>
+      <span class="pd-par-v" style="text-align:right">${d1(o.pct)}%</span>
+      <span class="pd-par-v" style="text-align:right;color:var(--muted)">${r ? d1(r.pct) + "%" : "ND"}</span>
+      <span class="pd-par-t" style="position:relative;background:#F4F2EC">
+        <span style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#A09A93"></span>
+        <span class="pd-par-f" style="width:${w.toFixed(1)}%;background:${col}"></span></span>
+      <span class="pd-par-v"><b style="color:${col}">× ${rap == null ? "ND" : d2(rap)}</b></span></div>`; }).join("");
+  const sur = prof.map(o => { const r = ref.find(x => x.tranche === o.tranche);
+    return { t: o.tranche, rap: r && r.pct ? o.pct / r.pct : 0 }; }).sort((a, b) => b.rap - a.rap);
+  return `<div class="cd-hd"><span>Tranche</span><span>Cas</span><span>Population</span><span></span><span>Rapport</span></div>
+    ${lignes}
+    <div class="dd-test-note" style="margin-top:12px">
+      La colonne Population donne la part de chaque tranche dans la population du pays, celle des Cas la part
+      observée parmi les ${CHOL_P ? CHOL_P.global.cas : ""} cas notifiés. Le rapport des deux corrige l'effet de
+      taille : une tranche nombreuse fournit mécaniquement beaucoup de cas sans être plus exposée.
+      <br><br>${sur[0].t} ressort à × ${d2(sur[0].rap)} et ${sur[1].t} à × ${d2(sur[1].rap)}, soit une
+      sur-représentation nette. La riposte, chloration des points d'eau et sensibilisation, gagne à cibler les
+      lieux de vie de ces tranches, écoles coraniques, points d'eau de quartier et marchés, plutôt qu'une
+      couverture indifférenciée.
+      <br><br><strong>Réserve de lecture.</strong> ${CHOL_C.source_structure}. Le rapport bouge avec la structure
+      retenue au dénominateur : les valeurs sont à revoir dès que le fichier officiel est disponible.</div>`;
 }
 
 </script>
