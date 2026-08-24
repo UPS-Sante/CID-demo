@@ -130,14 +130,14 @@
   .pd-hm td{padding:0;text-align:center;border:1px solid #fff}
   .pd-hm td:first-child{text-align:left;padding:5px 7px;font-weight:600;color:var(--ink);background:none;font-size:12px}
   .pd-cell{display:block;padding:6px 2px;font-variant-numeric:tabular-nums;font-weight:600}
-  .pd-act{border-left:3px solid var(--royal);padding:11px 14px;background:var(--surface-2);border-radius:0 5px 5px 0}
+  .pd-act{padding:12px 15px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px}
   .pd-act+.pd-act{margin-top:9px}
   .pd-act-t{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px}
   .pd-act-c{font-size:12.5px;color:var(--body);line-height:1.5}
   .pd-act-m{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:.6px;text-transform:uppercase}
   .pd-act-m span{background:var(--royal-tint);color:var(--royal);padding:2px 7px;border-radius:3px;font-weight:600}
-  .pd-act.p1{border-left-color:var(--rag-red)} .pd-act.p1 .pd-act-m span{background:var(--rag-red-l);color:var(--rag-red)}
-  .pd-act.p2{border-left-color:var(--gold)}   .pd-act.p2 .pd-act-m span{background:var(--gold-tint);color:var(--gold-d)}
+  .pd-act.p1 .pd-act-t{color:var(--ink)} .pd-act.p1 .pd-act-m span{background:var(--rag-red-l);color:var(--rag-red)}
+  .pd-act.p2 .pd-act-t{color:var(--ink)} .pd-act.p2 .pd-act-m span{background:var(--gold-tint);color:var(--gold-d)}
   .pd-leg{display:flex;gap:15px;flex-wrap:wrap;font-size:10.5px;color:var(--muted);margin-top:11px;
     padding-top:10px;border-top:1px dashed var(--border)}
   .pd-leg i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:-1px}
@@ -153,9 +153,9 @@
   .ap-v-n span{font-size:12px;color:var(--muted-2);letter-spacing:0}
 
   .ap-ins{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-  .ap-i{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--royal);
-    border-radius:0 var(--radius) var(--radius) 0;padding:14px 16px;box-shadow:var(--shadow-sm)}
-  .ap-i.alerte{border-left-color:var(--rag-red)} .ap-i.attention{border-left-color:var(--gold)}
+  .ap-i{background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm)}
+  
   .ap-i-k{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:6px}
   .ap-i.alerte .ap-i-k{color:var(--rag-red)} .ap-i.attention .ap-i-k{color:var(--gold-d)}
   .ap-i-h{font-family:var(--font-h);font-size:15px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:6px}
@@ -200,8 +200,8 @@
   .sc-tbl td:first-child{text-align:left;font-weight:600;color:var(--ink)}
   .sc-tbl tr:last-child td{border-bottom:none}
   .sc-tbl .gain{color:var(--rag-green);font-weight:700}
-  .sc-note{font-size:11.5px;color:var(--body);line-height:1.6;background:var(--surface-2);
-    border-left:3px solid var(--gold);border-radius:0 5px 5px 0;padding:11px 14px;margin-top:12px}
+  .sc-note{font-size:11.5px;color:var(--body);line-height:1.6;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;
+    border:1px solid var(--border);border-radius:6px;padding:11px 14px;margin-top:12px}
   @media(max-width:1100px){.sc-grid{grid-template-columns:1fr}.sc-pan{position:static}}
   .ph-fenetre{margin-top:9px;display:inline-block;font-size:11.5px;color:var(--gold-d);
     background:var(--gold-tint);border:1px solid #E4D3A8;border-radius:5px;padding:6px 11px;line-height:1.45}
@@ -221,9 +221,9 @@
   .qc-hm td.l{width:auto;font-size:11px;font-weight:600;color:var(--ink);padding-right:9px;white-space:nowrap;background:none}
   .qc-hm td.an{font-size:10.5px;color:var(--muted);padding-left:8px;text-align:right;font-variant-numeric:tabular-nums;background:none}
   .qc-dir{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .qc-d{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--royal);
-    border-radius:0 var(--radius) var(--radius) 0;padding:14px 16px;box-shadow:var(--shadow-sm)}
-  .qc-d.a{border-left-color:var(--rag-red)}.qc-d.b{border-left-color:var(--gold)}.qc-d.c{border-left-color:var(--rag-green)}
+  .qc-d{background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm)}
+  
   .qc-d-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
   .qc-d-t{font-family:var(--font-h);font-size:15px;font-weight:600;color:var(--ink)}
   .qc-d-n{font-size:20px;font-weight:700;color:var(--royal);font-variant-numeric:tabular-nums}
@@ -251,6 +251,19 @@
   .cid-map-lbl text{font-family:var(--font);font-size:9.5px;font-weight:600;fill:#fff;
     paint-order:stroke;stroke:rgba(27,26,22,.55);stroke-width:2.6px;stroke-linejoin:round}
   .cid-map-lbl text.v{font-size:12.5px;font-weight:800}
+  .ec-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ec-tbl th{text-align:right;font-size:9.5px;letter-spacing:.85px;text-transform:uppercase;color:var(--muted);
+    font-weight:700;padding:0 9px 8px;border-bottom:1px solid var(--border-2)}
+  .ec-tbl th:first-child{text-align:left}
+  .ec-tbl td{padding:8px 9px;border-bottom:1px solid #F2EFE9;text-align:right;font-variant-numeric:tabular-nums}
+  .ec-tbl td:first-child{text-align:left;font-weight:600;color:var(--ink)}
+  .ec-tbl tr:last-child td{border-bottom:none}
+  .ec-sig{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:5px}
+  .ec-sig.oui{background:var(--rag-green-l);color:var(--rag-green)}
+  .ec-sig.non{background:var(--na-l);color:var(--na)}
+  .ec-verdict{display:flex;gap:12px;align-items:baseline;padding:11px 14px;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:6px;margin-bottom:12px;font-size:12.5px;line-height:1.55}
+  .ec-verdict b{font-family:var(--font-h);font-size:16px;color:var(--ink);white-space:nowrap}
   .header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -1348,7 +1361,7 @@
   ============================================================ */
   .ph-exec {
     background: linear-gradient(135deg, var(--gold-tint) 0%, var(--gold-tint) 100%);
-    border-left: 4px solid var(--gold-d);
+    border: 1px solid var(--border);
     padding: 18px 22px;
     margin-bottom: 0;
   }
@@ -1922,7 +1935,7 @@
   .prov-banner.pda {
     background: linear-gradient(90deg, var(--gold-tint) 0%, white 70%);
     border-color: var(--gold);
-    border-left-color: var(--gold-d);
+    border-color: var(--gold-d);
   }
   .prov-banner-icon {
     width: 32px; height: 32px;
@@ -2196,7 +2209,7 @@
   /* Alerts */
   .alert {
     background: var(--surface);
-    border-left: 3px solid var(--rag-orange);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 9px 12px;
     margin-bottom: 7px;
@@ -2208,9 +2221,9 @@
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
   }
-  .alert.red { border-left-color: var(--rag-red); }
-  .alert.green { border-left-color: var(--rag-green); }
-  .alert.yellow { border-left-color: var(--rag-yellow); }
+  .alert.red { border-color: var(--rag-red); }
+  .alert.green { border-color: var(--rag-green); }
+  .alert.yellow { border-color: var(--rag-yellow); }
   .alert-ic {
     width: 22px; height: 22px;
     border-radius: 4px;
@@ -2955,12 +2968,18 @@
   .pill.red    { background: var(--rag-red-l);    color: var(--rag-red); animation: none; }
   .pill.na     { background: var(--rag-na-l);     color: var(--rag-na); }
 
-  .kpi::before, .kpi-exec::before {
-    top: 0; bottom: 0; left: 0; right: auto;
-    width: 3px; height: auto;
+  /* Le statut se lit a la pastille placee devant le libelle, pas a un lisere
+     decoratif sur le bord de la carte. */
+  .kpi::before, .kpi::after, .kpi-exec::before, .kpi-exec::after { display: none; }
+  .kpi .kpi-label { display: flex; align-items: center; gap: 7px; }
+  .kpi .kpi-label::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--rag-na); flex-shrink: 0;
   }
-  .kpi::after, .kpi-exec::after { display: none; }
-  [dir="rtl"] .kpi::before, [dir="rtl"] .kpi-exec::before { left: auto; right: 0; }
+  .kpi.green  .kpi-label::before { background: var(--rag-green); }
+  .kpi.yellow .kpi-label::before { background: var(--rag-yellow); }
+  .kpi.orange .kpi-label::before { background: var(--rag-orange); }
+  .kpi.red    .kpi-label::before { background: var(--rag-red); }
 
   .kpi .kpi-value { color: var(--ink); font-family: var(--font); font-weight: 600; }
   .kpi.green .kpi-value, .kpi.yellow .kpi-value, .kpi.orange .kpi-value, .kpi.red .kpi-value { color: var(--ink); }
@@ -3552,10 +3571,10 @@
 .cid-dot.jaune{background:#C9A227;box-shadow:0 0 0 3px rgba(201,162,39,.14)}
 /* registre des alertes */
 .cid-al-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;margin-top:6px}
-.cid-al-carte{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--border-2);border-radius:12px;padding:14px 16px}
-.cid-al-carte.rouge{border-left-color:#B3372F}
-.cid-al-carte.orange{border-left-color:#D97B29}
-.cid-al-carte.jaune{border-left-color:#C9A227}
+.cid-al-carte{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.cid-al-carte.rouge .cid-al-t::before{background:#B3372F}
+.cid-al-carte.orange .cid-al-t::before{background:#D97B29}
+.cid-al-carte.jaune .cid-al-t::before{background:#C9A227}
 .cid-al-carte-tete{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .cid-al-dom{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .cid-al-per{margin-left:auto;font-size:11px;color:var(--muted-2)}
@@ -4246,6 +4265,7 @@ const PROGRAMS = [
     dir:"UPS-SANTÉ", groupe:"Outils transversaux",
     sub:[
       { id:"vacc-scenario", i18n_key:"sub_vacc_scenario", label:"Que produirait chaque décision", status:"yellow" },
+      { id:"econometrie", label:"Tests économétriques", status:"green" },
     ]
   },
   {
@@ -11727,6 +11747,121 @@ VIEWS["dsr-apercu"] = () => {
         } catch (e) { return ""; } })()}
       ${card("Plan d'action", "Décisions proposées au Cabinet, avec porteur, mesure de suivi et fréquence de revue",
         `<table class="ap-pl"><thead><tr><th>Rang</th><th>Action</th><th>Porteur</th><th>Mesure de suivi</th><th>Cible</th><th>Revue</th></tr></thead><tbody>${plan}</tbody></table>`)}
+    </div>` };
+};
+
+
+/* ==============================================================
+   OUTILS · TESTS ECONOMETRIQUES
+   Serie chronologique (autocorrelation, racine unitaire, rupture
+   structurelle) et modeles a variable binaire (logit, probit).
+   Les resultats sont calcules sur les series observees ; les
+   limites de chaque test sont enoncees avec le resultat.
+============================================================== */
+let ECO = null;
+fetch("econometrie.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { ECO = j; if (state.sub === "econometrie") renderMain(); }).catch(() => {});
+
+VIEWS["econometrie"] = () => {
+  const crumbs = ["Outils transversaux", "Tests économétriques"];
+  const et = `<div class="ph"><div class="ph-tag">Méthodes quantitatives · UPS-Santé</div>
+    <div class="ph-title">Ce que les séries supportent comme conclusion</div>`;
+  if (!ECO) return { crumbs, html: et + `<div class="ph-sub">Résultats en cours de chargement.</div></div>` };
+
+  const T = ECO.ts, MD = ECO.modeles, L = MD.logit, P = MD.probit;
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const vg = x => x == null ? "ND" : String(x).replace(".", ",");
+  const pfx = x => x == null ? "ND" : x < 0.001 ? "< 0,001" : vg(x);
+  const sig = x => x != null && x < 0.05;
+
+  /* --- correlogramme --- */
+  const aW = 660, aH = 190, aPL = 44, aPB = 30;
+  const aiw = aW - aPL - 14, aih = aH - aPB - 14;
+  const amx = Math.max(...T.acf.map(a => Math.abs(a.r)), T.ic) * 1.15;
+  const AY = v => 14 + aih / 2 - (aih / 2) * v / amx;
+  const bw = aiw / T.acf.length;
+  let ag = `<rect x="${aPL}" y="${AY(T.ic).toFixed(1)}" width="${aiw}" height="${(AY(-T.ic) - AY(T.ic)).toFixed(1)}" fill="#1F3864" opacity=".08"/>`;
+  [-amx, -amx / 2, 0, amx / 2, amx].forEach(v => {
+    ag += `<line x1="${aPL}" y1="${AY(v).toFixed(1)}" x2="${aPL + aiw}" y2="${AY(v).toFixed(1)}" stroke="${v === 0 ? "#75706B" : "#E4E0D5"}"/>
+      <text x="${aPL - 7}" y="${(AY(v) + 4).toFixed(1)}" text-anchor="end" class="pd-ax">${d1(v)}</text>`; });
+  T.acf.forEach((a, i) => {
+    const x = aPL + i * bw + bw / 2, col = Math.abs(a.r) > T.ic ? "#1F3864" : "#A09A93";
+    ag += `<line x1="${x.toFixed(1)}" y1="${AY(0).toFixed(1)}" x2="${x.toFixed(1)}" y2="${AY(a.r).toFixed(1)}" stroke="${col}" stroke-width="3.4"/>
+      <circle cx="${x.toFixed(1)}" cy="${AY(a.r).toFixed(1)}" r="3" fill="${col}"><title>Décalage ${a.k} mois · r = ${vg(a.r)}</title></circle>`;
+    if (a.k % 3 === 0 || a.k === 1) ag += `<text x="${x.toFixed(1)}" y="${14 + aih + 16}" text-anchor="middle" class="pd-ax">${a.k}</text>`;
+  });
+  ag += `<text x="${aPL + aiw / 2}" y="${aH - 4}" text-anchor="middle" class="pd-axt">Décalage, en mois</text>`;
+  const sig12 = T.acf.find(a => a.k === 12);
+  const correlo = `<svg viewBox="0 0 ${aW} ${aH}" style="width:100%;height:auto;display:block">${ag}</svg>
+    <div class="pd-leg"><span><i style="background:#1F3864"></i>Au-delà du seuil</span>
+      <span><i style="background:#A09A93"></i>Non distinguable de zéro</span>
+      <span><i style="background:#D5DCE9"></i>Intervalle de non-significativité, ± ${vg(T.ic)}</span></div>
+    <div class="dd-test-note" style="margin-top:12px">
+      L'autocorrélation mesure combien un mois ressemble au mois qui le précède de k mois. Elle vaut
+      ${vg(T.acf[0].r)} à un mois de décalage et ${vg(sig12 ? sig12.r : null)} à douze mois. Une valeur élevée à
+      douze mois est la signature d'un cycle annuel.
+      <br><br>Sur ${T.n} observations, une autocorrélation n'est distinguable de zéro qu'au-delà de
+      ${vg(T.ic)}. ${Math.abs(T.acf[0].r) > T.ic
+        ? "La série est autocorrélée à court terme : les mois ne sont pas indépendants, ce qui interdit de traiter chaque relevé comme une observation nouvelle dans un test."
+        : "Aucune autocorrélation nette à court terme."}</div>`;
+
+  /* --- verdicts serie --- */
+  const serie = `
+    <div class="ec-verdict"><b>${vg(T.adf.t)}</b><span>
+      <strong>Racine unitaire, test de Dickey-Fuller augmenté.</strong> La statistique vaut ${vg(T.adf.t)} contre
+      un seuil de ${vg(T.adf.crit["5%"])} à 5%. ${T.adf.stationnaire
+        ? "L'hypothèse de racine unitaire est rejetée : la série revient vers son niveau moyen et une projection linéaire garde un sens."
+        : "L'hypothèse de racine unitaire n'est pas rejetée : la série dérive sans point d'ancrage et toute extrapolation linéaire est fragile."}
+      </span></div>
+    <div class="ec-verdict"><b>F = ${vg(T.chow.F)}</b><span>
+      <strong>Rupture structurelle, test de Chow.</strong> Le point de rupture le plus probable est
+      ${T.chow.p}, avec F = ${vg(T.chow.F)} contre un seuil de ${vg(T.chow.seuil)} à 5%.
+      ${T.chow.signif
+        ? `La rupture est significative : la relation entre le temps et la couverture n'est pas la même avant et après ${T.chow.p}. Avant de projeter, il faut savoir ce qui s'est passé à cette date, changement de périmètre de rapportage, introduction d'un antigène ou campagne.`
+        : "Aucune rupture significative : la série se comporte de la même façon sur toute la période."}
+      </span></div>
+    <div class="dd-test-note">
+      Ces deux tests conditionnent tout ce que le simulateur produit. Une série non stationnaire rend la
+      prévision peu fiable ; une rupture structurelle non identifiée fait estimer la tendance sur deux régimes
+      différents mélangés. Ils sont présentés avant les modèles, non après.</div>`;
+
+  /* --- modeles --- */
+  const ligne = (i, nom) => `<tr><td>${nom}</td>
+    <td>${vg(L.beta[i])}</td><td>${vg(L.se[i])}</td><td>${vg(L.p[i])}${i ? `<span class="ec-sig ${sig(L.p[i]) ? "oui" : "non"}">${sig(L.p[i]) ? "signif." : "n.s."}</span>` : ""}</td>
+    <td>${vg(P.beta[i])}</td><td>${vg(P.p[i])}</td>
+    <td>${L.me[i] == null ? "—" : (L.me[i] > 0 ? "+" : "") + vg(L.me[i]) + " pts"}</td></tr>`;
+  const modeles = `
+    <div class="dd-test-note" style="margin-bottom:12px">
+      <strong>Événement modélisé.</strong> ${MD.evenement}. Sur ${L.n} observations province-mois, il se produit
+      dans ${vg(L.taux)}% des cas. Le logit et le probit sont estimés séparément : deux fonctions de lien
+      différentes sur les mêmes données, un résultat qui ne tient que sur l'une des deux serait suspect.</div>
+    <table class="ec-tbl"><thead><tr><th>Variable</th><th>Logit β</th><th>Écart-type</th><th>p</th>
+      <th>Probit β</th><th>p</th><th>Effet marginal</th></tr></thead>
+      <tbody>${MD.vars.map((v, i) => ligne(i, v)).join("")}</tbody></table>
+    <div class="ec-verdict" style="margin-top:14px"><b>${vg(L.acc)}%</b><span>
+      d'observations correctement classées, pseudo-R² de McFadden ${vg(L.r2)} pour le logit et ${vg(P.r2)} pour le
+      probit. Les deux liens donnent le même classement des variables et les mêmes seuils de signification.</span></div>
+    <div class="dd-test-note">
+      <strong>Ce que le modèle dit.</strong> L'utilisation du partogramme est le seul prédicteur nettement
+      significatif : ${vg(Math.abs(L.me[3]))} points de probabilité en moins d'être sous la cible pour dix points
+      de partogramme en plus. La couverture prénatale va dans le même sens sans atteindre le seuil
+      (p = ${vg(L.p[1])}), et le stock d'oxytocine du mois précédent n'a aucun effet détectable
+      (p = ${vg(L.p[2])}), ce qui confirme par une troisième méthode ce que la corrélation intra-province et le
+      test décalé avaient déjà montré.
+      <br><br><strong>Ce qu'il ne dit pas.</strong> Le partogramme n'est pas nécessairement une cause. C'est un
+      marqueur de qualité de la prise en charge intrapartum, et il est plausible qu'il mesure surtout la capacité
+      générale de la structure, laquelle produit aussi l'accouchement assisté. Le modèle établit une association
+      robuste, pas un mécanisme. Les observations d'une même province ne sont par ailleurs pas indépendantes, ce
+      qui rend les écarts-types optimistes : les seuils de signification sont à lire comme des ordres de
+      grandeur, non comme des décisions.</div>`;
+
+  return { crumbs, html: et +
+    `<div class="ph-sub">Tests conduits sur les séries observées du tableau de bord. Chaque résultat est
+      présenté avec la condition qui le rend valide et avec ce qu'il ne permet pas de conclure.</div></div>
+    <div class="content">
+      ${card("Structure temporelle de la série", `Couverture Penta 3 nationale, ${T.n} mois observés`, correlo)}
+      ${card("Stationnarité et rupture", "Deux conditions préalables à toute projection", serie)}
+      ${card("Modèles à variable binaire", "Logit et probit estimés sur les mêmes données", modeles)}
     </div>` };
 };
 
