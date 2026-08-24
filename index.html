@@ -264,6 +264,18 @@
   .ec-verdict{display:flex;gap:12px;align-items:baseline;padding:11px 14px;background:var(--surface-2);
     border:1px solid var(--border);border-radius:6px;margin-bottom:12px;font-size:12.5px;line-height:1.55}
   .ec-verdict b{font-family:var(--font-h);font-size:16px;color:var(--ink);white-space:nowrap}
+  .ec-cmd{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;padding-bottom:14px;margin-bottom:14px;
+    border-bottom:1px dashed var(--border)}
+  .ec-cmd label{display:flex;flex-direction:column;gap:4px;font-size:10.5px;letter-spacing:.7px;
+    text-transform:uppercase;color:var(--muted);font-weight:700;flex:1;min-width:150px}
+  .ec-cmd .sc-sel{margin-bottom:0}
+  .ec-covwrap{margin-bottom:14px}
+  .ec-covlbl{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:7px}
+  .ec-covlist{display:flex;gap:5px;flex-wrap:wrap;max-height:104px;overflow-y:auto;padding:2px}
+  .ec-cov{font-size:11px;padding:4px 9px;border-radius:4px;border:1px solid var(--border-2);
+    background:var(--surface);color:var(--body);cursor:pointer}
+  .ec-cov:hover{border-color:var(--royal);color:var(--royal)}
+  .ec-cov.on{background:var(--royal);color:#fff;border-color:var(--royal)}
   .header {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -11753,115 +11765,315 @@ VIEWS["dsr-apercu"] = () => {
 
 /* ==============================================================
    OUTILS · TESTS ECONOMETRIQUES
-   Serie chronologique (autocorrelation, racine unitaire, rupture
-   structurelle) et modeles a variable binaire (logit, probit).
-   Les resultats sont calcules sur les series observees ; les
-   limites de chaque test sont enoncees avec le resultat.
+   Boite a outils generique : tout indicateur du catalogue
+   transversal peut alimenter une analyse de serie chronologique
+   ou un modele a variable binaire. Les calculs sont faits a la
+   volee, la lecture des resultats est produite a partir des
+   valeurs obtenues et non ecrite a l'avance.
 ============================================================== */
-let ECO = null;
-fetch("econometrie.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
-  .then(j => { ECO = j; if (state.sub === "econometrie") renderMain(); }).catch(() => {});
+const ECOS = { ind: "pev:Penta3", scope: null, dep: "dsr:acc_qualifie", seuil: 80,
+               sens: "sous", cov: ["dsr:cpn1", "dsr:partogramme", "dsr:stock_oxytocine"], lien: "logit" };
+function setEco(k, v) {
+  if (k === "cov") { const i = ECOS.cov.indexOf(v); if (i >= 0) ECOS.cov.splice(i, 1); else if (ECOS.cov.length < 5) ECOS.cov.push(v); }
+  else ECOS[k] = (k === "seuil") ? parseFloat(v) : (v === "" ? null : v);
+  renderMain();
+}
+
+/* ---------- primitives ---------- */
+function ecoMoy(v) { return v.reduce((a, b) => a + b, 0) / v.length; }
+function ecoVar(v) { const m = ecoMoy(v); return v.reduce((a, b) => a + (b - m) * (b - m), 0) / v.length; }
+function ecoACF(v, k) { const n = v.length, m = ecoMoy(v);
+  const d = v.reduce((a, b) => a + (b - m) * (b - m), 0); if (!d) return 0;
+  let s = 0; for (let i = 0; i + k < n; i++) s += (v[i] - m) * (v[i + k] - m); return s / d; }
+function ecoInv(A) { const k = A.length;
+  const M = A.map((r, i) => r.concat(Array.from({ length: k }, (_, j) => i === j ? 1 : 0)));
+  for (let c = 0; c < k; c++) {
+    let piv = c; for (let r = c; r < k; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+    [M[c], M[piv]] = [M[piv], M[c]];
+    const d = M[c][c]; if (Math.abs(d) < 1e-12) return null;
+    M[c] = M[c].map(x => x / d);
+    for (let r = 0; r < k; r++) if (r !== c) { const f = M[r][c]; M[r] = M[r].map((x, j) => x - f * M[c][j]); }
+  }
+  return M.map(r => r.slice(k)); }
+function ecoOLS(X, y) { const k = X[0].length, n = X.length;
+  const XtX = Array.from({ length: k }, (_, a) => Array.from({ length: k }, (_, b) =>
+    X.reduce((s, r, i) => s + r[a] * r[b], 0)));
+  const Xty = Array.from({ length: k }, (_, a) => X.reduce((s, r, i) => s + r[a] * y[i], 0));
+  const inv = ecoInv(XtX); if (!inv) return null;
+  const beta = inv.map(r => r.reduce((s, v, b) => s + v * Xty[b], 0));
+  const res = y.map((v, i) => v - X[i].reduce((s, x, a) => s + x * beta[a], 0));
+  const s2 = res.reduce((s, r) => s + r * r, 0) / Math.max(1, n - k);
+  return { beta, se: inv.map((r, a) => Math.sqrt(Math.max(0, s2 * r[a]))), res, sse: res.reduce((s, r) => s + r * r, 0), n, k }; }
+function ecoNorm(z) { return 0.5 * (1 + ecoErf(Math.abs(z) / Math.SQRT2)); }
+function ecoErf(x) { const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return y; }
+function ecoP(t) { return t == null || !isFinite(t) ? null : Math.max(0, Math.min(1, 2 * (1 - ecoNorm(t)))); }
+function ecoGLM(X, y, lien) {
+  const k = X[0].length, n = X.length; let beta = new Array(k).fill(0), inv = null;
+  const F = lien === "logit" ? (z => 1 / (1 + Math.exp(-Math.max(-35, Math.min(35, z)))))
+                             : (z => { const a = Math.max(-8, Math.min(8, z)); return a >= 0 ? ecoNorm(a) : 1 - ecoNorm(a); });
+  const f = lien === "logit" ? (z => { const q = F(z); return q * (1 - q); })
+                             : (z => Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI));
+  for (let it = 0; it < 60; it++) {
+    const g = new Array(k).fill(0), H = Array.from({ length: k }, () => new Array(k).fill(0));
+    for (let i = 0; i < n; i++) {
+      const z = X[i].reduce((s, x, a) => s + x * beta[a], 0);
+      const q = Math.min(Math.max(F(z), 1e-9), 1 - 1e-9), d = f(z);
+      const w = d * d / (q * (1 - q)), r = (y[i] - q) * d / (q * (1 - q));
+      for (let a = 0; a < k; a++) { g[a] += X[i][a] * r;
+        for (let b = 0; b < k; b++) H[a][b] += w * X[i][a] * X[i][b]; }
+    }
+    inv = ecoInv(H); if (!inv) break;
+    const step = inv.map(r => r.reduce((s, v, b) => s + v * g[b], 0));
+    beta = beta.map((v, a) => v + step[a]);
+    if (Math.max(...step.map(Math.abs)) < 1e-8) break;
+  }
+  if (!inv) return null;
+  let ll = 0, ok = 0; const me = new Array(k).fill(0);
+  for (let i = 0; i < n; i++) {
+    const z = X[i].reduce((s, x, a) => s + x * beta[a], 0);
+    const q = Math.min(Math.max(F(z), 1e-9), 1 - 1e-9);
+    ll += y[i] * Math.log(q) + (1 - y[i]) * Math.log(1 - q);
+    if ((q >= .5 ? 1 : 0) === y[i]) ok++;
+    for (let a = 1; a < k; a++) me[a] += f(z) * beta[a];
+  }
+  const pb = ecoMoy(y);
+  const ll0 = n * (pb * Math.log(Math.max(pb, 1e-9)) + (1 - pb) * Math.log(Math.max(1 - pb, 1e-9)));
+  return { beta, se: inv.map((r, a) => Math.sqrt(Math.max(0, r[a]))), n, k, ll, ll0,
+    r2: 1 - ll / ll0, acc: 100 * ok / n, taux: 100 * pb, me: me.map(v => 100 * v / n), lien }; }
+
+/* ---------- assemblage des donnees ---------- */
+function ecoSerie(id, scope) { const c = cidCatalogue().find(x => x.id === id); if (!c) return null;
+  const s = c.serie(scope); if (!s) return null;
+  const per = Object.keys(s).filter(p => s[p] != null).sort();
+  return per.length ? { per, v: per.map(p => s[p]), c } : null; }
+function ecoPanel(depId, covIds, seuil, sens) {
+  const cat = cidCatalogue(); const dep = cat.find(x => x.id === depId);
+  const cov = covIds.map(i => cat.find(x => x.id === i)).filter(Boolean);
+  if (!dep) return null;
+  const rows = [];
+  PROVINCES.forEach(pv => {
+    const sd = dep.serie(pv.id); if (!sd) return;
+    const sc = cov.map(c => c.serie(pv.id));
+    if (sc.some(x => !x)) return;
+    const per = Object.keys(sd).filter(p => sd[p] != null && sc.every(x => x[p] != null)).sort();
+    if (per.length < 6) return;
+    /* les variables explicatives sont centrees sur la moyenne de leur province :
+       le modele exploite la variation dans le temps, pas les ecarts de niveau */
+    const moy = sc.map(x => ecoMoy(per.map(p => x[p])));
+    per.forEach(p => {
+      rows.push({ pr: pv.id, p,
+        y: sens === "sous" ? (sd[p] < seuil ? 1 : 0) : (sd[p] > seuil ? 1 : 0),
+        x: sc.map((x, a) => x[p] - moy[a]) });
+    });
+  });
+  /* Les explicatives sont ensuite ramenees a un ecart-type commun. Sans cela un
+     stock en milliers d'unites et un taux en points donnent des coefficients
+     incomparables, celui du stock etant arrondi a zero. */
+  const sd = cov.map((_, a) => {
+    const col = rows.map(r => r.x[a]);
+    return Math.sqrt(ecoVar(col)) || 1; });
+  rows.forEach(r => { r.x = r.x.map((v, a) => v / sd[a]); });
+  return { rows, dep, cov, sd }; }
 
 VIEWS["econometrie"] = () => {
   const crumbs = ["Outils transversaux", "Tests économétriques"];
   const et = `<div class="ph"><div class="ph-tag">Méthodes quantitatives · UPS-Santé</div>
     <div class="ph-title">Ce que les séries supportent comme conclusion</div>`;
-  if (!ECO) return { crumbs, html: et + `<div class="ph-sub">Résultats en cours de chargement.</div></div>` };
+  const cat = cidCatalogue();
+  if (!cat.length) return { crumbs, html: et + `<div class="ph-sub">Catalogue en cours de chargement.</div></div>` };
 
-  const T = ECO.ts, MD = ECO.modeles, L = MD.logit, P = MD.probit;
-  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
-  const vg = x => x == null ? "ND" : String(x).replace(".", ",");
-  const pfx = x => x == null ? "ND" : x < 0.001 ? "< 0,001" : vg(x);
-  const sig = x => x != null && x < 0.05;
+  const d1 = x => x == null || !isFinite(x) ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const d3 = x => x == null || !isFinite(x) ? "ND" : String(Math.round(x * 1000) / 1000).replace(".", ",");
+  const pf = x => x == null ? "ND" : x < 0.001 ? "< 0,001" : d3(x);
+  const doms = [...new Set(cat.map(c => c.dom))];
+  const opts = (sel, exclure) => doms.map(dm => `<optgroup label="${dm}">${
+    cat.filter(c => c.dom === dm && c.id !== exclure).map(c =>
+      `<option value="${c.id}" ${c.id === sel ? "selected" : ""}>${c.libelle}</option>`).join("")}</optgroup>`).join("");
 
-  /* --- correlogramme --- */
-  const aW = 660, aH = 190, aPL = 44, aPB = 30;
-  const aiw = aW - aPL - 14, aih = aH - aPB - 14;
-  const amx = Math.max(...T.acf.map(a => Math.abs(a.r)), T.ic) * 1.15;
-  const AY = v => 14 + aih / 2 - (aih / 2) * v / amx;
-  const bw = aiw / T.acf.length;
-  let ag = `<rect x="${aPL}" y="${AY(T.ic).toFixed(1)}" width="${aiw}" height="${(AY(-T.ic) - AY(T.ic)).toFixed(1)}" fill="#1F3864" opacity=".08"/>`;
-  [-amx, -amx / 2, 0, amx / 2, amx].forEach(v => {
-    ag += `<line x1="${aPL}" y1="${AY(v).toFixed(1)}" x2="${aPL + aiw}" y2="${AY(v).toFixed(1)}" stroke="${v === 0 ? "#75706B" : "#E4E0D5"}"/>
-      <text x="${aPL - 7}" y="${(AY(v) + 4).toFixed(1)}" text-anchor="end" class="pd-ax">${d1(v)}</text>`; });
-  T.acf.forEach((a, i) => {
-    const x = aPL + i * bw + bw / 2, col = Math.abs(a.r) > T.ic ? "#1F3864" : "#A09A93";
-    ag += `<line x1="${x.toFixed(1)}" y1="${AY(0).toFixed(1)}" x2="${x.toFixed(1)}" y2="${AY(a.r).toFixed(1)}" stroke="${col}" stroke-width="3.4"/>
-      <circle cx="${x.toFixed(1)}" cy="${AY(a.r).toFixed(1)}" r="3" fill="${col}"><title>Décalage ${a.k} mois · r = ${vg(a.r)}</title></circle>`;
-    if (a.k % 3 === 0 || a.k === 1) ag += `<text x="${x.toFixed(1)}" y="${14 + aih + 16}" text-anchor="middle" class="pd-ax">${a.k}</text>`;
-  });
-  ag += `<text x="${aPL + aiw / 2}" y="${aH - 4}" text-anchor="middle" class="pd-axt">Décalage, en mois</text>`;
-  const sig12 = T.acf.find(a => a.k === 12);
-  const correlo = `<svg viewBox="0 0 ${aW} ${aH}" style="width:100%;height:auto;display:block">${ag}</svg>
-    <div class="pd-leg"><span><i style="background:#1F3864"></i>Au-delà du seuil</span>
-      <span><i style="background:#A09A93"></i>Non distinguable de zéro</span>
-      <span><i style="background:#D5DCE9"></i>Intervalle de non-significativité, ± ${vg(T.ic)}</span></div>
-    <div class="dd-test-note" style="margin-top:12px">
-      L'autocorrélation mesure combien un mois ressemble au mois qui le précède de k mois. Elle vaut
-      ${vg(T.acf[0].r)} à un mois de décalage et ${vg(sig12 ? sig12.r : null)} à douze mois. Une valeur élevée à
-      douze mois est la signature d'un cycle annuel.
-      <br><br>Sur ${T.n} observations, une autocorrélation n'est distinguable de zéro qu'au-delà de
-      ${vg(T.ic)}. ${Math.abs(T.acf[0].r) > T.ic
-        ? "La série est autocorrélée à court terme : les mois ne sont pas indépendants, ce qui interdit de traiter chaque relevé comme une observation nouvelle dans un test."
-        : "Aucune autocorrélation nette à court terme."}</div>`;
+  /* ============ A · SERIE CHRONOLOGIQUE ============ */
+  const S = ecoSerie(ECOS.ind, ECOS.scope);
+  let blocA;
+  const varS = S ? ecoVar(S.v) : 0;
+  const distinctes = S ? new Set(S.v.map(v => Math.round(v * 1000))).size : 0;
+  if (!S || S.v.length < 12) {
+    blocA = `<div class="dd-test-note"><strong>Série trop courte.</strong>
+      ${S ? S.v.length : 0} observation${S && S.v.length > 1 ? "s" : ""} disponible${S && S.v.length > 1 ? "s" : ""},
+      douze au minimum pour un test de série chronologique. Choisissez un autre indicateur, ou le niveau national
+      lorsque la série provinciale est plus courte.</div>`;
+  } else if (varS < 1e-9 || distinctes < 5) {
+    blocA = `<div class="dd-test-note"><strong>Série trop peu variable.</strong> Elle ne prend que
+      ${distinctes} valeur${distinctes > 1 ? "s" : ""} distincte${distinctes > 1 ? "s" : ""} sur ${S.v.length}
+      observations. Une série quasi constante, souvent une suite de zéros, ne permet ni d'estimer une
+      autocorrélation ni de tester une racine unitaire. C'est en soi une information : l'indicateur n'est
+      pratiquement pas renseigné ou l'événement ne survient pas.</div>`;
+  } else {
+    const y = S.v, n = y.length, ic = 1.96 / Math.sqrt(n);
+    const kmax = Math.min(18, n - 3);
+    const ACF = Array.from({ length: kmax }, (_, i) => ({ k: i + 1, r: ecoACF(y, i + 1) }));
+    /* Dickey-Fuller augmente d'ordre 1 */
+    const mu = ecoMoy(y), dy = y.slice(1).map((v, i) => v - y[i]);
+    const Xa = [], Za = [];
+    for (let i = 1; i < n - 1; i++) { Xa.push([y[i] - mu, dy[i - 1]]); Za.push(dy[i]); }
+    const RA = Xa.length > 4 ? ecoOLS(Xa, Za) : null;
+    const tADF = RA && RA.se[0] ? RA.beta[0] / RA.se[0] : null;
+    const crit = -1.95, stat = tADF != null && tADF < crit;
+    /* Chow */
+    const sse = v => { const m = v.length, xs = v.map((_, i) => i), mx = ecoMoy(xs), my = ecoMoy(v);
+      const den = xs.reduce((s, x) => s + (x - mx) * (x - mx), 0) || 1;
+      const b = xs.reduce((s, x, i) => s + (x - mx) * (v[i] - my), 0) / den, a = my - b * mx;
+      return v.reduce((s, val, i) => s + Math.pow(val - (a + b * xs[i]), 2), 0); };
+    const St = sse(y); let best = null;
+    for (let c = 6; c < n - 6; c++) { const F = ((St - (sse(y.slice(0, c)) + sse(y.slice(c)))) / 2) / ((sse(y.slice(0, c)) + sse(y.slice(c))) / (n - 4));
+      if (!best || F > best.F) best = { i: c, p: S.per[c], F }; }
+    const seuilF = 3.23;
+    /* correlogramme */
+    const aW = 660, aH = 190, aPL = 46, aPB = 30, aiw = aW - aPL - 14, aih = aH - aPB - 14;
+    const amx = Math.max(...ACF.map(a => Math.abs(a.r)), ic) * 1.15;
+    const AY = v => 14 + aih / 2 - (aih / 2) * v / amx, bw = aiw / ACF.length;
+    let ag = `<rect x="${aPL}" y="${AY(ic).toFixed(1)}" width="${aiw}" height="${(AY(-ic) - AY(ic)).toFixed(1)}" fill="#1F3864" opacity=".08"/>`;
+    [-amx, -amx / 2, 0, amx / 2, amx].forEach(v => {
+      ag += `<line x1="${aPL}" y1="${AY(v).toFixed(1)}" x2="${aPL + aiw}" y2="${AY(v).toFixed(1)}" stroke="${v === 0 ? "#75706B" : "#E4E0D5"}"/>
+        <text x="${aPL - 7}" y="${(AY(v) + 4).toFixed(1)}" text-anchor="end" class="pd-ax">${d1(v)}</text>`; });
+    ACF.forEach((a, i) => { const x = aPL + i * bw + bw / 2, col = Math.abs(a.r) > ic ? "#1F3864" : "#A09A93";
+      ag += `<line x1="${x.toFixed(1)}" y1="${AY(0).toFixed(1)}" x2="${x.toFixed(1)}" y2="${AY(a.r).toFixed(1)}" stroke="${col}" stroke-width="3.4"/>
+        <circle cx="${x.toFixed(1)}" cy="${AY(a.r).toFixed(1)}" r="3" fill="${col}"><title>Décalage ${a.k} mois · r = ${d3(a.r)}</title></circle>`;
+      if (a.k % 3 === 0 || a.k === 1) ag += `<text x="${x.toFixed(1)}" y="${14 + aih + 16}" text-anchor="middle" class="pd-ax">${a.k}</text>`; });
+    ag += `<text x="${aPL + aiw / 2}" y="${aH - 4}" text-anchor="middle" class="pd-axt">Décalage, en mois</text>`;
+    const a12 = ACF.find(a => a.k === 12);
+    const nSig = ACF.filter(a => Math.abs(a.r) > ic).length;
+    blocA = `<svg viewBox="0 0 ${aW} ${aH}" style="width:100%;height:auto;display:block">${ag}</svg>
+      <div class="pd-leg"><span><i style="background:#1F3864"></i>Au-delà du seuil</span>
+        <span><i style="background:#A09A93"></i>Non distinguable de zéro</span>
+        <span><i style="background:#D5DCE9"></i>Bande de non-significativité, ± ${d3(ic)}</span></div>
+      <div class="dd-test-note" style="margin-top:12px">
+        <strong>${S.c.libelle}</strong>${ECOS.scope ? " · " + (PROVINCES.find(p => p.id === ECOS.scope) || {}).name : " · national"},
+        ${n} observations de ${S.per[0]} à ${S.per[n - 1]}.
+        ${nSig ? `${nSig} décalage${nSig > 1 ? "s dépassent" : " dépasse"} le seuil de ${d3(ic)}.` : "Aucun décalage ne dépasse le seuil : la série se comporte comme un bruit, aucune structure temporelle exploitable."}
+        ${a12 && Math.abs(a12.r) > ic ? ` L'autocorrélation à douze mois vaut ${d3(a12.r)}, signature d'un cycle annuel.`
+          : a12 ? ` À douze mois elle vaut ${d3(a12.r)}, sous le seuil : pas de cycle annuel détectable.` : ""}
+        ${Math.abs(ACF[0].r) > ic ? " Les mois voisins se ressemblent, ce qui interdit de traiter chaque relevé comme une observation indépendante dans un test." : ""}</div>
+      <div class="ec-verdict" style="margin-top:12px"><b>${tADF == null || !isFinite(tADF) ? "non estimé" : d3(tADF)}</b><span>
+        <strong>Racine unitaire, Dickey-Fuller augmenté.</strong> Statistique ${d3(tADF)} contre ${d1(crit)} à 5%.
+        ${(tADF == null || !isFinite(tADF)) ? "La régression auxiliaire du test est dégénérée sur cette série, vraisemblablement du fait de valeurs répétées à l'identique. Le test n'est pas concluant."
+          : stat ? "L'hypothèse de racine unitaire est rejetée : la série revient vers son niveau moyen, une projection garde un sens."
+                 : "L'hypothèse de racine unitaire n'est pas rejetée : la série dérive sans point d'ancrage, toute extrapolation linéaire est fragile."}</span></div>
+      <div class="ec-verdict"><b>${!best || !isFinite(best.F) ? "non estimé" : "F = " + d1(best.F)}</b><span>
+        <strong>Rupture structurelle, test de Chow.</strong> ${!best || !isFinite(best.F)
+          ? "La statistique n'est pas calculable : la série est trop courte ou trop plate pour comparer deux sous-périodes."
+          : `Point le plus probable ${best.p}, F = ${d1(best.F)} contre ${d1(seuilF)} à 5%.`}
+        ${best && isFinite(best.F) && best.F > seuilF ? `Rupture significative : la relation entre le temps et l'indicateur diffère avant et après ${best.p}. Identifier l'événement de cette date avant toute projection.`
+                          : (best && isFinite(best.F) ? "Aucune rupture significative : la série se comporte de la même façon sur toute la période." : "")}</span></div>`;
+  }
 
-  /* --- verdicts serie --- */
-  const serie = `
-    <div class="ec-verdict"><b>${vg(T.adf.t)}</b><span>
-      <strong>Racine unitaire, test de Dickey-Fuller augmenté.</strong> La statistique vaut ${vg(T.adf.t)} contre
-      un seuil de ${vg(T.adf.crit["5%"])} à 5%. ${T.adf.stationnaire
-        ? "L'hypothèse de racine unitaire est rejetée : la série revient vers son niveau moyen et une projection linéaire garde un sens."
-        : "L'hypothèse de racine unitaire n'est pas rejetée : la série dérive sans point d'ancrage et toute extrapolation linéaire est fragile."}
-      </span></div>
-    <div class="ec-verdict"><b>F = ${vg(T.chow.F)}</b><span>
-      <strong>Rupture structurelle, test de Chow.</strong> Le point de rupture le plus probable est
-      ${T.chow.p}, avec F = ${vg(T.chow.F)} contre un seuil de ${vg(T.chow.seuil)} à 5%.
-      ${T.chow.signif
-        ? `La rupture est significative : la relation entre le temps et la couverture n'est pas la même avant et après ${T.chow.p}. Avant de projeter, il faut savoir ce qui s'est passé à cette date, changement de périmètre de rapportage, introduction d'un antigène ou campagne.`
-        : "Aucune rupture significative : la série se comporte de la même façon sur toute la période."}
-      </span></div>
-    <div class="dd-test-note">
-      Ces deux tests conditionnent tout ce que le simulateur produit. Une série non stationnaire rend la
-      prévision peu fiable ; une rupture structurelle non identifiée fait estimer la tendance sur deux régimes
-      différents mélangés. Ils sont présentés avant les modèles, non après.</div>`;
+  /* ============ B · MODELE A VARIABLE BINAIRE ============ */
+  const PN = ecoPanel(ECOS.dep, ECOS.cov, ECOS.seuil, ECOS.sens);
+  let blocB;
+  if (!PN || PN.rows.length < 40 || !PN.cov.length) {
+    blocB = `<div class="dd-test-note">Données insuffisantes pour estimer le modèle.
+      ${PN ? PN.rows.length : 0} observations province-mois avec toutes les variables renseignées simultanément,
+      quarante au minimum, et au moins une variable explicative. Réduisez le nombre de variables ou choisissez des
+      indicateurs issus de la même source.</div>`;
+  } else {
+    const X = PN.rows.map(r => [1].concat(r.x)), Y = PN.rows.map(r => r.y);
+    const taux = ecoMoy(Y);
+    if (taux < 0.03 || taux > 0.97) {
+      blocB = `<div class="dd-test-note">L'événement se produit dans ${d1(100 * taux)}% des observations.
+        En deçà de 3% ou au-delà de 97%, l'estimation n'est plus fiable. Déplacez le seuil.</div>`;
+    } else {
+      const L = ecoGLM(X, Y, "logit"), P2 = ecoGLM(X, Y, "probit");
+      if (!L || !P2) blocB = `<div class="dd-test-note">L'estimation n'a pas convergé, vraisemblablement du fait de
+        variables explicatives trop proches les unes des autres. Retirez-en une.</div>`;
+      else {
+        const noms = ["Constante"].concat(PN.cov.map((c, a) => `${c.libelle}, par écart-type (${d1(PN.sd[a])} ${c.unite === "%" ? "pts" : c.unite})`));
+        const tL = L.beta.map((b, a) => L.se[a] ? b / L.se[a] : null);
+        const tP = P2.beta.map((b, a) => P2.se[a] ? b / P2.se[a] : null);
+        const pL = tL.map(ecoP), pP = tP.map(ecoP);
+        const lignes = noms.map((nm, a) => `<tr><td>${nm}</td>
+          <td>${d3(L.beta[a])}</td><td>${d3(L.se[a])}</td>
+          <td>${pf(pL[a])}${a ? `<span class="ec-sig ${pL[a] < .05 ? "oui" : "non"}">${pL[a] < .05 ? "signif." : "n.s."}</span>` : ""}</td>
+          <td>${d3(P2.beta[a])}</td><td>${pf(pP[a])}</td>
+          <td>${a ? (L.me[a] > 0 ? "+" : "") + d1(L.me[a]) + " pts" : "—"}</td></tr>`).join("");
+        /* lecture produite a partir des resultats */
+        const rangs = noms.map((nm, a) => ({ a, nm, p: pL[a], me: L.me[a] })).slice(1)
+          .sort((x, z) => (x.p == null ? 1 : x.p) - (z.p == null ? 1 : z.p));
+        const rets = rangs.filter(r => r.p != null && r.p < .05);
+        const nuls = rangs.filter(r => r.p != null && r.p >= .05);
+        const memeSigne = noms.slice(1).every((_, i) => Math.sign(L.beta[i + 1]) === Math.sign(P2.beta[i + 1]));
+        blocB = `
+          <div class="dd-test-note" style="margin-bottom:12px">
+            <strong>Événement modélisé.</strong> ${PN.dep.libelle} ${ECOS.sens === "sous" ? "en dessous de" : "au-dessus de"}
+            ${d1(ECOS.seuil)}${PN.dep.unite === "%" ? "%" : " " + PN.dep.unite}, sur ${L.n} observations province-mois.
+            Il se produit dans ${d1(L.taux)}% des cas. Les variables explicatives sont centrées sur la moyenne de
+            chaque province : le modèle exploite la variation dans le temps et non les écarts de niveau entre
+            territoires.</div>
+          <table class="ec-tbl"><thead><tr><th>Variable</th><th>Logit β</th><th>Écart-type</th><th>p</th>
+            <th>Probit β</th><th>p</th><th>Effet marginal</th></tr></thead><tbody>${lignes}</tbody></table>
+          <div class="ec-verdict" style="margin-top:14px"><b>${d1(L.acc)}%</b><span>
+            d'observations correctement classées, pseudo-R² de McFadden ${d3(L.r2)} pour le logit et ${d3(P2.r2)}
+            pour le probit. ${memeSigne ? "Les deux liens donnent le même sens pour toutes les variables."
+              : "Attention : les deux liens ne concordent pas sur le signe d'au moins une variable, résultat à ne pas retenir."}</span></div>
+          <div class="dd-test-note">
+            <strong>Lecture.</strong> ${rets.length
+              ? `${rets.length === 1 ? "Une seule variable atteint le seuil de 5%" : rets.length + " variables atteignent le seuil de 5%"} : ${
+                rets.map(r => `${r.nm.split(",")[0]} (${(r.me > 0 ? "+" : "") + d1(r.me)} points de probabilité, p ${pf(r.p)})`).join(", ")}.`
+              : "Aucune variable n'atteint le seuil de 5%. Sur ces données, aucun des facteurs retenus ne prédit l'événement."}
+            ${nuls.length ? ` Sans effet détectable : ${nuls.map(r => r.nm.split(",")[0] + " (p " + pf(r.p) + ")").join(", ")}.` : ""}
+            <br><br><strong>Ce que le modèle ne dit pas.</strong> Une association robuste n'est pas un mécanisme :
+            une variable significative peut mesurer la capacité générale de la structure plutôt qu'agir directement.
+            Les observations d'une même province ne sont pas indépendantes, ce qui rend les écarts-types optimistes ;
+            les seuils se lisent comme des ordres de grandeur. Enfin le modèle ne teste que les variables
+            sélectionnées : une omission importante déplace les coefficients de celles qui restent.</div>`;
+      }
+    }
+  }
 
-  /* --- modeles --- */
-  const ligne = (i, nom) => `<tr><td>${nom}</td>
-    <td>${vg(L.beta[i])}</td><td>${vg(L.se[i])}</td><td>${vg(L.p[i])}${i ? `<span class="ec-sig ${sig(L.p[i]) ? "oui" : "non"}">${sig(L.p[i]) ? "signif." : "n.s."}</span>` : ""}</td>
-    <td>${vg(P.beta[i])}</td><td>${vg(P.p[i])}</td>
-    <td>${L.me[i] == null ? "—" : (L.me[i] > 0 ? "+" : "") + vg(L.me[i]) + " pts"}</td></tr>`;
-  const modeles = `
-    <div class="dd-test-note" style="margin-bottom:12px">
-      <strong>Événement modélisé.</strong> ${MD.evenement}. Sur ${L.n} observations province-mois, il se produit
-      dans ${vg(L.taux)}% des cas. Le logit et le probit sont estimés séparément : deux fonctions de lien
-      différentes sur les mêmes données, un résultat qui ne tient que sur l'une des deux serait suspect.</div>
-    <table class="ec-tbl"><thead><tr><th>Variable</th><th>Logit β</th><th>Écart-type</th><th>p</th>
-      <th>Probit β</th><th>p</th><th>Effet marginal</th></tr></thead>
-      <tbody>${MD.vars.map((v, i) => ligne(i, v)).join("")}</tbody></table>
-    <div class="ec-verdict" style="margin-top:14px"><b>${vg(L.acc)}%</b><span>
-      d'observations correctement classées, pseudo-R² de McFadden ${vg(L.r2)} pour le logit et ${vg(P.r2)} pour le
-      probit. Les deux liens donnent le même classement des variables et les mêmes seuils de signification.</span></div>
-    <div class="dd-test-note">
-      <strong>Ce que le modèle dit.</strong> L'utilisation du partogramme est le seul prédicteur nettement
-      significatif : ${vg(Math.abs(L.me[3]))} points de probabilité en moins d'être sous la cible pour dix points
-      de partogramme en plus. La couverture prénatale va dans le même sens sans atteindre le seuil
-      (p = ${vg(L.p[1])}), et le stock d'oxytocine du mois précédent n'a aucun effet détectable
-      (p = ${vg(L.p[2])}), ce qui confirme par une troisième méthode ce que la corrélation intra-province et le
-      test décalé avaient déjà montré.
-      <br><br><strong>Ce qu'il ne dit pas.</strong> Le partogramme n'est pas nécessairement une cause. C'est un
-      marqueur de qualité de la prise en charge intrapartum, et il est plausible qu'il mesure surtout la capacité
-      générale de la structure, laquelle produit aussi l'accouchement assisté. Le modèle établit une association
-      robuste, pas un mécanisme. Les observations d'une même province ne sont par ailleurs pas indépendantes, ce
-      qui rend les écarts-types optimistes : les seuils de signification sont à lire comme des ordres de
-      grandeur, non comme des décisions.</div>`;
+  /* ============ PANNEAUX DE COMMANDE ============ */
+  const provOpts = `<option value="">National</option>` + PROVINCES.map(p =>
+    `<option value="${p.id}" ${ECOS.scope === p.id ? "selected" : ""}>${p.name}</option>`).join("");
+  const panA = `<div class="ec-cmd">
+    <label>Indicateur<select class="sc-sel" onchange="setEco('ind', this.value)">${opts(ECOS.ind)}</select></label>
+    <label>Niveau<select class="sc-sel" onchange="setEco('scope', this.value)">${provOpts}</select></label></div>`;
+  const covList = cat.filter(c => c.id !== ECOS.dep).map(c =>
+    `<button class="ec-cov ${ECOS.cov.includes(c.id) ? "on" : ""}" onclick="setEco('cov','${c.id}')">${c.libelle}</button>`).join("");
+  const panB = `<div class="ec-cmd">
+    <label>Variable expliquée<select class="sc-sel" onchange="setEco('dep', this.value)">${opts(ECOS.dep)}</select></label>
+    <label>Sens<select class="sc-sel" onchange="setEco('sens', this.value)">
+      <option value="sous" ${ECOS.sens === "sous" ? "selected" : ""}>En dessous du seuil</option>
+      <option value="sur" ${ECOS.sens === "sur" ? "selected" : ""}>Au-dessus du seuil</option></select></label>
+    <label>Seuil<input class="sc-sel" type="number" step="any" value="${ECOS.seuil}" onchange="setEco('seuil', this.value)"></label>
+    </div>
+    <div class="ec-covwrap"><div class="ec-covlbl">Variables explicatives · ${ECOS.cov.length} sur 5 au plus</div>
+      <div class="ec-covlist">${covList}</div></div>`;
 
   return { crumbs, html: et +
-    `<div class="ph-sub">Tests conduits sur les séries observées du tableau de bord. Chaque résultat est
-      présenté avec la condition qui le rend valide et avec ce qu'il ne permet pas de conclure.</div></div>
+    `<div class="ph-sub">Boîte à outils générique. Les ${cat.length} indicateurs du catalogue transversal, tous
+      domaines confondus, peuvent alimenter une analyse de série ou un modèle. Les calculs sont refaits à chaque
+      changement et la lecture des résultats est produite à partir des valeurs obtenues.</div></div>
     <div class="content">
-      ${card("Structure temporelle de la série", `Couverture Penta 3 nationale, ${T.n} mois observés`, correlo)}
-      ${card("Stationnarité et rupture", "Deux conditions préalables à toute projection", serie)}
-      ${card("Modèles à variable binaire", "Logit et probit estimés sur les mêmes données", modeles)}
+      ${card("Série chronologique", "Autocorrélation, racine unitaire et rupture structurelle", panA + blocA)}
+      ${card("Modèle à variable binaire", "Logit et probit estimés sur les mêmes données, en panel province-mois", panB + blocB)}
+      ${card("Comment lire ces sorties", "Ce que chaque test établit et ce qu'il ne peut pas établir",
+        `<div class="dd-limites">
+          <div class="dd-lim"><div class="dd-lim-t">Autocorrélation</div>Mesure la ressemblance entre un mois et
+          celui qui le précède de k mois. Une valeur forte à douze mois signale un cycle annuel. Une série
+          autocorrélée ne fournit pas autant d'information indépendante que son nombre d'observations le suggère.</div>
+          <div class="dd-lim"><div class="dd-lim-t">Racine unitaire</div>Une série non stationnaire n'a pas de
+          niveau d'équilibre : elle peut s'éloigner indéfiniment. Y ajuster une tendance produit des relations
+          apparentes entre séries qui n'ont rien à voir.</div>
+          <div class="dd-lim"><div class="dd-lim-t">Rupture structurelle</div>Le test de Chow cherche la date où la
+          relation change le plus. Il en trouve toujours une ; seul le dépassement du seuil la rend significative,
+          et la date reste à interpréter au regard d'un événement réel.</div>
+          <div class="dd-lim"><div class="dd-lim-t">Logit et probit</div>Deux fonctions de lien pour le même
+          problème. Elles doivent donner le même sens et des seuils voisins. Un résultat qui ne tient que sur l'une
+          des deux ne doit pas être retenu.</div>
+          <div class="dd-lim"><div class="dd-lim-t">Effet marginal</div>Variation de la probabilité de l'événement,
+          en points, pour une unité de la variable, moyennée sur l'échantillon. Plus lisible que le coefficient,
+          qui s'exprime en log-odds pour le logit.</div>
+          <div class="dd-lim"><div class="dd-lim-t">Centrage intra-province</div>Les explicatives sont exprimées en
+          écart à la moyenne de leur province. Cela retire les différences structurelles entre territoires et évite
+          d'attribuer à une variable ce qui relève de la taille ou de la richesse d'une province.</div></div>`)}
     </div>` };
 };
 
