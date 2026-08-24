@@ -4215,6 +4215,7 @@ const PROGRAMS = [
       { id:"dpsis-comp",    i18n_key:"sub_dpsis_comp", label:"Complétude & promptitude",  status:"yellow" },
       { id:"dpsis-qual",    i18n_key:"sub_dpsis_qual", label:"Qualité des données",  status:"green" },
       { id:"dpsis-pev-qual", label:"Qualité des séries PEV", status:"yellow" },
+      { id:"dpsis-dsr-qual", label:"Qualité des séries DSR", status:"orange" },
       { id:"dpsis-carte",   label:"Carte sanitaire · Répertoire", status:"green" },
     ]
   },
@@ -11285,6 +11286,81 @@ VIEWS["dsr-deepdive"] = () => {
       accompagnée selon sa province, et l'écart est presque deux fois plus large que pour la vaccination de son
       enfant.</div>`;
 
+
+  /* ---------- decomposition de la variance ---------- */
+  const V = D.variance || {}, MO = D.mortalite || {}, RT = D.retention || {}, SB = D.stabilite || [];
+  const variance = `<div>${Object.entries(V).map(([k, v]) => {
+      const col = v.part >= 70 ? "#1F3864" : v.part >= 40 ? "#B4913C" : "#8C5A2E";
+      return `<div class="pd-par"><span class="pd-par-n">${v.lib}</span>
+        <span class="pd-par-t"><span class="pd-par-f" style="width:${v.part.toFixed(1)}%;background:${col}"></span></span>
+        <span class="pd-par-v"><b>${d1(v.part)}%</b></span></div>`; }).join("")}
+    <div style="font-size:10.5px;color:var(--muted);margin-top:6px">Part de la variance totale qui sépare les provinces entre elles. Le complément est la variation d'un mois à l'autre au sein d'une même province.</div></div>
+    <div class="dd-test-note" style="margin-top:12px">
+      Sur les indicateurs de couverture, ${d1(Math.max(...Object.values(V).filter(v => v.part > 50).map(v => v.part)))}%
+      au plus de la variation sépare les provinces entre elles. Autrement dit, une province performe de façon
+      stable et une province en retard reste en retard : l'écart est structurel, il ne relève pas d'à-coups de
+      gestion. <strong>Le levier est territorial, pas conjoncturel.</strong>
+      <br><br>La mortalité maternelle hospitalière fait exception : seulement ${d1(V.mort_mat_hosp ? V.mort_mat_hosp.part : 0)}%
+      de sa variance sépare les provinces. Elle est à peu près la même partout et bouge surtout d'un mois sur
+      l'autre à l'intérieur de chaque province. Un indicateur qui ne discrimine pas les territoires ne peut pas
+      servir à les classer ni à leur fixer des cibles différenciées.</div>`;
+
+  /* ---------- gradient de mortalite ---------- */
+  const barM = (r, lbl, col, note) => {
+    const iW = 660, x0 = iW / 2, sc = iW / 2 - 90;
+    return `<div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+      <span style="font-weight:600;color:var(--ink)">${lbl}</span><span style="color:var(--muted)">${note}</span></div>
+      <svg viewBox="0 0 ${iW} 26" style="width:100%;height:26px;display:block">
+        <line x1="0" y1="13" x2="${iW}" y2="13" stroke="#E4E0D5"/>
+        <line x1="${x0}" y1="2" x2="${x0}" y2="24" stroke="#75706B" stroke-width="1.2"/>
+        <rect x="${(x0 - sc * MO.rmin).toFixed(1)}" y="4" width="${(2 * sc * MO.rmin).toFixed(1)}" height="18" fill="#E9E6DE"/>
+        <rect x="${(r < 0 ? x0 + sc * r : x0).toFixed(1)}" y="8" width="${Math.abs(sc * r).toFixed(1)}" height="10" fill="${col}" rx="2"/>
+        <text x="${(x0 + sc * r + (r < 0 ? -6 : 6)).toFixed(1)}" y="17" text-anchor="${r < 0 ? "end" : "start"}"
+          style="font-size:11px;font-weight:700;fill:${col}">r = ${vg(r)}</text></svg></div>`; };
+  const mortal = barM(MO.r_brut, "Entre provinces, moyennes de la période", "#A02233", `p = ${vg(MO.p_brut)} · significatif`)
+    + barM(MO.r, "Dans le temps, écarts de chaque province à sa propre moyenne", "#2E6B3F", `p = ${vg(MO.p)} · non significatif`)
+    + `<div class="dd-test-note">
+      Entre provinces, plus l'accouchement est assisté, moins la mortalité maternelle hospitalière est élevée
+      (r = ${vg(MO.r_brut)}, p = ${vg(MO.p_brut)}). Le gradient est net et va dans le sens attendu.
+      <br><br>Mais il disparaît dès qu'on suit une même province dans le temps : ${vg(MO.r)} sur ${MO.n}
+      observations province-mois, non significatif (p = ${vg(MO.p)}), alors que l'échantillon détectait dès
+      ${vg(MO.rmin)}. Un mois où une province accouche davantage en structure n'est pas un mois où elle enregistre
+      moins de décès.
+      <br><br><strong>Deux lectures possibles, et il faut les nommer.</strong> Soit le gradient entre provinces
+      reflète autre chose que l'accouchement assisté, richesse, densité de structures, profil des femmes. Soit
+      l'indicateur lui-même est piégé : la mortalité est ici hospitalière, donc rapportée aux seuls accouchements
+      en structure. Une province qui capte davantage de cas compliqués voit mécaniquement son ratio monter. Ce
+      test ne permet pas de trancher, et il serait imprudent d'en tirer que renforcer l'accouchement assisté ne
+      réduit pas la mortalité. Il dit seulement que ces données-là ne le démontrent pas.</div>`;
+
+  /* ---------- residus de retention ---------- */
+  const rr = RT.prov || [];
+  const mxr = Math.max(...rr.map(x => Math.abs(x.res)), 1);
+  const reten = `<div>${rr.slice().sort((a, b) => a.res - b.res).map(x => {
+      const w = 50 * Math.abs(x.res) / mxr, neg = x.res < 0;
+      return `<div class="pd-par" style="grid-template-columns:132px 1fr 96px">
+        <span class="pd-par-n">${x.pr}</span>
+        <span class="pd-par-t" style="position:relative;background:#F4F2EC">
+          <span style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#A09A93"></span>
+          <span class="pd-par-f" style="position:absolute;top:0;bottom:0;left:${neg ? 50 - w : 50}%;width:${w}%;
+            background:${neg ? "#A02233" : "#2E6B3F"};border-radius:2px"></span></span>
+        <span class="pd-par-v"><b style="color:${neg ? "#A02233" : "#2E6B3F"}">${x.res > 0 ? "+" : ""}${d1(x.res)}</b> pts</span></div>`;
+    }).join("")}</div>
+    <div class="dd-test-note" style="margin-top:12px">
+      La couverture prénatale explique une part réelle de l'accouchement assisté entre provinces
+      (r = ${vg(RT.r)}, p = ${vg(RT.p)}) : ${d1(RT.pente * 10)} points d'accouchement assisté pour dix points de
+      CPN 1. L'écart affiché ici est le résidu, c'est-à-dire ce qu'une province réalise en plus ou en moins de ce
+      que son niveau de CPN 1 laissait attendre.
+      <br><br>${rr[0].pr} perd ${d1(Math.abs(rr[0].res))} points de plus que prévu, ${rr[rr.length - 1].pr} en gagne
+      ${d1(rr[rr.length - 1].res)}. Ces écarts ne s'expliquent pas par le recrutement prénatal, qui est déjà pris
+      en compte. Ils isolent ce qui se joue entre la dernière consultation et la naissance :
+      orientation, disponibilité de la structure, décision du ménage. <strong>Les provinces à résidu fortement
+      négatif sont celles où une intervention sur la rétention produira le plus d'effet</strong>, puisque les
+      femmes y sont déjà entrées dans le système.
+      ${SB.length ? `<br><br>À noter, ${SB[0].pr} présente la variation mensuelle la plus forte du pays
+      (coefficient de variation de ${d1(SB[0].cv)}%). Une performance instable se pilote autrement qu'une
+      performance basse mais régulière.` : ""}</div>`;
+
   /* ---------- priorites ---------- */
   const actions = `
     <div class="pd-act p1"><div class="pd-act-t">Traiter ${par.slice(0, 3).map(q => q.nom).join(", ")} en premier</div>
@@ -11320,8 +11396,115 @@ VIEWS["dsr-deepdive"] = () => {
       ${card("Le continuum de soins, étape par étape", "Couverture nationale moyenne du semestre", `<div class="pd-casc">${cascHtml}</div>${cascNote}`)}
       ${card("Ce que le stock explique vraiment", "Test d'association intra-province, activité du mois contre stock du mois précédent", infer)}
       ${card("Profil mensuel, 2025 contre 2026", "Accouchements assistés, mois communs aux deux années", saison)}
+      ${card("Où se loge la variation", "Décomposition de la variance entre provinces et dans le temps", variance)}
+      ${card("L'accouchement assisté protège-t-il ?", "Gradient de mortalité maternelle hospitalière, deux niveaux de lecture", mortal)}
+      ${card("Qui retient mieux que sa consultation prénatale ne le laisse attendre", "Écart au niveau attendu compte tenu de la CPN 1", reten)}
       ${card("Équité entre provinces", "Accouchements assistés par quintile de provinces", equite)}
       ${card("Lecture et priorités", "Ce que les données commandent de faire, dans l'ordre", actions)}
+    </div>` };
+};
+
+
+/* ==============================================================
+   DSR · QUALITE ET COMPLETUDE  (rattachee au Systeme d'information)
+============================================================== */
+let DSRQ = null;
+fetch("dsr_qualite.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { DSRQ = j; if (state.sub === "dpsis-dsr-qual") renderMain(); }).catch(() => {});
+
+VIEWS["dpsis-dsr-qual"] = () => {
+  const crumbs = ["Système d'Information", "Qualité des séries DSR"];
+  const et = `<div class="ph"><div class="ph-tag">Accompagnement des directions · CID</div>
+    <div class="ph-title">La moitié des indicateurs DSR n'est pas pilotable en l'état</div>`;
+  if (!DSRQ) return { crumbs, html: et + `<div class="ph-sub">Contrôle en cours de chargement.</div></div>` };
+  const Q = DSRQ, M = Q.meta;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const RAGN = { g: "green", y: "yellow", o: "orange", r: "red" };
+  const kk = (l, v, u, d, c) => kpi(l, v, u, d, "", "flat", RAGN[c] || "na");
+
+  const tete =
+    kk("Complétude des séries", d1(M.completude), " %", `${nb(M.cells)} cellules contrôlées, ${nb(M.vides)} vides`, M.completude >= 98 ? "g" : "y") +
+    kk("Observations signalées", d1(M.part), " %", `${nb(M.n_anom)} écarts relevés, aucun corrigé`, M.part > 10 ? "o" : "g") +
+    kk("Indicateurs non pilotables", Q.struct.length, ` /${M.n_ind}`, "Valeurs incompatibles avec leur définition", "r") +
+    kk("Périmètre", M.n_ind, " indicateurs", `${M.n_prov} provinces · ${M.n_mois} mois · ${M.periode}`, "g");
+
+  /* indicateurs structurellement faux */
+  const struct = `<table class="qc-tbl"><thead><tr><th>Indicateur</th><th>Moyenne nationale</th>
+    <th>Lecture</th><th>Conséquence</th></tr></thead><tbody>${
+    Q.struct.slice().sort((a, b) => b.moy - a.moy).map(x =>
+      `<tr><td><b>${x.lib}</b></td><td><span class="qc-tag ${x.moy > 115 ? "sup150" : "saut"}">${d1(x.moy)}%</span></td>
+       <td>${x.motif.charAt(0).toUpperCase() + x.motif.slice(1)}</td>
+       <td>Aucune cible chiffrée ne peut être fixée sur cette série tant que la définition n'est pas rétablie.</td></tr>`).join("")}
+    </tbody></table>
+    <div class="sc-note"><strong>Ce que cela signifie.</strong> Huit des seize indicateurs nationaux de la DSR
+    portent des valeurs incompatibles avec leur propre définition : une couverture effective en accouchement à
+    ${d1(Q.struct.find(x => x.i === "couv_acc") ? Q.struct.find(x => x.i === "couv_acc").moy : 0)}%, une CPoN à plus
+    de 240%, une CPN 4 à 2,6%. Le problème n'est ni la performance ni la saisie de terrain : ce sont les formules
+    d'agrégation et les dénominateurs de l'export qui sont à reprendre. Tant qu'ils ne le sont pas, la moitié du
+    tableau de bord DSR se lit mais ne se pilote pas.</div>`;
+
+  /* matrice de completude */
+  const PER = Q.per, PROV = Q.prov;
+  const anProv = Q.par_prov || {};
+  const lignes = PROV.map(pr => {
+    const g = Q.grille[pr] || [];
+    const tds = PER.map((p, i) => {
+      const v = g[i];
+      const c = v == null ? "#E9E6DE" : v > 110 ? "#A02233" : v >= 80 ? "#8FBF9F" : v >= 50 ? "#DCC084" : "#E0A48C";
+      return `<td style="background:${c}" title="${pr} · ${p} · ${v == null ? "non disponible" : d1(v) + "%"}"></td>`;
+    }).join("");
+    return `<tr><td class="l">${pr}</td>${tds}<td class="an">${anProv[pr] || 0}</td></tr>`; }).join("");
+  const entete = PER.map(p => p.slice(5) === "01" ? `<th style="color:#1F3864">${p.slice(0, 4)}</th>` : `<th></th>`).join("");
+  const matrice = `<div style="overflow-x:auto"><table class="qc-hm">
+    <thead><tr><th class="l">Province</th>${entete}<th class="an" style="font-size:9px">Signalés</th></tr></thead>
+    <tbody>${lignes}</tbody></table></div>
+    <div class="pd-leg"><span><i style="background:#8FBF9F"></i>80% et plus</span>
+      <span><i style="background:#DCC084"></i>50 à 80%</span>
+      <span><i style="background:#E0A48C"></i>Moins de 50%</span>
+      <span><i style="background:#A02233"></i>Au-dessus de 110%</span>
+      <span><i style="background:#E9E6DE"></i>Non disponible</span>
+      <span>Accouchements assistés, ${PER.length} mois</span></div>`;
+
+  /* routage */
+  const dirs = `<div class="qc-dir">
+    <div class="qc-d a"><div class="qc-d-h"><span class="qc-d-t">DSR</span><span class="qc-d-n">${nb(Q.par_dir["DSR"] || 0)}</span></div>
+      <div class="qc-d-c">${Q.par_type.saut || 0} ruptures de série d'un mois sur l'autre, ${Q.par_type.negatif || 0} valeurs
+      négatives et ${Q.par_type.hors_borne || 0} valeurs hors des bornes cliniquement plausibles. S'y ajoutent les
+      huit indicateurs dont la formule d'agrégation est à reprendre.</div>
+      <div class="qc-d-a"><b>Ce que le CID propose.</b> Reprendre d'abord les définitions des huit indicateurs non
+      pilotables, avant tout travail sur les valeurs. Corriger une saisie sur une formule fausse ne produit rien.</div></div>
+    <div class="qc-d b"><div class="qc-d-h"><span class="qc-d-t">DPSIS et INSEED</span><span class="qc-d-n">${nb(Q.par_dir["DPSIS et INSEED"] || 0)}</span></div>
+      <div class="qc-d-c">Taux au-dessus de 110%, dont ${Q.par_type.sup150 || 0} au-dessus de 150%. Même origine
+      qu'en vaccination : des projections de population qui ne correspondent plus aux effectifs rapportés.</div>
+      <div class="qc-d-a"><b>Ce que le CID propose.</b> Un recalage unique des dénominateurs sert le PEV et la DSR
+      à la fois. Le chantier est commun aux deux programmes, il n'a pas à être mené deux fois.</div></div>
+    <div class="qc-d c"><div class="qc-d-h"><span class="qc-d-t">Complétude</span><span class="qc-d-n">${d1(M.completude)}%</span></div>
+      <div class="qc-d-c">La saisie de terrain tient. ${nb(M.vides)} cellules vides sur ${nb(M.cells)}, concentrées
+      sur TD2 et sur les stocks. Tibesti porte le plus de manques avec ${Q.manque_prov["Tibesti"] || 0} cellules.</div>
+      <div class="qc-d-a"><b>Ce que le CID propose.</b> Ne pas mobiliser les provinces sur la complétude : elle
+      n'est pas le problème. L'effort porte sur les définitions, au niveau central.</div></div></div>`;
+
+  const ordre = { negatif: 0, sup150: 1, hors_borne: 2, saut: 3, sup110: 4 };
+  const lib = { sup150: "Au-dessus de 150%", sup110: "Au-dessus de 110%", saut: "Rupture de série",
+                negatif: "Valeur négative", hors_borne: "Hors bornes" };
+  const ech = Q.anomalies.slice().sort((a, b) => (ordre[a.t] - ordre[b.t]) || (Math.abs(b.v) - Math.abs(a.v))).slice(0, 12);
+  const anTable = `<table class="qc-tbl"><thead><tr><th>Type</th><th>Province</th><th>Indicateur</th>
+    <th>Période</th><th>Valeur</th><th>Lecture</th></tr></thead><tbody>${
+    ech.map(a => `<tr><td><span class="qc-tag ${a.t === "hors_borne" ? "saut" : a.t}">${lib[a.t]}</span></td>
+      <td><b>${a.pr}</b></td><td>${a.i}</td><td>${a.p}</td><td>${d1(a.v)}</td><td>${a.d}</td></tr>`).join("")}
+    </tbody></table>`;
+
+  return { crumbs, html: et +
+    `<div class="ph-sub">Contrôle systématique de ${M.n_ind} indicateurs sur ${M.n_prov} provinces et
+      ${M.n_mois} mois. Le CID ne corrige pas les données des directions : il rend l'écart visible, le qualifie
+      et l'adresse.</div></div>
+    <div class="content">
+      <div class="kpi-grid">${tete}</div>
+      ${card("Indicateurs dont la définition est à reprendre", "Valeurs nationales incompatibles avec l'unité déclarée", struct)}
+      ${card("Complétude et cohérence, province par mois", "Chaque case est un relevé mensuel d'accouchements assistés", matrice)}
+      ${card("À qui adresser quoi", "Répartition des écarts par direction productrice", dirs)}
+      ${card("Écarts les plus marqués", "Relevés tels qu'ils figurent dans les systèmes sources", anTable)}
     </div>` };
 };
 
