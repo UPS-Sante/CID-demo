@@ -6007,9 +6007,27 @@ function renderHeaderControls() {
   `;
 }
 
+/* Vue effectivement affichee au dernier rendu. Sert a distinguer un
+   changement de tableau de bord, qui doit se lire depuis son debut, d'un
+   simple rafraichissement de la vue courante, ou l'on reste sur place. */
+let _vueAffichee = null;
+
+/* Ramene la zone de lecture en haut. Le defilement porte sur le conteneur
+   principal en mode bureau et sur la fenetre en mode mobile : les deux
+   sont remis a zero, sans animation, pour que la page soit deja en place
+   quand elle apparait. */
+function remonterEnHaut() {
+  const m = document.getElementById("main");
+  if (m && typeof m.scrollTo === "function") m.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  else if (m) m.scrollTop = 0;
+  if (typeof window.scrollTo === "function") window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+}
+
 function renderMain() {
   const _m = document.getElementById("main");
   if (_m) _m.style.overflowY = "";
+  const _changementDeVue = (state.sub !== _vueAffichee);
   try { renderHeaderControls(); } catch (e) { console.error("Bandeau :", e); }
   try { renderMainNoyau(); }
   catch (e) {
@@ -6020,6 +6038,15 @@ function renderMain() {
       <button class="tb-btn" onclick="location.reload()" style="margin-left:10px;">Recharger la page</button></div>`;
   }
   if (state.sub === "min-overview") { planifierAjustement(); ckAnim = false; }
+  /* Un tableau de bord s'ouvre a son commencement. Le rappel differe couvre
+     les vues dont la hauteur se fixe apres le rendu, cartes et graphiques
+     redimensionnes une fois les donnees en place. */
+  if (_changementDeVue) {
+    remonterEnHaut();
+    requestAnimationFrame(remonterEnHaut);
+    setTimeout(remonterEnHaut, 120);
+  }
+  _vueAffichee = state.sub;
   requestAnimationFrame(ajusterCarteFoyers);
 }
 
