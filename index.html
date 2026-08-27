@@ -5937,6 +5937,7 @@ function selectSub(progId, subId) {
   document.querySelectorAll(".subprog").forEach(el => {
     el.classList.toggle("active", el.dataset.sub === subId);
   });
+  demanderOuverture();
   renderMain();
   majBarreCockpit();
   closeSidebarOnMobile();
@@ -6012,6 +6013,19 @@ function renderHeaderControls() {
    simple rafraichissement de la vue courante, ou l'on reste sur place. */
 let _vueAffichee = null;
 
+/* Ouvrir un tableau de bord et le rafraichir ne se valent pas. On ouvre en
+   cliquant dans le menu, sur une tuile ou sur un lien interne : la lecture
+   commence alors au debut, meme si la vue etait deja a l'ecran. On
+   rafraichit en changeant de periode, d'onglet de carte ou quand des
+   donnees arrivent : la position de lecture est conservee. */
+let _ouvertureDemandee = false;
+function demanderOuverture() { _ouvertureDemandee = true; }
+
+/* Hauteur de defilement au moment de l'ouverture. Les rappels differes ne
+   remontent que si le lecteur n'a pas commence a parcourir la page :
+   corriger un cadrage ne doit jamais lui reprendre la main. */
+let _hautAuDernierRendu = true;
+
 /* Ramene la zone de lecture en haut. Le defilement porte sur le conteneur
    principal en mode bureau et sur la fenetre en mode mobile : les deux
    sont remis a zero, sans animation, pour que la page soit deja en place
@@ -6022,6 +6036,17 @@ function remonterEnHaut() {
   else if (m) m.scrollTop = 0;
   if (typeof window.scrollTo === "function") window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+  _hautAuDernierRendu = true;
+}
+
+/* Rappel differe : les vues dont la hauteur se fixe apres coup, cartes et
+   graphiques redimensionnes une fois les donnees en place, peuvent glisser
+   de quelques pixels. On les recadre tant que le lecteur n'a pas bouge. */
+function remonterSiIntact() {
+  const m = document.getElementById("main");
+  const y = m ? m.scrollTop : (window.scrollY || 0);
+  if (y > 40 || !_hautAuDernierRendu) { _hautAuDernierRendu = false; return; }
+  remonterEnHaut();
 }
 
 function renderMain() {
@@ -6037,15 +6062,19 @@ function renderMain() {
       Une erreur d'affichage est survenue sur cette vue.
       <button class="tb-btn" onclick="location.reload()" style="margin-left:10px;">Recharger la page</button></div>`;
   }
-  if (state.sub === "min-overview") { planifierAjustement(); ckAnim = false; }
+  if (state.sub === "min-overview") { ckAnim = false; }
   /* Un tableau de bord s'ouvre a son commencement. Le rappel differe couvre
      les vues dont la hauteur se fixe apres le rendu, cartes et graphiques
      redimensionnes une fois les donnees en place. */
-  if (_changementDeVue) {
+  if (_changementDeVue || _ouvertureDemandee) {
     remonterEnHaut();
     requestAnimationFrame(remonterEnHaut);
-    setTimeout(remonterEnHaut, 120);
+    [120, 420, 900].forEach(d => setTimeout(remonterSiIntact, d));
+    /* Les cartes et les courbes se cadrent des l'ouverture, pour que le
+       premier ecran soit celui que le lecteur gardera. */
+    planifierAjustement();
   }
+  _ouvertureDemandee = false;
   _vueAffichee = state.sub;
   requestAnimationFrame(ajusterCarteFoyers);
 }
@@ -6090,6 +6119,10 @@ function ajusterCarteFoyers() {
 /* Ajuste le cockpit du Ministre pour qu'il tienne toujours dans la zone visible,
    quelle que soit la résolution de l'écran ou la hauteur laissée par le navigateur. */
 function ajusterCockpit() {
+  /* La mise a l'echelle ne vaut que pour le tableau de bord du Ministre,
+     qui tient en un ecran. Les cockpits de programme sont suivis d'une
+     analyse : les reduire bloquerait le defilement de leur suite. */
+  if (state.sub !== "min-overview") return;
   const wrap = document.querySelector(".ck2-wrap");
   const main = document.getElementById("main");
   if (!wrap || !main) return;
