@@ -3714,6 +3714,16 @@
   .ck2-barre-note { font-size:11.5px; color:var(--muted-2); margin-left:auto; }
 
   .ck2-grid { display:grid; grid-template-columns:repeat(6, 1fr); gap:14px; }
+  /* Le cockpit d'un programme porte dix indicateurs plutot que six : la
+     grille passe a cinq colonnes sur deux rangees, la tuile gardant sa
+     hauteur pour que les deux cockpits se lisent de la meme facon. */
+  .dsr-ck .ck2-grid { grid-template-columns:repeat(5, minmax(0, 1fr)); }
+  .dsr-ck .ck2-tile { min-width:0; }
+  .dsr-ck .ck2-val { font-size:34px; }
+  .dsr-ck .ck2-label { font-size:14.5px; }
+  @media (max-width:1400px){ .dsr-ck .ck2-grid { grid-template-columns:repeat(4, minmax(0, 1fr)); } }
+  @media (max-width:1100px){ .dsr-ck .ck2-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+  @media (max-width:820px){ .dsr-ck .ck2-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
   .ck2-tile { position:relative; background:#fff; border-radius:14px; padding:15px 17px 12px;
     border-top:4px solid var(--rc); box-shadow:0 1px 3px rgba(31,56,100,.07), 0 8px 22px rgba(31,56,100,.05);
     display:flex; flex-direction:column; gap:5px; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease; }
@@ -10252,21 +10262,21 @@ VIEWS["vacc-surv"] = () => {
 ============================================================== */
 const DSR_RETENUS = [
   /* --- Sante maternelle : huit indicateurs retenus --- */
-  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de mortalité maternelle en milieu hospitalier", calc: { num: "Décès maternels survenus en formation sanitaire, multipliés par 100 000", den: "Naissances vivantes en formation sanitaire" }, ajout: true,
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de mortalité maternelle en milieu hospitalier", calc: { num: "Décès maternels survenus en formation sanitaire, multipliés par 100 000", den: "Naissances vivantes en formation sanitaire" }, tuile: { cible: 700, inverse: true, repere: null, col: "#8C4A5E" }, ajout: true,
     code: "mort_mat_hosp", niv: "national et provincial", unite: "/100 000", src: "SMI.csv · DHIS2 national et relevé provincial" },
-  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture de la CPN 1", calc: { num: "Femmes enceintes vues au moins une fois en consultation prénatale", den: "Grossesses attendues sur la période" }, ajout: false,
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture de la CPN 1", calc: { num: "Femmes enceintes vues au moins une fois en consultation prénatale", den: "Grossesses attendues sur la période" }, tuile: { cible: 95, inverse: false, repere: null, col: "#3E6E78" }, ajout: false,
     code: "cpn1", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
-  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture de la CPN 4", calc: { num: "Femmes enceintes ayant effectué au moins quatre consultations prénatales", den: "Grossesses attendues sur la période" }, ajout: false,
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture de la CPN 4", calc: { num: "Femmes enceintes ayant effectué au moins quatre consultations prénatales", den: "Grossesses attendues sur la période" }, tuile: { cible: 65, inverse: false, repere: null, col: "#3E6E78" }, ajout: false,
     code: "cpn4", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial",
     voisin: "Le relevé national porte 2% en juin, valeur incompatible avec une CPN 1 à 85% : écart signalé à la DPSIS, affiché sans correction." },
-  { dir: "DSR", grp: "Santé maternelle", lib: "Taux d'accouchements assistés par personnel qualifié", calc: { num: "Accouchements assistés par un personnel de santé qualifié", den: "Accouchements attendus sur la période" }, ajout: false,
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux d'accouchements assistés par personnel qualifié", calc: { num: "Accouchements assistés par un personnel de santé qualifié", den: "Accouchements attendus sur la période" }, tuile: { cible: 70, inverse: false, repere: null, col: "#3E6E78" }, ajout: false,
     code: "acc_qualifie", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
-  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de césarienne", calc: { num: "Césariennes réalisées", den: "Naissances attendues sur la période" }, ajout: false,
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de césarienne", calc: { num: "Césariennes réalisées", den: "Naissances attendues sur la période" }, tuile: { cible: null, inverse: false, repere: "repère 5 à 15%", col: "#856722" }, ajout: false,
     code: "cesarienne", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
   { dir: "DSR", grp: "Santé maternelle", lib: "Proportion des femmes référées pour complications obstétricales", calc: { num: "Femmes référées vers un niveau supérieur pour complication obstétricale", den: "Femmes ayant présenté une complication obstétricale" }, ajout: true,
     code: null, unite: "%", src: "Registre de référence et contre-référence, à extraire du DHIS2",
     voisin: "La série disponible porte la proportion d'accouchements avec complication, qui mesure la survenue et non la référence." },
-  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture en CPoN", calc: { num: "Femmes ayant effectué au moins une consultation postnatale dans les six semaines suivant l'accouchement", den: "Accouchements attendus sur la période" }, ajout: false,
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture en CPoN", calc: { num: "Femmes ayant effectué au moins une consultation postnatale dans les six semaines suivant l'accouchement", den: "Accouchements attendus sur la période" }, tuile: { cible: 70, inverse: false, repere: null, col: "#3E6E78" }, ajout: false,
     code: "cpon", niv: "national", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial",
     voisin: "Le relevé national dépasse 100% : dénominateur à reprendre avant toute fixation de cible." },
   { dir: "DSR", grp: "Santé maternelle", lib: "Taux de létalité des complications obstétricales", calc: { num: "Décès maternels consécutifs à une complication obstétricale", den: "Complications obstétricales prises en charge" }, ajout: true,
@@ -10276,21 +10286,21 @@ const DSR_RETENUS = [
   { dir: "DSR", grp: "Santé de l'enfant", lib: "Taux de mortalité néonatale intrahospitalière", calc: { num: "Décès de nouveau-nés de zéro à vingt-huit jours survenus en structure, multipliés par 1 000", den: "Naissances vivantes institutionnelles" }, ajout: true,
     code: null, unite: "‰", src: "Décès néonatals en structure rapportés aux naissances vivantes institutionnelles, à ouvrir dans le DHIS2",
     voisin: "La mortalité périnatale est disponible : elle agrège mortinaissances et décès de la première semaine, elle ne s'y substitue pas." },
-  { dir: "DSR", grp: "Santé de l'enfant", lib: "Taux de décès néonatals précoces, de zéro à sept jours", calc: { num: "Décès de nouveau-nés de zéro à sept jours, multipliés par 1 000", den: "Naissances vivantes" }, ajout: true,
+  { dir: "DSR", grp: "Santé de l'enfant", lib: "Taux de décès néonatals précoces, de zéro à sept jours", calc: { num: "Décès de nouveau-nés de zéro à sept jours, multipliés par 1 000", den: "Naissances vivantes" }, tuile: { cible: null, inverse: true, repere: "suivi", col: "#8C4A5E" }, ajout: true,
     code: "deces_neonat", niv: "national et provincial", unite: "‰", src: "SMI.csv · DHIS2 national et relevé provincial",
     voisin: "Unité déclarée en pourcentage au national et en pour mille au provincial, pour des valeurs du même ordre : définition à trancher entre la DSR et la DPSIS." },
-  { dir: "DSR", grp: "Santé de l'enfant", lib: "Proportion de faible poids de naissance", calc: { num: "Nouveau-nés pesant moins de 2 500 grammes à la naissance", den: "Nouveau-nés pesés à la naissance" }, ajout: true,
+  { dir: "DSR", grp: "Santé de l'enfant", lib: "Proportion de faible poids de naissance", calc: { num: "Nouveau-nés pesant moins de 2 500 grammes à la naissance", den: "Nouveau-nés pesés à la naissance" }, tuile: { cible: null, inverse: true, repere: "suivi", col: "#8C4A5E" }, ajout: true,
     code: "faible_poids", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
   { dir: "DSR", grp: "Santé de l'enfant", lib: "Proportion des décès néonatals liés à l'asphyxie", calc: { num: "Décès néonatals dont la cause enregistrée est l'asphyxie", den: "Décès néonatals enregistrés" }, ajout: true,
     code: null, unite: "%", src: "Cause de décès néonatal, champ non codé dans le rapportage actuel" },
 
   /* --- Planification familiale : quatre indicateurs --- */
-  { dir: "DSR", grp: "Planification familiale", lib: "Prévalence contraceptive, toutes méthodes", calc: { num: "Femmes en âge de procréer utilisant une méthode contraceptive, quelle qu'elle soit", den: "Femmes en âge de procréer" }, ajout: false,
+  { dir: "DSR", grp: "Planification familiale", lib: "Prévalence contraceptive, toutes méthodes", calc: { num: "Femmes en âge de procréer utilisant une méthode contraceptive, quelle qu'elle soit", den: "Femmes en âge de procréer" }, tuile: { cible: null, inverse: false, repere: "suivi", col: "#2E6B3F" }, ajout: false,
     code: "prev_contra", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
   { dir: "DSR", grp: "Planification familiale", lib: "Taux de prévalence contraceptive moderne", calc: { num: "Femmes en âge de procréer utilisant une méthode contraceptive moderne", den: "Femmes en âge de procréer" }, ajout: true,
     code: null, unite: "%", src: "Ventilation par méthode de la prévalence contraceptive, à demander au DHIS2",
     voisin: "La prévalence contraceptive toutes méthodes est disponible et sert de plafond à l'indicateur moderne." },
-  { dir: "DSR", grp: "Planification familiale", lib: "Taux d'acceptation des contraceptifs du post-partum immédiat", calc: { num: "Accouchées ayant accepté une méthode contraceptive avant leur sortie de la maternité", den: "Accouchements" }, ajout: true,
+  { dir: "DSR", grp: "Planification familiale", lib: "Taux d'acceptation des contraceptifs du post-partum immédiat", calc: { num: "Accouchées ayant accepté une méthode contraceptive avant leur sortie de la maternité", den: "Accouchements" }, tuile: { cible: null, inverse: false, repere: "suivi", col: "#2E6B3F" }, ajout: true,
     code: "accept_pp", niv: "provincial", unite: "%", src: "Relevé provincial DSR · DHIS2",
     voisin: "Une province dépasse 100% : dénominateur mal apparié entre accouchements et acceptantes, anomalie remontée sans correction." },
   { dir: "DSR", grp: "Planification familiale", lib: "Part des formations sanitaires sans rupture d'une méthode traceuse dans le mois", calc: { num: "Formations sanitaires n'ayant déclaré aucun jour de rupture d'une méthode traceuse dans le mois", den: "Formations sanitaires déclarantes" }, ajout: true,
@@ -12332,17 +12342,142 @@ VIEWS["dpsis-dsr-qual"] = () => {
 
 
 /* ==============================================================
+   DSR · COCKPIT DU PROGRAMME
+   Les tuiles sont construites depuis le registre : un indicateur y
+   entre parce que la direction l'a retenu et qu'un releve l'alimente,
+   non parce qu'il a ete choisi pour la vue. Le cadre commande
+   l'affichage, l'inverse produirait deux listes a tenir.
+============================================================== */
+/* Rendu d'une tuile, identique a celui du cockpit du Ministre : numero,
+   verdict colore, valeur, courbe de rappel, cible et variation. Un
+   indicateur sans cible chiffree porte son repere a la place. */
+function dsrTuile(o) {
+  const ragCol = { green: "#2E7D32", yellow: "#C9A227", orange: "#D97B29", red: "#B3372F", na: "#A09A93" };
+  const col = ragCol[o.rag] || ragCol.na;
+  const red = o.rag === "red";
+  const ndv = (o.value == null || String(o.value).includes("NaN"));
+  const val = ndv ? "ND" : String(o.value).replace(".", ",");
+  const verdict = o.horsBornes ? "hors bornes" : o.rag === "" ? "suivi" : ragLabel(o.rag);
+  return `<div class="ck2-tile${red ? " ck2-red" : ""}" style="--rc:${col}">
+    <div class="ck2-top">
+      <span class="ck2-num">${o.n}</span>
+      <span class="ck2-stat" style="color:${col}">${red ? '<span class="ck2-dot"></span>' : ''}${verdict}</span>
+    </div>
+    <div class="ck2-label">${o.label}</div>
+    <div class="ck2-cat">${o.category}</div>
+    <div class="ck2-mid">
+      <div class="ck2-val">${val}${ndv ? '' : `<span class="ck2-unit">${o.unit}</span>`}</div>
+      <div class="ck2-spark">${miniSpark(o.sparkData || [], red ? "#B3372F" : (o.sparkColor || "#1F3864"))}</div>
+    </div>
+    <div class="ck2-foot">
+      <span class="ck2-target">${o.horsBornes ? "dénominateur à reprendre" : o.target}</span>
+      <span class="ck2-delta ${o.trendDir}">${o.trend}</span>
+    </div>
+  </div>`;
+}
+
+function dsrTuilesCockpit() {
+  const reg = CID_CADRE.filter(i => i.dir === "DSR" && i.code && i.tuile);
+  const lien = { cpn1: ["dsr", "dsr-mat"], cpn4: ["dsr", "dsr-mat"], acc_qualifie: ["dsr", "dsr-mat"],
+    mort_mat_hosp: ["dsr", "dsr-mat"], cesarienne: ["dsr", "dsr-mat"], cpon: ["dsr", "dsr-mat"],
+    deces_neonat: ["dsr", "dsr-neonat"], faible_poids: ["dsr", "dsr-neonat"],
+    prev_contra: ["dsr", "dsr-pf"], accept_pp: ["dsr", "dsr-pf"] };
+  /* Libelles courts : le registre porte l'intitule complet, la tuile
+     n'en garde que ce qui se lit d'un coup d'oeil. */
+  const court = { mort_mat_hosp: "Mortalité maternelle hospitalière", cpn1: "Couverture CPN 1",
+    cpn4: "Couverture CPN 4", acc_qualifie: "Accouchements assistés", cesarienne: "Taux de césarienne",
+    cpon: "Couverture CPoN", deces_neonat: "Décès néonatals précoces",
+    faible_poids: "Faible poids de naissance", prev_contra: "Prévalence contraceptive",
+    accept_pp: "Post-partum immédiat" };
+  const cat = { "Santé maternelle": "Santé maternelle · DSR", "Santé de l'enfant": "Santé néonatale · DSR",
+    "Planification familiale": "Planification familiale · DSR" };
+
+  return reg.map((i, k) => {
+    const t = i.tuile;
+    let v = null, per = null, serie = {};
+    if (i.niv === "provincial") {
+      /* Indicateur tenu au seul niveau provincial : la mediane des provinces
+         est retenue, une moyenne de taux sans denominateur commun n'ayant
+         pas de sens. */
+      const m = (typeof dsrMedianeProv === "function") ? dsrMedianeProv(i.code) : null;
+      v = m && m.v != null ? m.v : null; per = m ? m.p : null;
+    } else if (DSRN && DSRN.indicateurs[i.code]) {
+      serie = DSRN.indicateurs[i.code].serie || {};
+      const d = cidDerniere(serie, DSRN.meta.mois_max);
+      v = d.v; per = d.p;
+    }
+    const prec = per && serie[cidPrec(per)] != null ? serie[cidPrec(per)] : null;
+    const delta = (v != null && prec != null) ? Math.round((v - prec) * 10) / 10 : null;
+    const bon = delta == null ? null : (t.inverse ? delta <= 0 : delta >= 0);
+    /* Une valeur au-dessus de 110% sur un taux de couverture ne dit rien de la
+       performance : elle dit que le denominateur ne correspond pas au
+       numerateur. Elle est signalee comme telle plutot que portee au vert. */
+    const horsBornes = (v != null && i.unite === "%" && !t.inverse && v > 110);
+    let rag = "na";
+    if (v != null && !horsBornes) {
+      if (t.cible == null) rag = "";
+      else if (t.inverse) rag = v <= t.cible ? "green" : v <= t.cible * 1.5 ? "orange" : "red";
+      else rag = pevRag(v, t.cible);
+    }
+    return {
+      n: String(k + 1).padStart(2, "0"),
+      label: court[i.code] || i.lib,
+      category: cat[i.grp] || "DSR",
+      value: v == null ? null : Math.round(v * 10) / 10,
+      unit: i.unite === "/100 000" ? "/100k" : i.unite,
+      target: t.cible == null ? (t.repere || "suivi") : (t.inverse ? "≤ " : "") + t.cible + (i.unite === "/100 000" ? "/100k" : i.unite),
+      trend: delta == null ? "—" : (delta >= 0 ? "+" : "") + String(delta).replace(".", ","),
+      trendDir: delta == null ? "flat" : bon ? "up" : "down",
+      rag: rag,
+      horsBornes: horsBornes,
+      sparkData: Object.keys(serie).sort().map(p => serie[p]).filter(x => x != null),
+      sparkColor: t.col,
+      lien: lien[i.code] || null,
+      periode: per
+    };
+  });
+}
+
+/* ==============================================================
    DSR · APERCU DU PROGRAMME (format ministre)
    Meme grammaire que l'apercu PEV. La vue d'ensemble est reprise
    en fin de page plutot que maintenue comme entree separee.
 ============================================================== */
 VIEWS["dsr-apercu"] = () => {
   const crumbs = ["Santé Reproductive", "Aperçu du programme"];
+
+  /* Fraicheur des relevés qui alimentent le programme, sur le modèle du
+     cockpit du Ministre : chaque source dit sa dernière période couverte
+     ou se déclare en attente. */
+  const srcs = [
+    { l: "Relevé national", ok: !!DSRN, p: DSRN ? DSRN.meta.mois_max : null },
+    { l: "Relevé provincial", ok: !!DSRP, p: DSRP ? DSRP.meta.mois_max : null },
+    { l: "Analyse approfondie", ok: !!DSRDD, p: DSRDD ? null : null },
+    { l: "PNLP", ok: false, p: null },
+    { l: "PNPTME", ok: false, p: null },
+  ];
+  const ticker = srcs.map(x => `<span class="cid-src ${x.ok ? "ok" : "off"}">${x.l}<em>${x.ok ? (x.p ? cidMoisC(String(x.p).slice(0, 7)) : "à jour") : "en attente"}</em></span>`).join("");
+  const regD = CID_CADRE.filter(i => i.dir === "DSR");
+  const regA = regD.filter(i => i.code).length;
+  const heroDSR = `
+    <div class="ck2-hero">
+      <div class="ck2-hero-l">
+        <div class="ck2-hero-kicker">Direction de la Santé de la Reproduction · Ministère de la Santé Publique et de la Prévention</div>
+        <div class="ck2-hero-titre">Aperçu du programme</div>
+        <div class="ck2-srcs">◷ ${dateMinistre()} &nbsp;·&nbsp; ${ticker}</div>
+      </div>
+      <div class="ck2-counts">
+        <div class="ck2-count"><div class="ck2-count-val">23</div><div class="ck2-count-lib">provinces</div></div>
+        <div class="ck2-count"><div class="ck2-count-val">${regD.length}</div><div class="ck2-count-lib">indicateurs retenus</div></div>
+        <div class="ck2-count"><div class="ck2-count-val">${regA}</div><div class="ck2-count-lib">alimentés</div></div>
+      </div>
+    </div>`;
   const et = `<div class="ph"><div class="ph-tag">Direction de la Santé de la Reproduction · DSR</div>
     <div class="ph-title">Aperçu du programme</div>`;
   /* Le suivi de l'alimentation des indicateurs retenus ne dépend d'aucun
      calcul : il reste affiché même si l'analyse approfondie n'est pas chargée. */
-  if (!DSRDD) return { crumbs, html: et + `<div class="ph-sub">Lecture d'ensemble en cours de chargement.</div></div>
+  if (!DSRDD) return { crumbs, html: `<div class="ck2-wrap">${heroDSR}
+      <div class="ck2-grid">${dsrTuilesCockpit().map(dsrTuile).join("")}</div></div>
     <div class="content">
       ${card("Indicateurs retenus par la direction", "Cadre de suivi SMNI et indicateurs adossés à la consultation prénatale",
         `<div class="cid-res-note">L'état d'alimentation des indicateurs retenus par la direction est tenu dans le registre transversal,
@@ -12425,9 +12560,53 @@ VIEWS["dsr-apercu"] = () => {
       <td class="ac">${r[1]}<small>${r[2]}</small></td>
       <td>${r[3]}</td><td>${r[4]}</td><td class="ap-me">${r[5]}</td><td>${r[6]}</td></tr>`).join("");
 
-  return { crumbs, html: et +
-    `<div class="ph-sub">État du programme sur ${M.periode}, lecture pour le Cabinet. Sources :
-      ${M.source_prog} ; ${M.source_log}.</div></div>
+  /* Lecture de la situation, dans la grammaire du cockpit : le décompte des
+     indicateurs par couleur ouvre la page, les constats la déplient. */
+  const tuiles = dsrTuilesCockpit();
+  const nRouge = tuiles.filter(t => t.rag === "red").length;
+  const nOrange = tuiles.filter(t => t.rag === "orange").length;
+  const nVert = tuiles.filter(t => t.rag === "green").length;
+  const ins = [];
+  ins.push({ n: "red", t: "Rupture entre la grossesse et la naissance",
+    d: `${d1(D.cascade[0].v)}% des femmes entrent en consultation prénatale et ${d1(D.cascade[2].v)}% accouchent accompagnées.
+        ${nb(M.total_deficit)} naissances sans personnel qualifié, concentrées dans ${n80} provinces.` });
+  ins.push({ n: "orange", t: "Le déficit n'est pas d'abord rural",
+    d: `${par[0].nom}, la mieux dotée en plateaux techniques, plafonne à ${d1(par[0].couv)}% et concentre ${d1(par[0].part)}% des naissances non couvertes.` });
+  ins.push({ n: "orange", t: "Les provinces divergent",
+    d: `La dispersion entre provinces passe de ${d1(CV2.sd_debut)} à ${d1(CV2.sd_fin)} points sur la période. Sans ciblage explicite, l'écart se creuse.` });
+  if ((D.struct || []).length) ins.push({ n: "red", t: "Indicateurs non pilotables",
+    d: `${(D.struct || []).length} indicateurs nationaux portent des valeurs incompatibles avec leur définition et ne peuvent pas servir de base à une cible.` });
+  const insDSR = `
+    <div class="ck2-ins">
+      <div class="ck2-ins-tete">
+        <div class="ck2-ins-titre">◆ Lecture de la situation</div>
+        <div class="ck2-ins-badges">
+          ${nRouge ? `<span class="ck2-badge-rouge"><span class="ck2-dot"></span>${nRouge} au rouge</span>` : `<span class="ck2-badge-vert">Aucun au rouge</span>`}
+          ${nOrange ? `<span class="ck2-badge-orange">${nOrange} sous surveillance</span>` : ""}
+          ${nVert ? `<span class="ck2-badge-vert">${nVert} au vert</span>` : ""}
+          <span class="ck2-badge-orange">${regD.length - regA} en attente de source</span>
+        </div>
+      </div>
+      <div class="ck2-ins-liste">
+        ${ins.slice(0, 3).map(i => `<div class="ck2-ins-item n-${i.n}"><div class="ck2-ins-item-t">${i.t}</div><div class="ck2-ins-item-d">${i.d}</div></div>`).join("")}
+      </div>
+    </div>`;
+
+  /* Les tuiles renvoient vers la vue de détail de leur composante. */
+  setTimeout(() => {
+    document.querySelectorAll(".dsr-ck .ck2-tile").forEach((el, i) => {
+      const t = tuiles[i]; if (!t || !t.lien) return;
+      el.classList.add("cid-cliquable");
+      el.onclick = () => selectSub(t.lien[0], t.lien[1]);
+    });
+  }, 0);
+
+  return { crumbs, html:
+    `<div class="ck2-wrap dsr-ck">
+      ${heroDSR}
+      ${insDSR}
+      <div class="ck2-grid">${tuiles.map(dsrTuile).join("")}</div>
+    </div>
     <div class="content">
       <div class="ap-band">
         <div class="ap-band-t">Ce qu'il faut retenir</div>
@@ -12438,7 +12617,6 @@ VIEWS["dsr-apercu"] = () => {
         mesure : la moitié des indicateurs nationaux porte des valeurs incompatibles avec leur définition et ne
         peut pas servir de base à une cible.</div>
       </div>
-      <div class="kpi-grid g6">${veille}</div>
       ${cidTestCible("dsrn:acc_qualifie", M.cible_acc)}
       <div class="ap-ins">${insights}</div>
       ${(() => { try { const v = VIEWS["dsr-overview"](state);
