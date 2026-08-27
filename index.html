@@ -300,10 +300,21 @@
     paint-order:stroke;stroke:rgba(27,26,22,.62);stroke-width:2.4px;stroke-linejoin:round}
   .chol-map-lbl text.v{font-size:11.5px;font-weight:800}
   @keyframes cholAlerteBornee{0%,100%{opacity:1}50%{opacity:.42}}
-  .cf-pulse{animation:cholAlerteBornee .75s ease-in-out 4}
+  /* Alerte rouge : quatre battements de 0,85 s, soit 3,4 s, au-dessus du
+     minimum de trois secondes retenu pour la lecture en salle. */
+  .cf-pulse{animation:cholAlerteBornee .85s ease-in-out 4}
+  .chol-flash{animation:cholAlerteBornee .85s ease-in-out 4}
+  .chol-st-pastille{display:inline-block;width:10px;height:10px;border-radius:50%;
+    margin-right:6px;vertical-align:-1px;border:1px solid rgba(255,255,255,.7)}
+  .chol-st-lib{font-size:11px;font-weight:600;color:var(--body);white-space:nowrap}
+  .chol-st-legende{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;
+    padding-top:8px;margin-top:4px;border-top:1px solid var(--border)}
+  @media (prefers-reduced-motion: reduce){.chol-flash{animation:none}}
   .cd-bar{display:flex;height:15px;border-radius:3px;overflow:hidden;background:#F4F2EC}
   .cd-bar span{display:block;height:100%}
   .cd-lgd{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:10px}
+  .cd-nat{margin-top:6px;padding-top:7px;border-top:1px solid var(--border-2)}
+  .cd-nat .pd-par-n{font-weight:700;color:var(--ink)}
   .cd-lgd i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
   .cd-t{font-size:9.5px;letter-spacing:.85px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:7px}
   .cd-hd{display:grid;grid-template-columns:120px 62px 62px 1fr 92px;gap:10px;font-size:9px;letter-spacing:.7px;
@@ -3202,6 +3213,37 @@
   .trend-up { color:var(--rag-green); } .trend-down { color:var(--rag-red); }
   .sp-attente .sp-label { opacity:0.55; }
   .sp-attente-badge { font-size:9px; font-weight:600; color:var(--muted); background:var(--surface-2); border:1px solid var(--border); padding:1px 7px; border-radius:10px; margin-left:auto; }
+  /* Suivi de l'alimentation des indicateurs retenus par la DSR */
+  .dsr-src { width:100%; border-collapse:collapse; font-size:12px; }
+  .dsr-src th { text-align:left; font-size:9.5px; letter-spacing:.7px; text-transform:uppercase;
+    color:var(--muted); font-weight:700; padding:0 10px 7px 0; border-bottom:1px solid var(--border-2); }
+  .dsr-src td { padding:7px 10px 7px 0; border-bottom:1px solid var(--border); vertical-align:top; color:var(--body); }
+  .dsr-src td.ind { color:var(--ink); font-weight:600; width:34%; }
+  .dsr-src tr.dsr-grp td { background:var(--surface-2); font-family:var(--font-h); font-weight:700;
+    color:var(--royal); font-size:11.5px; letter-spacing:.4px; padding:8px 10px; border-bottom:none; }
+  .dsr-src .dsr-o { font-size:11px; color:var(--muted); }
+  .dsr-src tr.dsr-dir td { background:var(--royal); color:#fff; font-family:var(--font-h); font-weight:700;
+    font-size:12.5px; letter-spacing:.4px; padding:8px 10px; }
+  .dsr-src tr.dsr-dir .dsr-dir-n { float:right; font-family:var(--font); font-weight:600;
+    font-size:10.5px; letter-spacing:.5px; text-transform:uppercase; opacity:.82; }
+  .dsr-src-5 td.ind { width:20%; }
+  .dsr-src-5 td.cad-calc { width:27%; }
+  .cad-frac { display:block; font-size:11px; line-height:1.45; color:var(--body); }
+  .cad-frac .cad-num { display:block; padding-bottom:3px; }
+  .cad-frac .cad-den { display:block; padding-top:3px; border-top:1px solid var(--border-2); color:var(--muted); }
+  .cad-def { font-size:11px; line-height:1.5; color:var(--muted); font-style:italic; }
+  .cad-tabs { flex-wrap:wrap; gap:7px; margin-bottom:14px; }
+  .cad-cpt { display:inline-block; margin-left:7px; font-size:10px; font-weight:700; opacity:.7; }
+  .cad-charge { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+  .cad-ch { background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:11px 13px; }
+  .cad-ch-t { font-size:12px; font-weight:700; color:var(--ink); font-family:var(--font-h);
+    display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:7px; }
+  .cad-ch-t span { font-family:var(--font); font-size:10.5px; font-weight:600; color:var(--muted);
+    text-transform:none; letter-spacing:0; white-space:nowrap; }
+  .cad-ch-l { margin:0; padding-left:16px; font-size:11.5px; line-height:1.65; color:var(--body); }
+  .dsr-nouveau { display:inline-block; font-size:9px; font-weight:700; letter-spacing:.6px;
+    text-transform:uppercase; color:#2E7D32; background:rgba(46,125,50,.12);
+    border-radius:4px; padding:2px 6px; margin-left:7px; vertical-align:1px; }
   .attente-carte { display:flex; gap:20px; align-items:center; background:var(--surface); border:none; border-radius:14px; padding:32px 30px; box-shadow:var(--shadow-sm); }
   .attente-ic { font-size:40px; color:var(--muted-2); flex-shrink:0; }
   .attente-titre { font-family:var(--font-h); font-size:17px; font-weight:700; color:var(--royal); margin-bottom:6px; }
@@ -4255,7 +4297,9 @@ const PROGRAMS = [
     sub:[
       { id:"dsr-apercu",     label:"Aperçu du programme",  status:"orange" },
       { id:"dsr-mat",       i18n_key:"sub_dsr_mat",      label:"Santé maternelle",     status:"red" },
+      { id:"dsr-neonat",    label:"Santé néonatale",       status:"red" },
       { id:"dsr-pf",        i18n_key:"sub_dsr_pf",       label:"Planification familiale",status:"orange" },
+      { id:"dsr-sraj",      label:"Santé des adolescents", status:"orange" },
       { id:"dsr-stock",     i18n_key:"sub_dsr_stocks",   label:"Stocks produits SR",   status:"orange" },
       { id:"dsr-com",       i18n_key:"sub_dsr_com",      label:"Santé communautaire",  status:"yellow" },
             { id:"dsr-deepdive",   label:"Analyse approfondie",  status:"orange" },
@@ -4311,6 +4355,13 @@ const PROGRAMS = [
       { id:"explor-comp",  label:"Comparateur de provinces", status:"green" },
       { id:"explor-alert", label:"Alertes actives",          status:"green" },
       { id:"explor-rech",  label:"Recherche & export",       status:"green" },
+    ]
+  },
+  {
+    id:"cadre", c:"min", icon:"IND", label:"Cadre d'indicateurs",
+    dir:"UPS-SANTÉ", groupe:"Outils transversaux",
+    sub:[
+      { id:"cadre-suivi", label:"Indicateurs retenus par direction", status:"orange" },
     ]
   },
   {
@@ -5125,6 +5176,7 @@ const state = {
   provinceFilter: null,
   mapMode: "performance",
   cholCarte: "cas",
+  cadreDir: null,
   minSection: "A",
   lang: "fr",                  // 'fr' | 'en' | 'ar'
   // Map view controls (zoom/pan/size)
@@ -7035,10 +7087,40 @@ VIEWS["vacc-palu"] = () => {
   };
 };
 
+/* Chiffres cles de l'episode, dans l'ordre de lecture retenu pour toute la
+   section cholera : cas cumules, deces cumules, letalite globale, deces
+   communautaires. Les vues de surveillance, de rapport de situation et
+   d'analyse approfondie ouvrent sur la meme sequence. */
+function cholCumulRef() {
+  if (CHOL_P) {
+    const der = CHOL_P.cles.semaine[CHOL_P.cles.semaine.length - 1];
+    return CHOL_P.semaine[der].cumul;
+  }
+  if (CHOL_A) return { cas: CHOL_A.meta.n, deces: CHOL_A.meta.deces, letalite: CHOL_A.meta.cfr };
+  return null;
+}
+function cholChiffresCles(sousTitre) {
+  const C = cholCumulRef(); if (!C) return "";
+  const nb = (x) => x == null ? "ND" : String(x).replace(".", ",");
+  const r = ragChol(C.letalite);
+  const dcCom = C.deces_communautaires == null ? null : C.deces_communautaires;
+  const txCom = (dcCom == null || !C.deces) ? null : Math.round(dcCom / C.deces * 1000) / 10;
+  return `<div class="kpi-grid">
+    ${kpi("Cas cumulés", C.cas, "", sousTitre || "Depuis le début de l'épisode", "—", "flat", "", true)}
+    ${kpi("Décès cumulés", C.deces, "", sousTitre || "Depuis le début de l'épisode", "—", "flat", "", true)}
+    ${kpi("Létalité globale", C.letalite == null ? null : nb(C.letalite), "%", "Cible : < 1 %", ragLabel(r), "flat", r, true)}
+    ${kpi("Décès communautaires", dcCom, "", "Décès survenus hors structure de santé",
+          txCom == null ? "—" : nb(txCom) + " % des décès", "flat", txCom == null ? "na" : (txCom >= 50 ? "red" : txCom >= 25 ? "orange" : "yellow"), true)}
+  </div>`;
+}
+
 VIEWS["cousp-surv"] = () => {
   if (!cholDispo()) return { crumbs: ["Surveillance · COUSP", "Riposte au choléra"], html: `<div class="ph"><div class="ph-title">Choléra</div><div class="ph-sub">Données en cours de chargement.</div></div>` };
   const g = CHOLERA.global, M = CHOLERA.meta;
   const V = (CHOL_S && CHOL_S.variation) ? CHOL_S.variation : null;
+  /* Les résultats de laboratoire proviennent du rapport de situation : le
+     champ correspondant de la liste linéaire n'est pas renseigné. */
+  const LB = (CHOL_P && CHOL_P.sitrep) ? CHOL_P.sitrep.labo : null;
   const cfrRag = ragChol(g.létalité);
   const nomPr = (s) => s.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ");
 
@@ -7069,11 +7151,14 @@ VIEWS["cousp-surv"] = () => {
         <div class="ph-sub">Relevé de la liste linéaire de surveillance · ${M.zone} · ${periodeChol()}.</div>
       </div>
       <div class="content">
+        ${cholChiffresCles()}
         <div class="kpi-grid">
-          ${kpi("Cas cumulés", g.cas, "", "depuis la semaine " + CHOLERA.meta.periode.match(/\d+/)[0], "", "flat", "orange", true)}
-          ${kpi("Décès", g.deces, "", g.gueris + " sortis guéris", "", "flat", "red", true)}
-          ${kpi("Cas confirmés", g.confirmes_tdr, "", "test de diagnostic rapide positif", "", "flat", "yellow", true)}
-          ${kpi("Districts affectés", CHOLERA.districts.length, "", "sur 2 provinces", "", "flat", "orange", true)}
+          ${kpi("Confirmations par culture", LB ? LB.culture_pos : null, "",
+                LB ? "sur " + LB.culture_total + " échantillons analysés" : "rapport de situation non chargé", "", "flat", "red", true)}
+          ${kpi("Tests rapides positifs", LB ? LB.tdr_pos : null, "",
+                LB ? "sur " + LB.tdr_total + " tests réalisés" : "rapport de situation non chargé", "", "flat", "orange", true)}
+          ${kpi("Cas hospitalisés", g.hospitalises, "", Math.round(g.hospitalises / g.cas * 100) + " % des cas notifiés", "", "flat", "", true)}
+          ${kpi("Sortis guéris", g.gueris, "", Math.round(g.gueris / g.cas * 100) + " % des cas notifiés", "", "flat", "", true)}
         </div>
         ${V ? `<div class="cfr-bloc">
           <div class="cfr-principal">
@@ -7116,12 +7201,13 @@ VIEWS["cousp-surv"] = () => {
             `<table class="tbl-s">
               <tr><th>Indicateur</th><th class="num">Effectif</th><th class="num">Part</th></tr>
               <tr><td>Cas hospitalisés</td><td class="num">${g.hospitalises}</td><td class="num">${Math.round(g.hospitalises / g.cas * 100)}%</td></tr>
-              <tr><td>Confirmés par test rapide</td><td class="num">${g.confirmes_tdr}</td><td class="num">${Math.round(g.confirmes_tdr / g.cas * 100)}%</td></tr>
+              <tr><td>Tests rapides positifs</td><td class="num">${LB ? LB.tdr_pos : "ND"}</td><td class="num">${LB && LB.tdr_total ? Math.round(LB.tdr_pos / LB.tdr_total * 100) + "% des tests" : "ND"}</td></tr>
+              <tr><td>Cultures positives</td><td class="num">${LB ? LB.culture_pos : "ND"}</td><td class="num">${LB && LB.culture_total ? Math.round(LB.culture_pos / LB.culture_total * 100) + "% des cultures" : "ND"}</td></tr>
               <tr><td>Sortis guéris</td><td class="num">${g.gueris}</td><td class="num">${Math.round(g.gueris / g.cas * 100)}%</td></tr>
               <tr><td>Décès</td><td class="num">${g.deces}</td><td class="num">${String(g.létalité).replace(".", ",")}%</td></tr>
               <tr><td>Issue non renseignée</td><td class="num">${g.sans_issue || 0}</td><td class="num">ND</td></tr>
             </table>`,
-            "Source : liste linéaire de surveillance du COUSP. Le taux de létalité est rapporté aux " + (g.cas_issue_connue == null ? "ND" : g.cas_issue_connue) + " cas dont l'issue est renseignée, et non au total notifié. La confirmation biologique porte sur un échantillon, conformément aux recommandations en phase épidémique déclarée.")}
+            "Source : liste linéaire de surveillance du COUSP. Le taux de létalité est rapporté aux " + (g.cas_issue_connue == null ? "ND" : g.cas_issue_connue) + " cas dont l'issue est renseignée, et non au total notifié. Les résultats de laboratoire proviennent du rapport de situation n° " + (CHOL_P && CHOL_P.sitrep ? CHOL_P.sitrep.numero : "ND") + " : ils sont rapportés au nombre de prélèvements analysés, non au nombre de cas notifiés, la confirmation biologique portant sur un échantillon conformément aux recommandations en phase épidémique déclarée.")}
         </div>
       </div>
     `
@@ -7199,7 +7285,11 @@ function renderCarteCholera() {
     const info = parTrace[d.nom];
     if (!info) return `<path class="cf-hors" d="${d.d}"><title>${d.nom} · aucun cas notifié</title></path>`;
     const actif = info.actif && info.recents > 0;
-    return `<path class="cf-dist niv-${info.niveau}${actif ? " cf-actif" : ""}" d="${d.d}"><title>${d.nom} : ${info.cas} cas notifiés, ${info.deces} décès, létalité ${info.cfr}%${actif ? ", " + info.recents + " cas sur 2 semaines" : ", foyer éteint"}</title></path>`;
+    /* Le remplissage reprend le codage commun : rouge pour une confirmation
+       par culture, orange pour un TDR positif, jaune pour un cas suspect,
+       vert pour un foyer sans notification depuis dix jours. */
+    const st = cholStatutDe(info.nom, actif);
+    return `<path class="cf-dist${st === "culture" ? " cf-pulse" : ""}" style="fill:${CHOL_STATUT[st].c}" d="${d.d}"><title>${d.nom} : ${info.cas} cas notifiés, ${info.deces} décès, létalité ${info.cfr}% · ${CHOL_STATUT[st].lib.toLowerCase()}${actif ? ", " + info.recents + " cas sur 2 semaines" : ""}</title></path>`;
   }).join("");
   // Halos d'alerte sur les foyers en transmission active
   const centres = { "Ndjamena-Nord": [470, 452], "Ndjamena-Centre": [487, 470], "Ndjamena-Est": [505, 462], "Karal": [455, 250] };
@@ -7214,13 +7304,7 @@ function renderCarteCholera() {
       <svg class="chol-carte" viewBox="0 0 ${F.w} ${F.h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" aria-label="Carte de la zone épidémique">
         <g>${formes}</g><g>${halos}</g>
       </svg>
-      <div class="chol-legende">
-        <span class="cl-item"><span class="cl-pastille niv-critique"></span> Transmission active</span>
-        <span class="cl-item"><span class="cl-pastille niv-eleve"></span> Risque élevé</span>
-        <span class="cl-item"><span class="cl-pastille niv-modere"></span> Foyer contrôlé</span>
-        <span class="cl-item"><span class="cl-pastille niv-faible"></span> Cas résiduels</span>
-        <span class="cl-item"><span class="cl-pastille cl-hors"></span> Aucun cas</span>
-      </div>
+      ${cholLegendeStatut('<span class="chol-st-lib"><span class="chol-st-pastille" style="background:var(--surface-2);border:1px solid var(--border)"></span>Aucun cas</span>')}
     </div>`;
 }
 
@@ -7308,6 +7392,59 @@ function setCholTypePeriode(typ) {
 function setCholPeriode(cle) { state.cholPeriode = cle; renderMain(); }
 function setCholCarte(mode) { state.cholCarte = mode; renderMain(); }
 
+/* ==============================================================
+   CHOLERA · CODAGE COULEUR UNIQUE
+   Le meme referentiel gouverne les cartes, les tableaux et les
+   graphiques : rouge pour une confirmation par culture, orange pour
+   un test de diagnostic rapide positif, jaune pour un cas suspect,
+   vert pour un foyer sans notification depuis dix jours.
+============================================================== */
+const CHOL_STATUT = {
+  culture: { c: "#B3372F", lib: "Confirmé par culture", court: "culture", rang: 4 },
+  tdr:     { c: "#D97B29", lib: "TDR positif",          court: "TDR",     rang: 3 },
+  suspect: { c: "#C9A227", lib: "Cas suspect",          court: "suspect", rang: 2 },
+  eteint:  { c: "#2E7D32", lib: "Foyer éteint",         court: "éteint",  rang: 1 }
+};
+/* Un district sans notification depuis dix jours passe en foyer éteint,
+   quel que soit le niveau de preuve atteint pendant la transmission. */
+function cholStatutDe(nom, actif) {
+  if (!actif) return "eteint";
+  const c = CHOL_CONF && CHOL_CONF[nom];
+  return CHOL_STATUT[c] ? c : "suspect";
+}
+function cholPastille(st, flash) {
+  const S = CHOL_STATUT[st] || CHOL_STATUT.suspect;
+  const cl = flash && st === "culture" ? " chol-flash" : "";
+  return `<span class="chol-st-pastille${cl}" style="background:${S.c}"></span>`;
+}
+function cholLegendeStatut(complement) {
+  const items = Object.keys(CHOL_STATUT).sort((a, b) => CHOL_STATUT[b].rang - CHOL_STATUT[a].rang)
+    .map(k => `<span class="chol-st-lib">${cholPastille(k, false)}${CHOL_STATUT[k].lib}</span>`).join("");
+  return `<div class="chol-st-legende">${items}${complement || ""}</div>`;
+}
+/* Echelle graduee pour les indicateurs chiffres. La letalite et le taux
+   d'attaque suivent les seuils du referentiel commun, le nombre de cas
+   n'ayant pas de seuil suit une progression relative au maximum observe. */
+const CHOL_RAMPE = ["#2E7D32", "#7FA83C", "#C9A227", "#D97B29", "#B3372F"];
+/* Le nombre de cas n'a pas de seuil : une rampe monochrome evite qu'un foyer
+   actif de faible volume apparaisse en vert, couleur reservee a l'extinction. */
+const CHOL_RAMPE_VOL = ["#D4DCEA", "#9FB2CE", "#6B87B2", "#3F5F94", "#1F3864"];
+function cholCouleurValeur(mode, v, vmax) {
+  if (v == null) return null;
+  if (mode === "letalite") {
+    const r = ragChol(v);
+    return r === "green" ? CHOL_RAMPE[0] : r === "yellow" ? CHOL_RAMPE[2]
+         : r === "orange" ? CHOL_RAMPE[3] : CHOL_RAMPE[4];
+  }
+  if (mode === "attaque") {
+    const r = ragCholAttaque(v);
+    return r === "green" ? CHOL_RAMPE[0] : r === "yellow" ? CHOL_RAMPE[2]
+         : r === "orange" ? CHOL_RAMPE[3] : CHOL_RAMPE[4];
+  }
+  const q = vmax ? Math.max(0, Math.min(0.999, v / vmax)) : 0;
+  return CHOL_RAMPE_VOL[Math.floor(q * CHOL_RAMPE_VOL.length)];
+}
+
 /* Carte de la zone épidémique choléra, un seul indicateur à la fois,
    recadrée sur le foyer, avec codage couleur et alerte rouge pulsée. */
 const CHOL_CADRES = {"Karal": {"vb": [79.6, 129.7, 266.7, 177.2], "noms": ["Karal", "Mani", "Massaguet"]}, "N'Djamena": {"vb": [142.7, 367.9, 121.4, 75.2], "noms": ["Ndjamena-Nord", "Ndjamena-Centre", "Ndjamena-Est", "Ndjamena-Sud"]}};
@@ -7328,7 +7465,9 @@ function carteCholeraChoix() {
   };
   const vals = CHOL_A.districts.map(valeur).filter(v => v != null);
   const vmax = vals.length ? Math.max(...vals) : 1;
-  const teinte = (v) => v == null ? null : `rgba(160,34,51,${(0.18 + Math.max(0, Math.min(1, v / vmax)) * 0.72).toFixed(2)})`;
+  /* La couleur suit le referentiel de seuils pour la letalite et le taux
+     d'attaque, et une progression relative pour un effectif sans seuil. */
+  const teinte = (v) => cholCouleurValeur(mode, v, vmax);
   const formesParNom = {}, etiqParNom = {};
   const formes = CARTE_FOCUS.districts.map(d => {
     const info = parTrace[d.nom];
@@ -7339,9 +7478,8 @@ function carteCholeraChoix() {
       /* Rouge confirmation par culture, orange TDR positif, jaune suspect,
          vert foyer sans notification depuis dix jours. Le niveau de preuve
          disponible par district est porte par CHOL_CONF. */
-      const cf2 = (CHOL_CONF && CHOL_CONF[info.nom]) || (info.actif ? "suspect" : "eteint");
-      const st = info.actif ? cf2 : "eteint";
-      fill = st === "culture" ? "#B3372F" : st === "tdr" ? "#D97B29" : st === "suspect" ? "#C9A227" : "#2E7D32";
+      const st = cholStatutDe(info.nom, info.actif);
+      fill = CHOL_STATUT[st].c;
       if (st === "culture") cls += " cf-pulse";
       const lib = { culture: "transmission active, confirmée par culture",
         tdr: "transmission active, TDR positif sans culture",
@@ -7353,7 +7491,9 @@ function carteCholeraChoix() {
       fill = teinte(v) || "#E7E2D8";
       const lib = mode === "cas" ? info.cas + " cas" : mode === "attaque" ? (v == null ? "population ND" : Math.round(v) + " pour 100 000") : String(info.cfr).replace(".", ",") + "% de létalité";
       tip = `${info.nom} · ${lib}`;
-      if (mode !== "attaque" && info.niveau === "critique") cls += " cf-pulse";
+      /* Le clignotement reste reserve a la confirmation par culture pour
+         qu'une seule signification lui soit attachee. */
+      if (cholStatutDe(info.nom, info.actif) === "culture") cls += " cf-pulse";
     }
     const h = `<path class="${cls}" style="fill:${fill}" d="${d.d}"><title>${tip}</title></path>`;
     formesParNom[d.nom] = h; return h;
@@ -7366,13 +7506,14 @@ function carteCholeraChoix() {
     const court = d.nom.replace("Ndjamena-", "NDJ ").replace("N'Djamena ", "NDJ ");
     let val;
     if (!info) val = "0";
-    else if (mode === "statut") { const c2 = (CHOL_CONF && CHOL_CONF[info.nom]) || (info.actif ? "suspect" : "eteint");
-      val = !info.actif ? "éteint" : c2 === "culture" ? "culture" : c2 === "tdr" ? "TDR" : "suspect"; }
+    else if (mode === "statut") { val = CHOL_STATUT[cholStatutDe(info.nom, info.actif)].court; }
     else { const v = valeur(info);
       val = v == null ? "ND" : mode === "cas" ? String(v)
         : mode === "attaque" ? Math.round(v) : String(Math.round(v * 10) / 10).replace(".", ",") + "%"; }
     /* La taille du texte suit la largeur du cadre : une meme valeur en pixels
        serait minuscule sur la grappe large et illisible sur la grappe serree. */
+    /* Sur les teintes claires de la rampe de volume, le texte blanc cerne de
+       sombre reste lisible : le contour est conserve quelle que soit la teinte. */
     etiqParNom[d.nom] = (ech) => `<g class="chol-map-lbl" pointer-events="none">
       <text x="${ctr[0]}" y="${(ctr[1] - 0.9 * ech).toFixed(1)}" text-anchor="middle"
         style="font-size:${(2.1 * ech).toFixed(2)}px;stroke-width:${(0.62 * ech).toFixed(2)}px">${court}</text>
@@ -7382,19 +7523,20 @@ function carteCholeraChoix() {
   }).join("");
   const onglet = (m, l) => `<button class="chc-tab ${mode === m ? "on" : ""}" onclick="setCholCarte('${m}')">${l}</button>`;
   const barre = `<div class="chc-tabs">${onglet("cas", "Nombre de cas")}${onglet("attaque", "Taux d'attaque")}${onglet("letalite", "Taux de létalité")}${onglet("statut", "Statut épidémiologique")}</div>`;
-  const legende = mode === "statut"
-    ? `<div class="chol-legende">
-        <span class="cl-item"><span class="cl-pastille" style="background:#B3372F"></span> Confirmé culture</span>
-        <span class="cl-item"><span class="cl-pastille" style="background:#D97B29"></span> TDR positif</span>
-        <span class="cl-item"><span class="cl-pastille" style="background:#C9A227"></span> Suspect</span>
-        <span class="cl-item"><span class="cl-pastille" style="background:#2E7D32"></span> Foyer éteint</span>
-        <span class="cl-item"><span class="cl-pastille cl-hors"></span> Aucun cas</span>
-      </div>`
-    : `<div class="chol-legende chc-grad">
-        <span class="chc-min">${mode === "letalite" ? "0 %" : "faible"}</span>
-        <span class="chc-bar"></span>
-        <span class="chc-max">${mode === "cas" ? vmax + " cas" : mode === "attaque" ? Math.round(vmax) + " /100k" : Math.round(vmax) + " %"}</span>
+  const paliers = (lib) => `<div class="chol-legende chc-grad">
+        ${lib.map((t, i) => `<span class="cl-item"><span class="cl-pastille" style="background:${CHOL_RAMPE[i === 0 ? 0 : i === 1 ? 2 : i === 2 ? 3 : 4]}"></span> ${t}</span>`).join("")}
         <span class="cl-item"><span class="cl-pastille cl-hors"></span> ${mode === "attaque" ? "population ND" : "aucun cas"}</span>
+      </div>`;
+  const legende = mode === "statut"
+    ? cholLegendeStatut('<span class="chol-st-lib"><span class="chol-st-pastille" style="background:var(--surface-2);border:1px solid var(--border)"></span>Aucun cas</span>')
+    : mode === "letalite" ? paliers(["moins de 1 %", "1 à 2 %", "2 à 3 %", "plus de 3 %"])
+    : mode === "attaque" ? paliers(["moins de 10", "10 à 50", "50 à 100", "plus de 100 pour 100 000"])
+    : `<div class="chol-legende chc-grad">
+        <span class="chc-min">1 cas</span>
+        ${CHOL_RAMPE_VOL.map(c => `<span class="cl-pastille" style="background:${c}"></span>`).join("")}
+        <span class="chc-max">${vmax} cas</span>
+        <span class="cl-item"><span class="cl-pastille cl-hors"></span> aucun cas</span>
+        <span class="chol-st-lib">Échelle neutre : le volume ne préjuge pas du statut de confirmation.</span>
       </div>`;
   /* Le foyer compte deux grappes distantes de plus de deux cents kilometres.
      Une seule carte les separerait par une plage vide et rendrait N'Djamena
@@ -7524,6 +7666,11 @@ VIEWS["cousp-sitrep"] = () => {
      La couleur ne code que la position par rapport a un seuil du referentiel :
      un effectif sans seuil reste neutre, une valeur absente passe en ND. */
   const txAttaque = REF.population_totale ? (C.cas / REF.population_totale * 100000) : null;
+  /* Deces survenus hors structure de sante. Le lieu de deces n'etant pas
+     encore code dans la liste lineaire, la valeur reste ND tant que le champ
+     n'est pas alimente : elle s'affichera d'elle-meme des sa transmission. */
+  const dcCom = C.deces_communautaires == null ? null : C.deces_communautaires;
+  const txCom = (dcCom == null || !C.deces) ? null : Math.round(dcCom / C.deces * 1000) / 10;
   const cles = `<div class="kpi-grid">
     ${kpi("Cas cumulés", C.cas, "", "Depuis le début de l'épisode",
           P.cas ? "+" + P.cas + " sur la période" : "aucun nouveau cas", P.cas ? "up" : "flat", "", true)}
@@ -7531,23 +7678,42 @@ VIEWS["cousp-sitrep"] = () => {
           P.deces ? "+" + P.deces + " sur la période" : "aucun nouveau décès", P.deces ? "up" : "flat", "", true)}
     ${kpi("Létalité globale", C.letalite == null ? null : nb(C.letalite), "%", "Cible : < 1 %",
           ragLabel(cfrRag), "flat", cfrRag, true)}
+    ${kpi("Décès communautaires", dcCom, "", "Décès survenus hors structure de santé",
+          txCom == null ? "—" : nb(txCom) + " % des décès", "flat", txCom == null ? "na" : (txCom >= 50 ? "red" : txCom >= 25 ? "orange" : "yellow"), true)}
     ${kpi("Taux d'attaque", txAttaque == null ? null : txAttaque.toFixed(1).replace(".", ","), "/100k",
           "Cible : < 10 pour 100 000", ragLabel(ragCholAttaque(txAttaque)), "flat", ragCholAttaque(txAttaque), true)}
     ${kpi("Districts touchés", C.districts.length, "",
           C.provinces.length + " province" + (C.provinces.length > 1 ? "s" : ""), "—", "flat", "")}
     ${kpi("Positivité en culture", REF.labo.culture_total ? Math.round(REF.labo.culture_pos / REF.labo.culture_total * 100) : null, "%",
           REF.labo.culture_pos + " sur " + REF.labo.culture_total + " échantillons", "—", "flat", "")}
-    ${kpi("Décès communautaires", null, "", "Part des décès survenus hors structure", "—", "flat", "na")}
-  </div>`;
+  </div>
+  ${txCom == null ? `<div class="chol-note">Le nombre de décès communautaires et leur part dans les décès cumulés restent en ND : le lieu de décès n'est pas encore codé dans la liste linéaire de surveillance. Le renseignement de ce champ est demandé au COUSP, la distinction entre décès en structure et décès en communauté orientant directement le choix entre renforcement de la prise en charge et recherche active dans les localités.</div>` : ""}`;
 
   // Tableau de répartition, calqué sur le tableau I du rapport
+  /* Le statut de confirmation accompagne chaque district : c'est lui qui
+     porte le codage couleur des cartes, la meme lecture doit valoir ici. */
+  const statutDistrict = (nom) => {
+    const a = CHOL_A && CHOL_A.districts.find(x => x.nom === nom);
+    return cholStatutDe(nom, a ? (a.actif && a.recents > 0) : true);
+  };
   const lignes = C.districts.map(d => {
     const cfr = d.cas ? (d.deces / d.cas * 100) : 0;
     const nouv = (P.districts.find(x => x.nom === d.nom) || {}).cas || 0;
     const ragD = ragChol(cfr);
-    return `<tr><td><strong>${d.nom}</strong></td><td class="num">${nouv || "ND"}</td><td class="num">${d.cas}</td><td class="num">${d.deces}</td><td class="num"><span class="pill ${ragD}">${cfr.toFixed(1).replace(".", ",")}%</span></td></tr>`;
+    const st = statutDistrict(d.nom);
+    return `<tr><td><strong>${d.nom}</strong></td><td class="num">${nouv || "ND"}</td><td class="num">${d.cas}</td><td class="num">${d.deces}</td><td class="num"><span class="pill ${ragD}">${cfr.toFixed(1).replace(".", ",")}%</span></td><td>${cholPastille(st, true)}<span class="chol-st-lib">${CHOL_STATUT[st].lib}</span></td></tr>`;
   }).join("");
-  const tot = `<tr class="sr-total"><td><strong>Ensemble</strong></td><td class="num">${P.cas || "ND"}</td><td class="num">${C.cas}</td><td class="num">${C.deces}</td><td class="num">${nb(C.letalite)}%</td></tr>`;
+  const tot = `<tr class="sr-total"><td><strong>Ensemble</strong></td><td class="num">${P.cas || "ND"}</td><td class="num">${C.cas}</td><td class="num">${C.deces}</td><td class="num">${nb(C.letalite)}%</td><td></td></tr>`;
+  /* Bandeau d'alerte : une confirmation par culture est le seul evenement qui
+     declenche le signal rouge anime, pendant plus de trois secondes. */
+  const confirmes = C.districts.filter(d => statutDistrict(d.nom) === "culture");
+  const bandeauAlerte = confirmes.length
+    ? `<div class="chol-alerte chol-flash"><span class="chol-alerte-ic">▲</span>
+        <span><strong>Confirmation par culture</strong> · ${confirmes.map(d => d.nom).join(", ")}.
+        Vibrio cholerae isolé sur ${nb(REF.labo.culture_pos)} des ${nb(REF.labo.culture_total)} échantillons analysés.
+        La transmission est établie sur ${confirmes.length > 1 ? "ces districts" : "ce district"}, la riposte y est prioritaire.</span>
+      </div>`
+    : "";
 
   // Déshydratation et évolution
   const dTot = C.desh.legere + C.desh.moderee + C.desh.severe;
@@ -7601,6 +7767,7 @@ VIEWS["cousp-sitrep"] = () => {
       </div>
       ${barreControleChol()}
       <div class="content">
+        ${bandeauAlerte}
         <section class="sr-page sr-garde">
           <div class="sr-garde-haut">
             <div class="sr-garde-armes">République du Tchad</div>
@@ -7647,8 +7814,8 @@ VIEWS["cousp-sitrep"] = () => {
         ${cles}
         <div class="grid-2 sr-large">
           ${card("Répartition par district sanitaire", "Cas notifiés et décès, cumul et période",
-            `<table class="tbl-s tbl-dist"><tr><th>District</th><th class="num">Nouv.</th><th class="num">Cumul</th><th class="num">Décès</th><th class="num">Létal.</th></tr>${lignes}${tot}</table>`,
-            "Source : liste linéaire de surveillance du COUSP. Les nouveaux cas correspondent à la période sélectionnée dans la barre de contrôle.")}
+            `<table class="tbl-s tbl-dist"><tr><th>District</th><th class="num">Nouv.</th><th class="num">Cumul</th><th class="num">Décès</th><th class="num">Létal.</th><th>Confirmation</th></tr>${lignes}${tot}</table>${cholLegendeStatut()}`,
+            "Source : liste linéaire de surveillance du COUSP. Les nouveaux cas correspondent à la période sélectionnée dans la barre de contrôle. La colonne de confirmation porte le même codage couleur que les cartes et les graphiques.")}
           ${card("Profil des cas et confirmation biologique", "Caractéristiques démographiques et résultats de laboratoire",
             `<table class="tbl-s">
               <tr><td>Âge médian</td><td class="num"><strong>${nb(C.age_median)} ans</strong></td><td class="num">de ${nb(C.age_min)} à ${nb(C.age_max)} ans</td></tr>
@@ -7718,12 +7885,15 @@ VIEWS["cousp-deepdive"] = () => {
   // --- Courbes par district (migration) ---
   const maxC = Math.max(...A.districts.map(d => Math.max(...d.courbe)));
   const courbesHtml = A.districts.filter(d => d.cas > 1).map(d => {
+    /* Les barres reprennent le codage de confirmation utilise sur les cartes,
+       de sorte qu'un district lu en rouge sur la carte le reste ici. */
+    const st = cholStatutDe(d.nom, d.actif && d.recents > 0);
     const barres = d.courbe.map((v, i) => {
       const h = maxC ? Math.round(v / maxC * 100) : 0;
-      return `<div class="mig-col" title="S${M.sems[i]} : ${v} cas"><div class="mig-bar niv-${d.niveau}" style="height:${h}%"></div></div>`;
+      return `<div class="mig-col" title="S${M.sems[i]} : ${v} cas"><div class="mig-bar" style="height:${h}%;background:${CHOL_STATUT[st].c}"></div></div>`;
     }).join("");
     return `<div class="mig-ligne">
-      <div class="mig-nom">${nomPr(d.nom)}<span class="mig-etat ${d.actif ? 'actif' : 'eteint'}">${d.actif ? 'transmission active' : 'éteint'}</span></div>
+      <div class="mig-nom">${cholPastille(st, true)}${nomPr(d.nom)}<span class="mig-etat ${d.actif ? 'actif' : 'eteint'}">${CHOL_STATUT[st].lib.toLowerCase()}</span></div>
       <div class="mig-graph">${barres}</div>
       <div class="mig-tot">${d.cas}</div>
     </div>`;
@@ -7784,13 +7954,14 @@ VIEWS["cousp-deepdive"] = () => {
         <div class="ph-title">Analyse approfondie de l'épisode</div>
         <div class="ph-sub">Analyse sur liste linéaire individuelle · ${M.zone} · semaines ${M.sems[0]} à ${M.sem_max} · ${M.n} cas, ${M.deces} décès, ${M.localites} localités.</div>
       </div>
+      ${cholChiffresCles("Rappel du cadrage de l'épisode")}
       ${constats}
 
       <div class="grid-2">
-        ${card("Où se joue la riposte aujourd'hui", "Districts touchés, colorés par niveau de risque", renderCarteCholera(),
-          "Les zones clignotantes signalent une transmission active sur les deux dernières semaines. Score composite : activité récente, excès de létalité, part de cas sévères, volume.")}
+        ${card("Où se joue la riposte aujourd'hui", "Un indicateur à la fois, recadré sur les deux grappes du foyer", carteCholeraChoix(),
+          "La même carte que le rapport de situation, pour que la lecture ne change pas d'une vue à l'autre. Le rouge signale une confirmation par culture et s'accompagne d'une alerte animée, l'orange un test rapide positif, le jaune des cas suspects, le vert un foyer sans notification depuis dix jours.")}
         ${card("Déplacement du foyer épidémique", "Cas par semaine et par district",
-          `<div class="mig-bloc">${courbesHtml}<div class="mig-axe">${axeSem}</div></div>`,
+          `<div class="mig-bloc">${courbesHtml}<div class="mig-axe">${axeSem}</div></div>${cholLegendeStatut()}`,
           "Le foyer initial de Karal s'est éteint après la semaine 30. Un second foyer, indépendant, s'est ouvert à N'Djamena à partir de la semaine 28.")}
       </div>
 
@@ -10071,12 +10242,249 @@ VIEWS["vacc-surv"] = () => {
 /* ==============================================================
    DSR : sante maternelle sur releves national et provincial
 ============================================================== */
+/* ==============================================================
+   DSR · INDICATEURS RETENUS PAR LA DIRECTION
+   Registre unique des indicateurs demandes par la DSR pour le cadre
+   de suivi SMNI, complete des indicateurs adosses a la consultation
+   prenatale transmis par le PNLP et le PNPTME. Chaque entree porte sa
+   source : celles qui ne sont pas encore alimentees restent en ND et
+   nomment le releve attendu, aucune valeur n'est reconstituee.
+============================================================== */
+const DSR_RETENUS = [
+  /* --- Sante maternelle : huit indicateurs retenus --- */
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de mortalité maternelle en milieu hospitalier", calc: { num: "Décès maternels survenus en formation sanitaire, multipliés par 100 000", den: "Naissances vivantes en formation sanitaire" }, ajout: true,
+    code: "mort_mat_hosp", niv: "national et provincial", unite: "/100 000", src: "SMI.csv · DHIS2 national et relevé provincial" },
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture de la CPN 1", calc: { num: "Femmes enceintes vues au moins une fois en consultation prénatale", den: "Grossesses attendues sur la période" }, ajout: false,
+    code: "cpn1", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture de la CPN 4", calc: { num: "Femmes enceintes ayant effectué au moins quatre consultations prénatales", den: "Grossesses attendues sur la période" }, ajout: false,
+    code: "cpn4", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial",
+    voisin: "Le relevé national porte 2% en juin, valeur incompatible avec une CPN 1 à 85% : écart signalé à la DPSIS, affiché sans correction." },
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux d'accouchements assistés par personnel qualifié", calc: { num: "Accouchements assistés par un personnel de santé qualifié", den: "Accouchements attendus sur la période" }, ajout: false,
+    code: "acc_qualifie", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de césarienne", calc: { num: "Césariennes réalisées", den: "Naissances attendues sur la période" }, ajout: false,
+    code: "cesarienne", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
+  { dir: "DSR", grp: "Santé maternelle", lib: "Proportion des femmes référées pour complications obstétricales", calc: { num: "Femmes référées vers un niveau supérieur pour complication obstétricale", den: "Femmes ayant présenté une complication obstétricale" }, ajout: true,
+    code: null, unite: "%", src: "Registre de référence et contre-référence, à extraire du DHIS2",
+    voisin: "La série disponible porte la proportion d'accouchements avec complication, qui mesure la survenue et non la référence." },
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de couverture en CPoN", calc: { num: "Femmes ayant effectué au moins une consultation postnatale dans les six semaines suivant l'accouchement", den: "Accouchements attendus sur la période" }, ajout: false,
+    code: "cpon", niv: "national", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial",
+    voisin: "Le relevé national dépasse 100% : dénominateur à reprendre avant toute fixation de cible." },
+  { dir: "DSR", grp: "Santé maternelle", lib: "Taux de létalité des complications obstétricales", calc: { num: "Décès maternels consécutifs à une complication obstétricale", den: "Complications obstétricales prises en charge" }, ajout: true,
+    code: null, unite: "%", src: "Décès maternels rapportés au nombre de complications prises en charge, couple de variables à ouvrir dans le DHIS2" },
+
+  /* --- Sante de l'enfant : quatre indicateurs, tous issus de la demande --- */
+  { dir: "DSR", grp: "Santé de l'enfant", lib: "Taux de mortalité néonatale intrahospitalière", calc: { num: "Décès de nouveau-nés de zéro à vingt-huit jours survenus en structure, multipliés par 1 000", den: "Naissances vivantes institutionnelles" }, ajout: true,
+    code: null, unite: "‰", src: "Décès néonatals en structure rapportés aux naissances vivantes institutionnelles, à ouvrir dans le DHIS2",
+    voisin: "La mortalité périnatale est disponible : elle agrège mortinaissances et décès de la première semaine, elle ne s'y substitue pas." },
+  { dir: "DSR", grp: "Santé de l'enfant", lib: "Taux de décès néonatals précoces, de zéro à sept jours", calc: { num: "Décès de nouveau-nés de zéro à sept jours, multipliés par 1 000", den: "Naissances vivantes" }, ajout: true,
+    code: "deces_neonat", niv: "national et provincial", unite: "‰", src: "SMI.csv · DHIS2 national et relevé provincial",
+    voisin: "Unité déclarée en pourcentage au national et en pour mille au provincial, pour des valeurs du même ordre : définition à trancher entre la DSR et la DPSIS." },
+  { dir: "DSR", grp: "Santé de l'enfant", lib: "Proportion de faible poids de naissance", calc: { num: "Nouveau-nés pesant moins de 2 500 grammes à la naissance", den: "Nouveau-nés pesés à la naissance" }, ajout: true,
+    code: "faible_poids", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
+  { dir: "DSR", grp: "Santé de l'enfant", lib: "Proportion des décès néonatals liés à l'asphyxie", calc: { num: "Décès néonatals dont la cause enregistrée est l'asphyxie", den: "Décès néonatals enregistrés" }, ajout: true,
+    code: null, unite: "%", src: "Cause de décès néonatal, champ non codé dans le rapportage actuel" },
+
+  /* --- Planification familiale : quatre indicateurs --- */
+  { dir: "DSR", grp: "Planification familiale", lib: "Prévalence contraceptive, toutes méthodes", calc: { num: "Femmes en âge de procréer utilisant une méthode contraceptive, quelle qu'elle soit", den: "Femmes en âge de procréer" }, ajout: false,
+    code: "prev_contra", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national et relevé provincial" },
+  { dir: "DSR", grp: "Planification familiale", lib: "Taux de prévalence contraceptive moderne", calc: { num: "Femmes en âge de procréer utilisant une méthode contraceptive moderne", den: "Femmes en âge de procréer" }, ajout: true,
+    code: null, unite: "%", src: "Ventilation par méthode de la prévalence contraceptive, à demander au DHIS2",
+    voisin: "La prévalence contraceptive toutes méthodes est disponible et sert de plafond à l'indicateur moderne." },
+  { dir: "DSR", grp: "Planification familiale", lib: "Taux d'acceptation des contraceptifs du post-partum immédiat", calc: { num: "Accouchées ayant accepté une méthode contraceptive avant leur sortie de la maternité", den: "Accouchements" }, ajout: true,
+    code: "accept_pp", niv: "provincial", unite: "%", src: "Relevé provincial DSR · DHIS2",
+    voisin: "Une province dépasse 100% : dénominateur mal apparié entre accouchements et acceptantes, anomalie remontée sans correction." },
+  { dir: "DSR", grp: "Planification familiale", lib: "Part des formations sanitaires sans rupture d'une méthode traceuse dans le mois", calc: { num: "Formations sanitaires n'ayant déclaré aucun jour de rupture d'une méthode traceuse dans le mois", den: "Formations sanitaires déclarantes" }, ajout: true,
+    code: null, unite: "%", src: "SIGL, dénombrement des formations sanitaires déclarantes et de celles en rupture",
+    voisin: "Les volumes de stock d'implants, d'injectables et d'oxytocine sont suivis, mais le dénominateur des formations déclarantes manque." },
+
+  /* --- Sante des adolescents et des jeunes : trois indicateurs --- */
+  { dir: "DSR", grp: "Santé des adolescents", lib: "Taux de grossesses précoces, dix à dix-neuf ans", calc: { num: "Grossesses enregistrées chez les femmes de dix à dix-neuf ans", den: "Grossesses attendues chez les femmes de dix à dix-neuf ans" }, ajout: true,
+    code: null, unite: "%", src: "Grossesses par tranche d'âge, ventilation absente du relevé transmis" },
+  { dir: "DSR", grp: "Santé des adolescents", lib: "Proportion des accouchements chez les adolescentes de dix à dix-neuf ans", calc: { num: "Accouchements de femmes de dix à dix-neuf ans", den: "Accouchements enregistrés" }, ajout: true,
+    code: null, unite: "%", src: "Accouchements par tranche d'âge, ventilation absente du relevé transmis" },
+  { dir: "DSR", grp: "Santé des adolescents", lib: "Taux de prévalence contraceptive chez les dix à vingt-quatre ans", calc: { num: "Utilisatrices d'une méthode contraceptive âgées de dix à vingt-quatre ans", den: "Femmes de dix à vingt-quatre ans" }, ajout: true,
+    code: null, unite: "%", src: "Prévalence contraceptive ventilée par âge, à demander au DHIS2",
+    voisin: "Le nombre de nouvelles acceptantes de moins de dix-neuf ans est disponible et donne la part des jeunes dans le recrutement, sans en donner la prévalence." },
+
+  /* --- Prestations adossees au contact prenatal --- */
+  { dir: "DSR", grp: "Indicateurs adossés à la consultation prénatale", lib: "Femmes enceintes ayant reçu au moins trois doses de sulfadoxine-pyriméthamine", calc: { num: "Femmes enceintes ayant reçu au moins trois doses de sulfadoxine-pyriméthamine", den: "Femmes vues en consultation prénatale" }, ajout: true,
+    code: null, unite: "%", src: "Programme national de lutte contre le paludisme" },
+  { dir: "DSR", grp: "Indicateurs adossés à la consultation prénatale", lib: "Femmes vues en CPN 1 dépistées au VIH et ayant reçu leur résultat", calc: { num: "Femmes vues en CPN 1 dépistées au VIH et à qui le résultat a été rendu", den: "Femmes vues en CPN 1" }, ajout: true,
+    code: null, unite: "%", src: "Programme national de prévention de la transmission mère-enfant",
+    voisin: "Le dépistage de la syphilis en CPN 1 est renseigné dans le relevé provincial et suit le même circuit de collecte." },
+  { dir: "DSR", grp: "Indicateurs adossés à la consultation prénatale", lib: "Femmes enceintes positives au VIH mises sous traitement", calc: { num: "Femmes enceintes dépistées positives au VIH et mises sous antirétroviraux", den: "Femmes enceintes dépistées positives au VIH" }, ajout: true,
+    code: null, unite: "%", src: "Programme national de prévention de la transmission mère-enfant" },
+  { dir: "DSR", grp: "Indicateurs adossés à la consultation prénatale", lib: "Femmes enceintes sous traitement dont la charge virale est supprimée", calc: { num: "Femmes enceintes sous antirétroviraux dont la charge virale est inférieure au seuil de détection", den: "Femmes enceintes sous antirétroviraux ayant bénéficié d'une mesure de charge virale" }, ajout: true,
+    code: null, unite: "%", src: "Programme national de prévention de la transmission mère-enfant" }
+];
+
+/* ==============================================================
+   CADRE D'INDICATEURS · AUTRES DIRECTIONS
+   Le registre ne recense que des cadres effectivement transmis par
+   une direction. Une direction dont le cadre n'est pas encore
+   arrete figure a sa place, sans indicateur, pour que l'etat
+   d'avancement du CID se lise d'un seul tenant.
+============================================================== */
+const CID_AUTRES = [
+  /* --- Cabinet du Ministre : tuiles du tableau de bord ministeriel --- */
+  { dir: "Cabinet du Ministre", grp: "Tableau de bord ministériel", lib: "Couverture en Penta 3", calc: { num: "Enfants de moins d'un an ayant reçu la troisième dose de vaccin pentavalent", den: "Enfants de moins d'un an attendus dans la population" },
+    code: "Penta3", niv: "national et provincial", unite: "%", src: "RIM PEV · DLMVSE" },
+  { dir: "Cabinet du Ministre", grp: "Tableau de bord ministériel", lib: "Couverture de la CPN 1", calc: { num: "Femmes enceintes vues au moins une fois en consultation prénatale", den: "Grossesses attendues sur la période" },
+    code: "cpn1", niv: "national et provincial", unite: "%", src: "SMI.csv · DHIS2 national, relevé DSR" },
+  { dir: "Cabinet du Ministre", grp: "Tableau de bord ministériel", lib: "Mortalité maternelle hospitalière", calc: { num: "Décès maternels survenus en formation sanitaire, multipliés par 100 000", den: "Naissances vivantes en formation sanitaire" },
+    code: "mort_mat_hosp", niv: "national et provincial", unite: "/100 000", src: "SMI.csv · DHIS2 national, relevé DSR" },
+  { dir: "Cabinet du Ministre", grp: "Tableau de bord ministériel", lib: "Complétude du rapportage RMA", calc: { num: "Rapports mensuels d'activité reçus", den: "Rapports mensuels attendus" },
+    code: "rma_comp", niv: "national et provincial", unite: "%", src: "Relevé qualité · DPSIS" },
+  { dir: "Cabinet du Ministre", grp: "Tableau de bord ministériel", lib: "Rougeole · taux d'attaque", calc: { num: "Cas de rougeole notifiés, multipliés par 100 000", den: "Population totale" },
+    code: "rougeole_att", niv: "national et provincial", unite: "/100 000", src: "Surveillance intégrée des maladies · IDS" },
+  { dir: "Cabinet du Ministre", grp: "Tableau de bord ministériel", lib: "Stock national d'amoxicilline adulte", calc: { def: "Quantité en stock au dernier jour du mois dans les entrepôts centraux" },
+    code: "trac_amox_ad", niv: "national", unite: "unités", src: "Relevé de stocks · DGPML" },
+  { dir: "Cabinet du Ministre", grp: "Tableau de bord ministériel", lib: "Quatre tuiles restantes du tableau de bord", calc: { def: "Mode de calcul à définir avec les indicateurs eux-mêmes" },
+    code: null, unite: "", src: "Arbitrage du Cabinet sur les indicateurs complétant les six premières tuiles",
+    voisin: "Le tableau de bord est annoncé à dix indicateurs et six sont câblés sur source réelle. Les quatre autres attendent une décision, non une donnée." },
+
+  /* --- COUSP : hierarchisation arretee pour la veille cholera --- */
+  { dir: "COUSP", grp: "Riposte au choléra", lib: "Cas cumulés", calc: { def: "Somme des cas notifiés depuis le début de l'épisode, tous districts atteints" },
+    code: "chol_cas", niv: "district", unite: "effectif", src: "Liste linéaire de surveillance · COUSP" },
+  { dir: "COUSP", grp: "Riposte au choléra", lib: "Décès cumulés", calc: { def: "Somme des décès notifiés depuis le début de l'épisode" },
+    code: "chol_deces", niv: "district", unite: "effectif", src: "Liste linéaire de surveillance · COUSP" },
+  { dir: "COUSP", grp: "Riposte au choléra", lib: "Létalité globale", calc: { num: "Décès cumulés, multipliés par 100", den: "Cas dont l'issue est renseignée" },
+    code: "chol_cfr", niv: "district", unite: "%", src: "Liste linéaire de surveillance · COUSP" },
+  { dir: "COUSP", grp: "Riposte au choléra", lib: "Décès communautaires et leur part dans les décès", calc: { num: "Décès survenus hors structure de santé, multipliés par 100", den: "Décès cumulés" },
+    code: null, unite: "%", src: "Lieu de décès, champ non codé dans la liste linéaire de surveillance",
+    voisin: "Le tableau de bord porte déjà l'emplacement de l'indicateur : il s'affichera dès que le champ sera renseigné." },
+  { dir: "COUSP", grp: "Riposte au choléra", lib: "Taux d'attaque par district", calc: { num: "Cas notifiés dans le district, multipliés par 100 000", den: "Population du district" },
+    code: "chol_attaque", niv: "district", unite: "/100 000", src: "Liste linéaire, populations du rapport de situation",
+    voisin: "Les populations de N'Djamena Centre et Est y sont reprises à l'identique : les taux de ces deux districts restent en ND." },
+  { dir: "COUSP", grp: "Riposte au choléra", lib: "Statut de confirmation par district", calc: { def: "Niveau de preuve le plus élevé atteint dans le district : culture positive, puis test rapide positif, puis cas suspect. Un district sans notification depuis dix jours passe en foyer éteint." },
+    code: "chol_conf", niv: "district", unite: "culture, TDR, suspect, éteint", src: "Résultats de laboratoire · COUSP" },
+  { dir: "COUSP", grp: "Riposte au choléra", lib: "État de déshydratation à l'admission", calc: { num: "Cas relevant d'un degré de déshydratation donné, multipliés par 100", den: "Cas dont le degré de déshydratation est renseigné" },
+    code: "chol_desh", niv: "province et national", unite: "%", src: "Liste linéaire de surveillance · COUSP" },
+  { dir: "COUSP", grp: "Riposte au choléra", lib: "Structure par âge et par sexe des cas", calc: { def: "Effectifs de cas par tranche d'âge et par sexe, rapportés à la structure par âge de la population du pays" },
+    code: "chol_pyr", niv: "national", unite: "effectif", src: "Liste linéaire, rapportée à la structure de population du pays" },
+
+  /* --- Directions dont le cadre reste a transmettre --- */
+  { dir: "DLMVSE", grp: "Programme élargi de vaccination", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
+    code: null, unite: "", src: "Direction de la lutte contre la maladie, la vaccination et la santé de l'environnement",
+    voisin: "Le tableau de bord affiche quinze antigènes, l'abandon spécifique et la qualité du rapportage. La liste des indicateurs que la direction retient pour son pilotage n'a pas encore été transmise." },
+  { dir: "DPSIS", grp: "Système d'information sanitaire", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
+    code: null, unite: "", src: "Direction de la planification et du système d'information sanitaire",
+    voisin: "Complétude et promptitude du rapportage sont suivies. Le cadre de qualité des données que la direction retient reste à formaliser." },
+  { dir: "DGPML", grp: "Pharmacie et logistique", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
+    code: null, unite: "", src: "Direction générale de la pharmacie, du médicament et des laboratoires",
+    voisin: "Stocks de fin de mois, ruptures et péremptions sont suivis sur les traceurs. La liste des traceurs retenus reste à valider." },
+  { dir: "DRH", grp: "Ressources humaines", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
+    code: null, unite: "", src: "Direction des ressources humaines" },
+  { dir: "PNLP", grp: "Paludisme", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
+    code: null, unite: "", src: "Programme national de lutte contre le paludisme",
+    voisin: "La chimioprévention pendant la grossesse est déjà attendue au titre du cadre DSR." },
+  { dir: "PNT", grp: "Tuberculose", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
+    code: null, unite: "", src: "Programme national de lutte contre la tuberculose" },
+  { dir: "PSLS", grp: "VIH et sida", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
+    code: null, unite: "", src: "Programme sectoriel de lutte contre le sida",
+    voisin: "Les trois indicateurs de prévention de la transmission mère-enfant sont déjà attendus au titre du cadre DSR." }
+];
+const CID_CADRE = DSR_RETENUS.concat(CID_AUTRES);
+const CID_DIR_ORDRE = ["Cabinet du Ministre", "DSR", "COUSP", "DLMVSE", "DPSIS", "DGPML", "DRH", "PNLP", "PNT", "PSLS"];
+
+
+/* Lecture nationale d'un indicateur du registre. */
+function dsrLireNat(code) {
+  if (!code || !DSRN || !DSRN.indicateurs[code]) return { p: null, v: null };
+  return cidDerniere(DSRN.indicateurs[code].serie, DSRN.meta.mois_max);
+}
+/* Valeurs provinciales du dernier mois disponible. */
+function dsrValProv(code) {
+  const out = {}; let der = null;
+  if (!DSRP) return { val: out, per: null };
+  Object.keys(PROV_CANON).forEach(id => {
+    const d = cidDerniere((DSRP.provinces[PROV_CANON[id]] || {})[code], DSRP.meta.mois_max);
+    out[id] = d.v == null ? null : Math.round(d.v * 10) / 10;
+    if (d.p && (!der || d.p > der)) der = d.p;
+  });
+  return { val: out, per: der };
+}
+/* Une proportion provinciale ne s'additionne pas sans son denominateur :
+   la mediane des provinces est retenue et annoncee comme telle. */
+function dsrMedianeProv(code) {
+  const { val, per } = dsrValProv(code);
+  const v = Object.values(val).filter(x => x != null).sort((a, b) => a - b);
+  if (!v.length) return { v: null, p: per, n: 0 };
+  const m = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+  return { v: Math.round(m * 10) / 10, p: per, n: v.length };
+}
+/* Somme provinciale d'un effectif, par periode. */
+function dsrSommeProv(code) {
+  const s = {};
+  if (!DSRP) return s;
+  Object.keys(DSRP.provinces).forEach(pv => {
+    const serie = DSRP.provinces[pv][code] || {};
+    Object.keys(serie).forEach(p => { if (serie[p] != null) s[p] = (s[p] || 0) + serie[p]; });
+  });
+  return s;
+}
+/* Chiffre cle d'un indicateur en attente de source : la valeur reste ND et
+   le releve attendu occupe la place de la cible. */
+function dsrKpiAttente(lib, unite, src) {
+  return kpi(lib, null, unite, "Source attendue : " + src, "—", "flat", "na");
+}
+/* Tableau de suivi de l'alimentation des indicateurs retenus. */
+/* Mode de calcul rendu en fraction, numerateur sur denominateur. Un
+   indicateur qui n'est pas un rapport porte sa definition operatoire. */
+function cidModeCalcul(c) {
+  if (!c) return '<span class="dsr-o">à préciser</span>';
+  if (c.def) return `<span class="cad-def">${c.def}</span>`;
+  return `<span class="cad-frac"><span class="cad-num">${c.num}</span><span class="cad-den">${c.den}</span></span>`;
+}
+/* Registre filtre sur une direction, ou registre entier. */
+function cidRegistre(dir) {
+  return dir ? CID_CADRE.filter(i => i.dir === dir) : CID_CADRE;
+}
+/* Tableau de suivi de l'alimentation, groupe par direction puis composante. */
+function dsrTableauSources(dir, sansDir) {
+  const reg = cidRegistre(dir);
+  let d0 = "", g0 = "", out = "";
+  CID_DIR_ORDRE.forEach(dd => {
+    reg.filter(i => i.dir === dd).forEach(i => {
+      if (!sansDir && i.dir !== d0) {
+        d0 = i.dir; g0 = "";
+        const n = reg.filter(x => x.dir === d0).length;
+        const a = reg.filter(x => x.dir === d0 && x.code).length;
+        out += `<tr class="dsr-dir"><td colspan="5">${d0}
+          <span class="dsr-dir-n">${a} sur ${n} alimenté${a > 1 ? "s" : ""}</span></td></tr>`;
+      }
+      if (i.grp !== g0) { g0 = i.grp; out += `<tr class="dsr-grp"><td colspan="5">${g0}</td></tr>`; }
+      const dispo = !!i.code;
+      out += `<tr>
+        <td class="ind">${i.lib}${i.ajout ? `<span class="dsr-nouveau">Ajout DSR</span>` : ""}</td>
+        <td class="cad-calc">${cidModeCalcul(i.calc)}</td>
+        <td class="num">${i.unite || "—"}</td>
+        <td>${dispo ? `<span class="pill green">alimenté</span>` : `<span class="pill na">en attente</span>`}
+          ${dispo ? `<span class="dsr-o"> · relevé ${i.niv}</span>` : ""}</td>
+        <td>${i.src}${i.voisin ? `<div class="dsr-o">${i.voisin}</div>` : ""}</td>
+      </tr>`;
+    });
+  });
+  const tot = reg.length, n = reg.filter(i => i.code).length;
+  const aj = reg.filter(i => i.ajout).length, ajOk = reg.filter(i => i.ajout && i.code).length;
+  return `<table class="dsr-src dsr-src-5"><thead><tr><th>Indicateur retenu</th><th>Mode de calcul</th><th>Unité</th><th>État</th><th>Source</th></tr></thead>
+    <tbody>${out}</tbody></table>
+    <div class="dsr-o" style="margin-top:10px;">${n} des ${tot} indicateurs recensés sont alimentés par les relevés déjà déposés.
+    ${aj ? `Sur les ${aj} indicateurs demandés par la direction de la santé de la reproduction, ${ajOk} sont servis et ${aj - ajOk} attendent l'ouverture de leur variable. ` : ""}
+    Les indicateurs en attente restent en ND : ils s'afficheront d'eux-mêmes dès que la variable correspondante sera transmise,
+    sans nouvelle intervention sur le tableau de bord.</div>`;
+}
+
 VIEWS["dsr-mat"] = () => {
   const crumbs = ["Santé Reproductive", "Santé maternelle"];
   const et = `<div class="ph"><div class="ph-tag">Santé maternelle · DSR</div><div class="ph-title">Santé maternelle · continuum de soins</div>`;
   if (!DSRN) return { crumbs, html: et + `<div class="ph-sub">Données DSR en cours de chargement.</div></div>` };
   const lireN = code => cidDerniere(DSRN.indicateurs[code] ? DSRN.indicateurs[code].serie : null, DSRN.meta.mois_max);
   const cpn1 = lireN("cpn1"), cpn4 = lireN("cpn4"), acc = lireN("acc_qualifie"), mm = lireN("mort_mat_hosp"), cpon = lireN("cpon"), gatpa = lireN("gatpa");
+  /* Indicateurs retenus par la DSR : complications obstétricales et
+     prestations adossées au contact prénatal. */
+  const compl = lireN("compl_acc"), cesa = lireN("cesarienne");
+  const td2 = dsrMedianeProv("td2"), syph = dsrMedianeProv("syphilis");
 
   const carteInd = window.__dsrMatCarte || "mort_mat_hosp";
   const valProv = {};
@@ -10122,6 +10530,18 @@ VIEWS["dsr-mat"] = () => {
           { name: "2025", data: cidAnnee(DSRN.indicateurs.mort_mat_hosp.serie, 2025), color: "#A09A93", style: "dash" },
         ]), "")}
       </div>
+      ${card("Indicateurs adossés à la consultation prénatale<span class=\"dsr-nouveau\">Ajout DSR</span>", "Ce que la CPN doit délivrer au-delà du contact", `
+        <div class="kpi-grid">
+          ${kpi("Vaccination antitétanique TD2+", td2.v == null ? null : td2.v, "%",
+                "Médiane des " + td2.n + " provinces · " + (td2.p ? cidMois(td2.p) : "ND"), "", "flat", pevRag(td2.v, 80))}
+          ${kpi("Dépistage de la syphilis en CPN 1", syph.v == null ? null : syph.v, "%",
+                "Médiane des " + syph.n + " provinces · " + (syph.p ? cidMois(syph.p) : "ND"), "", "flat", pevRag(syph.v, 80))}
+          ${dsrKpiAttente("Trois doses de sulfadoxine-pyriméthamine", "%", "PNLP")}
+          ${dsrKpiAttente("Dépistage VIH en CPN 1 avec résultat rendu", "%", "PNPTME")}
+          ${dsrKpiAttente("Femmes enceintes positives au VIH mises sous traitement", "%", "PNPTME")}
+          ${dsrKpiAttente("Charge virale supprimée chez les femmes enceintes traitées", "%", "PNPTME")}
+        </div>`,
+        "Ces indicateurs partagent le même contact que la consultation prénatale et sont placés à sa suite, comme demandé. Le TD2+ et le dépistage de la syphilis proviennent du relevé provincial de la DSR ; les quatre autres relèvent du PNLP et du PNPTME, dont les extractions ne sont pas encore versées au dépôt. Une proportion ne s'additionnant pas entre provinces sans son dénominateur, la médiane provinciale est retenue plutôt qu'une moyenne nationale reconstituée. Les niveaux relevés pour le TD2+ et la syphilis, inférieurs à 7% dans toutes les provinces, sont hors de proportion avec les couvertures attendues sur un contact prénatal : la valeur est affichée telle que transmise et l'écart signalé à la DPSIS, sans correction ni redressement.")}
       ${cidChips([["mort_mat_hosp", "Mortalité maternelle"], ["cpn1", "CPN 1"], ["acc_qualifie", "Accouchements assistés"], ["gatpa", "GATPA"]].map(([v, l]) => ({ v, l })), "__dsrMatCarte", carteInd)}
       <div class="g-2-1">
         ${card(libCarte + " par province · " + (derPProv ? cidMois(derPProv) : "ND"), inverse ? "Vert bas · rouge élevé · gris ND" : "Vert au dessus de la cible · rouge en deçà · gris ND",
@@ -10131,6 +10551,88 @@ VIEWS["dsr-mat"] = () => {
           rag: (c => { const v = valProv[id]; return v == null ? "na" : inverse ? (v <= seuil[0] ? "green" : v <= seuil[1] ? "yellow" : v <= seuil[2] ? "orange" : "red") : (v >= seuil[0] ? "green" : v >= seuil[1] ? "yellow" : v >= seuil[2] ? "orange" : "red"); })(),
           showVal: valProv[id] + (uniteCarte === "%" ? "%" : "")
         }))), "Un ratio hospitalier élevé peut aussi refléter un faible volume d'accouchements institutionnels : lecture conjointe avec la couverture recommandée.")}
+      </div>
+      ${card("Complications obstétricales<span class=\"dsr-nouveau\">Ajout DSR</span>", "Référence, prise en charge et issue des complications", `
+        <div class="kpi-grid">
+          ${kpi("Accouchements avec complication", compl.v == null ? null : Math.round(compl.v * 10) / 10, "%",
+                "Survenue · " + (compl.p ? cidMois(compl.p) : "ND"), "", "flat", compl.v == null ? "na" : "yellow")}
+          ${kpi("Taux de césarienne", cesa.v == null ? null : Math.round(cesa.v * 10) / 10, "%",
+                "Norme OMS : 5 à 15% · " + (cesa.p ? cidMois(cesa.p) : "ND"), "", "flat",
+                cesa.v == null ? "na" : (cesa.v >= 5 && cesa.v <= 15) ? "green" : cesa.v >= 3 ? "orange" : "red")}
+          ${dsrKpiAttente("Femmes référées pour complications obstétricales", "%", "registre de référence et contre-référence")}
+          ${dsrKpiAttente("Létalité des complications obstétricales", "%", "décès maternels rapportés aux complications prises en charge")}
+        </div>`,
+        "La proportion d'accouchements avec complication mesure la survenue, non la référence : elle ne remplace pas les deux indicateurs retenus par la DSR, qui portent sur la fonctionnalité du système de référence et sur la performance des soins obstétricaux d'urgence. Le couple de variables correspondant reste à ouvrir dans le DHIS2.")}
+    </div>` };
+};
+
+/* ==============================================================
+   DSR : sante neonatale
+   Composante retenue par la direction dans le cadre de suivi SMNI.
+   Deux des quatre indicateurs sont alimentes par les releves deja
+   deposes, les deux autres attendent l'ouverture de leur variable.
+============================================================== */
+VIEWS["dsr-neonat"] = () => {
+  const crumbs = ["Santé Reproductive", "Santé néonatale"];
+  const et = `<div class="ph"><div class="ph-tag">Santé néonatale · DSR</div><div class="ph-title">Santé néonatale</div>`;
+  if (!DSRN) return { crumbs, html: et + `<div class="ph-sub">Données DSR en cours de chargement.</div></div>` };
+  const nn = dsrLireNat("deces_neonat"), fp = dsrLireNat("faible_poids"), pn = dsrLireNat("mort_perinat");
+  const mortinat = dsrMedianeProv("mortinat");
+  /* Le relevé national déclare les décès néonatals précoces en pourcentage
+     et le relevé provincial en pour mille, pour des valeurs du même ordre :
+     l'unité de chaque source est reprise telle quelle et l'écart signalé. */
+  const uNat = (DSRN.indicateurs.deces_neonat || {}).unite || "";
+  const d1 = v => v == null ? null : Math.round(v * 100) / 100;
+
+  const carteInd = window.__dsrNeoCarte || "deces_neonat";
+  const { val: valProv, per: derPProv } = dsrValProv(carteInd);
+  const bornes = { deces_neonat: [1, 2, 4], faible_poids: [5, 10, 15], mortinat: [10, 20, 30] }[carteInd] || [1, 2, 4];
+  const coul = v => v == null ? "#CBC7BE" : v <= bornes[0] ? "#2E7D32" : v <= bornes[1] ? "#C9A227" : v <= bornes[2] ? "#D97B29" : "#B3372F";
+  const libCarte = DSRP && DSRP.indicateurs[carteInd] ? DSRP.indicateurs[carteInd].libelle : carteInd;
+  const uniteCarte = DSRP && DSRP.indicateurs[carteInd] ? DSRP.indicateurs[carteInd].unite : "%";
+  const pires = Object.keys(valProv).filter(id => valProv[id] != null)
+    .sort((a, b) => valProv[b] - valProv[a]).slice(0, 8);
+
+  return { crumbs, html: et + `<div class="ph-sub">Relevé national de ${cidMois(DSRN.meta.mois_max)} et détail provincial de ${derPProv ? cidMois(derPProv) : "ND"}. Valeurs brutes, ND pour toute absence.</div></div>
+    <div class="content">
+      <div class="kpi-grid">
+        ${kpi("Décès néonatals précoces", d1(nn.v), uNat, "Zéro à sept jours · " + (nn.p ? cidMois(nn.p) : "ND"), "", "flat",
+              nn.v == null ? "na" : nn.v <= 1 ? "green" : nn.v <= 2 ? "yellow" : nn.v <= 4 ? "orange" : "red", true)}
+        ${kpi("Faible poids de naissance", d1(fp.v), "%", "Parmi les nouveau-nés à terme · " + (fp.p ? cidMois(fp.p) : "ND"), "", "flat",
+              fp.v == null ? "na" : fp.v <= 5 ? "green" : fp.v <= 10 ? "yellow" : fp.v <= 15 ? "orange" : "red", true)}
+        ${dsrKpiAttente("Mortalité néonatale intrahospitalière", "‰", "décès néonatals en structure rapportés aux naissances vivantes institutionnelles")}
+        ${dsrKpiAttente("Part des décès néonatals liés à l'asphyxie", "%", "cause de décès néonatal, champ non codé")}
+      </div>
+      <div class="g-2-1">
+        ${card("Décès néonatals précoces et faible poids · séries nationales", "Relevé mensuel, 2026 rapporté à 2025", renderLineChart([
+          { name: "Décès néonatals précoces ‰", data: cidAnnee(DSRN.indicateurs.deces_neonat.serie, 2026), color: "#8C4A5E", style: "solid" },
+          { name: "Faible poids de naissance %", data: cidAnnee(DSRN.indicateurs.faible_poids.serie, 2026), color: "#1F3864", style: "solid" },
+          { name: "Décès néonatals précoces 2025", data: cidAnnee(DSRN.indicateurs.deces_neonat.serie, 2025), color: "#A09A93", style: "dash" },
+        ]), "Source : " + DSRN.meta.source)}
+        ${card("Ce que ces séries ne disent pas", "Portée des deux indicateurs alimentés", `
+          <table class="tbl-s">
+            <tr><th>Série voisine</th><th class="num">Valeur</th><th>Périmètre</th></tr>
+            <tr><td><strong>Mortalité périnatale</strong></td>
+              <td class="num">${pn.v == null ? "ND" : String(d1(pn.v)).replace(".", ",") + " ‰"}</td>
+              <td>Mortinaissances et décès de la première semaine · ${pn.p ? cidMois(pn.p) : "ND"}</td></tr>
+            <tr><td><strong>Mortinatalité</strong></td>
+              <td class="num">${mortinat.v == null ? "ND" : String(mortinat.v).replace(".", ",") + " ‰"}</td>
+              <td>Médiane des ${mortinat.n} provinces · ${mortinat.p ? cidMois(mortinat.p) : "ND"}</td></tr>
+          </table>
+          <div class="cid-res-note" style="margin-top:12px;">La mortalité périnatale agrège les mortinaissances et les décès de la première semaine de vie. Elle ne peut pas tenir lieu de mortalité néonatale intrahospitalière, qui rapporte les décès survenus en structure aux seules naissances vivantes institutionnelles et mesure la qualité des soins délivrés sur place. Les deux indicateurs sont conservés côte à côte tant que le second n'est pas produit.</div>
+          <div class="cid-res-note" style="margin-top:10px;">Les décès néonatals précoces sont déclarés en pourcentage dans le relevé national et en pour mille dans le relevé provincial, pour des valeurs du même ordre de grandeur. L'unité de chaque source est reprise sans arbitrage : la définition est à faire trancher par la DSR et la DPSIS avant toute fixation de cible.</div>`,
+          "")}
+      </div>
+      ${cidChips([["deces_neonat", "Décès néonatals précoces"], ["faible_poids", "Faible poids de naissance"], ["mortinat", "Mortinatalité"]].map(([v, l]) => ({ v, l })), "__dsrNeoCarte", carteInd)}
+      <div class="g-2-1">
+        ${card(libCarte + " par province · " + (derPProv ? cidMois(derPProv) : "ND"), "Vert bas · rouge élevé · gris ND",
+          DSRP ? cidCarte(valProv, { couleur: coul, format: v => v == null ? "ND" : v + " " + uniteCarte }) : '<div class="cid-res-note">Relevé provincial non chargé.</div>',
+          DSRP ? "Source : " + DSRP.meta.source : "")}
+        ${card("Provinces les plus exposées", libCarte, renderBars(pires.map(id => ({
+          label: cidProvNom(id), val: valProv[id], target: null,
+          rag: valProv[id] <= bornes[0] ? "green" : valProv[id] <= bornes[1] ? "yellow" : valProv[id] <= bornes[2] ? "orange" : "red",
+          showVal: valProv[id] + " " + uniteCarte
+        }))), "Un taux bas peut refléter un défaut de notification des décès néonatals autant qu'une bonne prise en charge : la lecture se fait avec le volume d'accouchements institutionnels de la province.")}
       </div>
     </div>` };
 };
@@ -10144,6 +10646,8 @@ VIEWS["dsr-pf"] = () => {
   if (!DSRN) return { crumbs, html: et + `<div class="ph-sub">Données DSR en cours de chargement.</div></div>` };
   const prev = cidDerniere(DSRN.indicateurs.prev_contra.serie, DSRN.meta.mois_max);
   const acc = cidDerniere(DSRN.indicateurs.accept_contra.serie, DSRN.meta.mois_max);
+  /* Acceptation du post-partum immédiat, indicateur retenu par la DSR. */
+  const pp = dsrMedianeProv("accept_pp");
 
   const sommeNat = code => {
     const s = {};
@@ -10183,6 +10687,14 @@ VIEWS["dsr-pf"] = () => {
         ${kpi("Nouvelles acceptantes · méthodes longues", dL.v == null ? null : cidFmtNb(dL.v), "", "implants et DIU · " + (dL.p ? cidMois(dL.p) : "ND") + (dC != null ? " · méthodes courtes " + cidFmtNb(dC) : ""), "", "flat", dL.v == null ? "na" : "green")}
         ${kpi("Part des moins de 19 ans", dJ.v, "%", "parmi les nouvelles acceptantes · " + (dJ.p ? cidMois(dJ.p) : "ND"), "", "flat", dJ.v == null ? "na" : "green")}
       </div>
+      ${card("Indicateurs retenus par la direction<span class=\"dsr-nouveau\">Ajout DSR</span>", "Méthodes modernes, post-partum immédiat et continuité de l'approvisionnement", `
+        <div class="kpi-grid">
+          ${kpi("Contraception du post-partum immédiat", pp.v, "%", "Médiane des " + pp.n + " provinces · " + (pp.p ? cidMois(pp.p) : "ND"), "", "flat",
+                pp.v == null ? "na" : pp.v >= 30 ? "green" : pp.v >= 15 ? "yellow" : pp.v >= 5 ? "orange" : "red")}
+          ${dsrKpiAttente("Prévalence contraceptive moderne", "%", "ventilation par méthode de la prévalence contraceptive")}
+          ${dsrKpiAttente("Formations sanitaires sans rupture d'une méthode traceuse", "%", "SIGL, dénombrement des formations déclarantes et en rupture")}
+        </div>`,
+        "L'acceptation du post-partum immédiat est disponible dans le relevé provincial et prend place ici comme indicateur d'intégration entre planification familiale et santé maternelle. Une province dépasse 100%, ce qui signale un dénominateur mal apparié entre accouchements et acceptantes : la valeur est conservée telle quelle et l'anomalie remontée. La prévalence moderne demande une ventilation par méthode que le relevé actuel n'apporte pas : la prévalence toutes méthodes affichée plus haut en constitue le plafond, pas l'équivalent. La part de formations sans rupture suppose de connaître le nombre de formations déclarantes, dénominateur absent des volumes de stock aujourd'hui suivis.")}
       <div class="g-2-1">
         ${card("Nouvelles acceptantes par mois · national", "Somme des 23 provinces · méthodes longues et courtes", renderLineChart([
           { name: "Implants et DIU", data: cidAnnee(longues, 2026), color: "#1F3864", style: "solid" },
@@ -10190,6 +10702,71 @@ VIEWS["dsr-pf"] = () => {
         ]), DSRP ? "Source : " + DSRP.meta.source : "")}
         ${card("Prévalence contraceptive par province · " + (derPProv ? cidMois(derPProv) : "ND"), "Vert ≥ 30 · jaune ≥ 20 · orange ≥ 10 · rouge en deçà · gris ND",
           DSRP ? cidCarte(valProv, { couleur: v => v == null ? "#CBC7BE" : v >= 30 ? "#2E7D32" : v >= 20 ? "#C9A227" : v >= 10 ? "#D97B29" : "#B3372F" }) : '<div class="cid-res-note">Relevé provincial non chargé.</div>', "")}
+      </div>
+    </div>` };
+};
+
+/* ==============================================================
+   DSR : sante des adolescents et des jeunes
+   Les trois indicateurs retenus supposent une ventilation par age
+   absente du releve transmis. Le seul element disponible porte sur
+   le recrutement en planification familiale des moins de dix-neuf
+   ans : il est affiche pour ce qu'il mesure, sans tenir lieu de
+   prevalence ni de taux de grossesse.
+============================================================== */
+VIEWS["dsr-sraj"] = () => {
+  const crumbs = ["Santé Reproductive", "Santé des adolescents"];
+  const et = `<div class="ph"><div class="ph-tag">Santé des adolescents et des jeunes · DSR</div>
+    <div class="ph-title">Santé des adolescents</div>`;
+  if (!DSRP) return { crumbs, html: et + `<div class="ph-sub">Relevé provincial DSR en cours de chargement.</div></div>` };
+
+  const jeunes = dsrSommeProv("acc_moins19"), adultes = dsrSommeProv("acc_plus20");
+  const part = {};
+  Object.keys(jeunes).forEach(p => {
+    const tot = (jeunes[p] || 0) + (adultes[p] || 0);
+    if (tot > 0) part[p] = Math.round(jeunes[p] / tot * 1000) / 10;
+  });
+  const dJ = cidDerniere(part, DSRP.meta.mois_max);
+  const dV = cidDerniere(jeunes, DSRP.meta.mois_max);
+
+  const partProv = {}; let derP = null;
+  Object.keys(PROV_CANON).forEach(id => {
+    const pv = DSRP.provinces[PROV_CANON[id]] || {};
+    const j = cidDerniere(pv.acc_moins19, DSRP.meta.mois_max);
+    const a = cidDerniere(pv.acc_plus20, DSRP.meta.mois_max);
+    const tot = (j.v || 0) + (a.v || 0);
+    partProv[id] = tot > 0 ? Math.round(j.v / tot * 1000) / 10 : null;
+    if (j.p && (!derP || j.p > derP)) derP = j.p;
+  });
+  const hauts = Object.keys(partProv).filter(id => partProv[id] != null)
+    .sort((a, b) => partProv[b] - partProv[a]).slice(0, 8);
+
+  return { crumbs, html: et + `<div class="ph-sub">Composante retenue par la direction. Les indicateurs de grossesse et d'accouchement chez les adolescentes demandent une ventilation par tranche d'âge que le relevé ne porte pas encore.</div></div>
+    <div class="content">
+      <div class="kpi-grid">
+        ${dsrKpiAttente("Grossesses précoces, dix à dix-neuf ans", "%", "grossesses ventilées par tranche d'âge")}
+        ${dsrKpiAttente("Accouchements chez les adolescentes", "%", "accouchements ventilés par tranche d'âge")}
+        ${dsrKpiAttente("Prévalence contraceptive, dix à vingt-quatre ans", "%", "prévalence contraceptive ventilée par âge")}
+        ${kpi("Part des moins de 19 ans parmi les nouvelles acceptantes", dJ.v, "%",
+              "Relevé provincial agrégé · " + (dJ.p ? cidMois(dJ.p) : "ND"), "", "flat", dJ.v == null ? "na" : "green")}
+      </div>
+      <div class="g-2-1">
+        ${card("Recrutement des moins de 19 ans en planification familiale", "Effectif mensuel et part dans le total des nouvelles acceptantes", renderLineChart([
+          { name: "Moins de 19 ans", data: cidAnnee(jeunes, 2026), color: "#8C4A5E", style: "solid" },
+          { name: "20 ans et plus", data: cidAnnee(adultes, 2026), color: "#A09A93", style: "solid" },
+        ]), "Source : " + DSRP.meta.source + ". Dernier relevé : " + cidFmtNb(dV.v) + " nouvelles acceptantes de moins de 19 ans, soit " + (dJ.v == null ? "ND" : String(dJ.v).replace(".", ",") + "%") + " du total.")}
+        ${card("Ce que cet indicateur mesure, et ce qu'il ne mesure pas", "Portée de la seule série disponible", `
+          <div class="cid-res-note">La part des moins de dix-neuf ans porte sur les femmes qui se présentent pour une première contraception. Elle décrit la composition du recrutement, elle ne dit rien du nombre d'adolescentes couvertes rapporté à leur effectif dans la population. Une part élevée peut signaler un bon accès des jeunes comme un faible recours des femmes plus âgées.</div>
+          <div class="cid-res-note" style="margin-top:10px;">Les trois indicateurs retenus par la direction supposent tous une variable ventilée par tranche d'âge : grossesses de dix à dix-neuf ans, accouchements de dix à dix-neuf ans, utilisatrices de dix à vingt-quatre ans. La demande est à porter auprès de la DPSIS pour que ces désagrégations soient ouvertes dans le rapportage, faute de quoi la composante restera en ND.</div>`,
+          "")}
+      </div>
+      <div class="g-2-1">
+        ${card("Part des moins de 19 ans par province · " + (derP ? cidMois(derP) : "ND"), "Parmi les nouvelles acceptantes · gris ND",
+          cidCarte(partProv, { couleur: v => v == null ? "#CBC7BE" : v >= 30 ? "#1F3864" : v >= 20 ? "#4A6B9A" : v >= 10 ? "#8FA6C4" : "#CBD5E2" }),
+          "L'échelle est neutre : aucune valeur cible n'est fixée pour la composition par âge du recrutement.")}
+        ${card("Provinces où les jeunes pèsent le plus dans le recrutement", "Part des moins de 19 ans", renderBars(hauts.map(id => ({
+          label: cidProvNom(id), val: partProv[id], target: null, rag: "na", showVal: String(partProv[id]).replace(".", ",") + "%"
+        }))), "")}
       </div>
     </div>` };
 };
@@ -11763,7 +12340,15 @@ VIEWS["dsr-apercu"] = () => {
   const crumbs = ["Santé Reproductive", "Aperçu du programme"];
   const et = `<div class="ph"><div class="ph-tag">Direction de la Santé de la Reproduction · DSR</div>
     <div class="ph-title">Aperçu du programme</div>`;
-  if (!DSRDD) return { crumbs, html: et + `<div class="ph-sub">Aperçu en cours de chargement.</div></div>` };
+  /* Le suivi de l'alimentation des indicateurs retenus ne dépend d'aucun
+     calcul : il reste affiché même si l'analyse approfondie n'est pas chargée. */
+  if (!DSRDD) return { crumbs, html: et + `<div class="ph-sub">Lecture d'ensemble en cours de chargement.</div></div>
+    <div class="content">
+      ${card("Indicateurs retenus par la direction", "Cadre de suivi SMNI et indicateurs adossés à la consultation prénatale",
+        `<div class="cid-res-note">L'état d'alimentation des indicateurs retenus par la direction est tenu dans le registre transversal,
+          sous <strong>Outils transversaux, Cadre d'indicateurs</strong>, où il se lit à côté de celui des autres directions.</div>
+         <button class="chc-tab" onclick="selectSub('cadre','cadre-suivi')">Ouvrir le registre</button>`, "")}
+    </div>` };
 
   const D = DSRDD, M = D.meta, I = D.inference, V = D.variance || {}, CV2 = D.convergence || {},
         CT = D.contribution || { prov: [] }, RT = D.retention || { prov: [] }, MO = D.mortalite || {};
@@ -11861,9 +12446,64 @@ VIEWS["dsr-apercu"] = () => {
         } catch (e) { return ""; } })()}
       ${card("Plan d'action", "Décisions proposées au Cabinet, avec porteur, mesure de suivi et fréquence de revue",
         `<table class="ap-pl"><thead><tr><th>Rang</th><th>Action</th><th>Porteur</th><th>Mesure de suivi</th><th>Cible</th><th>Revue</th></tr></thead><tbody>${plan}</tbody></table>`)}
+      ${card("Indicateurs retenus par la direction", "Cadre de suivi SMNI et indicateurs adossés à la consultation prénatale",
+        `<div class="cid-res-note">L'état d'alimentation des ${DSR_RETENUS.length} indicateurs retenus par la direction est tenu dans le registre
+          transversal du CID, où il se lit à côté de celui des autres directions et programmes.</div>
+         <button class="chc-tab" onclick="selectSub('cadre','cadre-suivi')">Ouvrir le registre des indicateurs</button>`,
+        "Le registre nomme, pour chaque indicateur en attente, le relevé qui lui manque et l'interlocuteur à saisir. Aucun indicateur n'y est reconstitué à partir d'un voisin, la variable manquante étant nommée à la place de la valeur.")}
     </div>` };
 };
 
+
+/* ==============================================================
+   OUTILS · CADRE D'INDICATEURS
+   Registre unique des indicateurs que chaque direction retient pour
+   son pilotage, avec l'etat d'alimentation de chacun. Il sert de
+   plan de charge : ce qui manque au CID s'y lit par interlocuteur.
+============================================================== */
+function setCadreDir(d) { state.cadreDir = d === "*" ? null : d; renderMain(); }
+
+VIEWS["cadre-suivi"] = () => {
+  const crumbs = ["Outils transversaux", "Cadre d'indicateurs"];
+  const dir = state.cadreDir || null;
+  const tot = CID_CADRE.length, alim = CID_CADRE.filter(i => i.code).length;
+  const dirs = CID_DIR_ORDRE.filter(d => CID_CADRE.some(i => i.dir === d));
+  const onglet = (v, l, n, a) => `<button class="chc-tab ${(dir || "*") === v ? "on" : ""}" onclick="setCadreDir('${v}')">${l}
+    <span class="cad-cpt">${a}/${n}</span></button>`;
+  const barre = `<div class="chc-tabs cad-tabs">
+    ${onglet("*", "Toutes les directions", tot, alim)}
+    ${dirs.map(d => onglet(d, d, CID_CADRE.filter(i => i.dir === d).length,
+      CID_CADRE.filter(i => i.dir === d && i.code).length)).join("")}
+  </div>`;
+
+  /* Plan de charge : ce qui manque, range par interlocuteur a saisir. */
+  const enAttente = cidRegistre(dir).filter(i => !i.code);
+  const parDir = {};
+  enAttente.forEach(i => { (parDir[i.dir] = parDir[i.dir] || []).push(i); });
+  const charge = Object.keys(parDir).sort((a, b) => CID_DIR_ORDRE.indexOf(a) - CID_DIR_ORDRE.indexOf(b))
+    .map(d => `<div class="cad-ch">
+      <div class="cad-ch-t">${d}<span>${parDir[d].length} indicateur${parDir[d].length > 1 ? "s" : ""} en attente</span></div>
+      <ul class="cad-ch-l">${parDir[d].map(i => `<li>${i.lib}</li>`).join("")}</ul>
+    </div>`).join("");
+
+  return { crumbs, html: `
+    <div class="ph">
+      <div class="ph-tag">Cadre d'indicateurs · UPS-Santé</div>
+      <div class="ph-title">Indicateurs retenus par direction</div>
+      <div class="ph-sub">Ce que chaque direction retient pour son pilotage, et ce qui l'alimente aujourd'hui.
+        ${alim} des ${tot} indicateurs recensés sont servis par un relevé déposé.</div>
+    </div>
+    <div class="content">
+      ${barre}
+      ${card(dir ? "Cadre de la direction " + dir : "Registre des indicateurs retenus",
+        dir ? "État de l'alimentation, composante par composante" : "Toutes directions et programmes du CID",
+        dsrTableauSources(dir, !!dir),
+        "Le mode de calcul se lit en fraction : le numérateur au-dessus du trait, le dénominateur en dessous. Il fixe la définition opposable de l'indicateur et permet de constater qu'une valeur hors bornes tient au dénominateur plutôt qu'à la mesure. Un indicateur alimenté est produit à partir d'un relevé effectivement déposé. Un indicateur en attente nomme la variable qui lui manque et reste en ND jusqu'à sa transmission : aucune valeur n'est reconstituée à partir d'un indicateur voisin.")}
+      ${enAttente.length ? card("Ce qui reste à obtenir", "Plan de charge par direction, " + enAttente.length + " indicateur" + (enAttente.length > 1 ? "s" : "") + " en attente",
+        `<div class="cad-charge">${charge}</div>`,
+        "Chaque ligne correspond à une demande à porter auprès de la direction concernée ou de la DPSIS lorsque la variable doit être ouverte dans le DHIS2. La liste se vide d'elle-même à mesure que les relevés arrivent.") : ""}
+    </div>` };
+};
 
 /* ==============================================================
    OUTILS · TESTS ECONOMETRIQUES
@@ -12720,7 +13360,14 @@ function cholDeshydratation() {
       <span class="cd-bar">${seg}</span>
       <span class="pd-par-v"><b>${d1(tot ? 100 * o.severe / tot : 0)}%</b> sévères · ${tot} cas</span></div>`; };
   const hebdo = DW.map(x => barre(x, x.sem.slice(5), x.legere + x.moderee + x.severe)).join("");
-  const parProv = MX.map(x => barre(x, x.prov, x.legere + x.moderee + x.severe)).join("");
+  /* Le niveau national est porte dans le meme bloc que les provinces : la
+     comparaison d'une province a l'ensemble ne doit pas demander de changer
+     de carte. */
+  const NAT = MX.reduce((a, x) => ({ legere: a.legere + x.legere, moderee: a.moderee + x.moderee,
+    severe: a.severe + x.severe }), { legere: 0, moderee: 0, severe: 0 });
+  const totNat = NAT.legere + NAT.moderee + NAT.severe;
+  const parProv = MX.map(x => barre(x, x.prov, x.legere + x.moderee + x.severe)).join("")
+    + `<div class="cd-nat">${barre(NAT, "Ensemble national", totNat)}</div>`;
   const sevMax = DW.reduce((a, b) => (b.severe / Math.max(1, b.legere + b.moderee + b.severe)) >
     (a.severe / Math.max(1, a.legere + a.moderee + a.severe)) ? b : a, DW[0]);
   const ecart = MX.length === 2
@@ -12729,7 +13376,7 @@ function cholDeshydratation() {
       <span><i style="background:${COL.moderee}"></i>Modérée</span>
       <span><i style="background:${COL.severe}"></i>Sévère</span></div>
     <div class="cd-t">Par semaine épidémiologique</div>${hebdo}
-    <div class="cd-t" style="margin-top:14px">Par province</div>${parProv}
+    <div class="cd-t" style="margin-top:14px">Par province et ensemble national</div>${parProv}
     <div class="dd-test-note" style="margin-top:12px">
       La part des formes sévères à l'admission mesure le délai de recours aux soins, non la gravité de la souche.
       Elle culmine en ${sevMax.sem.slice(5)} à ${d1(100 * sevMax.severe / (sevMax.legere + sevMax.moderee + sevMax.severe))}%.
