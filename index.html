@@ -3232,6 +3232,23 @@
   .cad-frac .cad-num { display:block; padding-bottom:3px; }
   .cad-frac .cad-den { display:block; padding-top:3px; border-top:1px solid var(--border-2); color:var(--muted); }
   .cad-def { font-size:11px; line-height:1.5; color:var(--muted); font-style:italic; }
+  .ddx-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:16px; }
+  .ddx-st { background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+  .ddx-st-l { font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+  .ddx-st-v { font-family:var(--font-h); font-size:21px; font-weight:700; color:var(--ink); margin:3px 0 2px; }
+  .ddx-st-d { font-size:11px; color:var(--muted); line-height:1.4; }
+  .ddx-doms { display:flex; flex-direction:column; gap:9px; }
+  .ddx-dom { display:grid; grid-template-columns:180px 1fr 34px; align-items:center; gap:10px; }
+  .ddx-dom-n { font-size:12px; font-weight:600; color:var(--body); }
+  .ddx-dom-b { display:flex; height:15px; border-radius:3px; overflow:hidden; min-width:6px; }
+  .ddx-dom-v { font-size:12px; font-weight:700; color:var(--ink); text-align:right; }
+  .ddx-barres { display:flex; flex-direction:column; gap:5px; }
+  .ddx-l { display:grid; grid-template-columns:150px 1fr 66px; align-items:center; gap:10px; }
+  .ddx-l-n { font-size:11.5px; color:var(--body); }
+  .ddx-l-b { background:var(--surface-2); border-radius:3px; height:13px; }
+  .ddx-l-b span { display:block; height:100%; border-radius:3px; }
+  .ddx-l-v { font-size:11.5px; font-weight:700; color:var(--ink); text-align:right; }
+  @media (max-width:700px){ .ddx-dom, .ddx-l { grid-template-columns:110px 1fr 46px; } }
   .cad-tabs { flex-wrap:wrap; gap:7px; margin-bottom:14px; }
   .cad-cpt { display:inline-block; margin-left:7px; font-size:10px; font-weight:700; opacity:.7; }
   .cad-charge { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
@@ -3241,9 +3258,6 @@
   .cad-ch-t span { font-family:var(--font); font-size:10.5px; font-weight:600; color:var(--muted);
     text-transform:none; letter-spacing:0; white-space:nowrap; }
   .cad-ch-l { margin:0; padding-left:16px; font-size:11.5px; line-height:1.65; color:var(--body); }
-  .dsr-nouveau { display:inline-block; font-size:9px; font-weight:700; letter-spacing:.6px;
-    text-transform:uppercase; color:#2E7D32; background:rgba(46,125,50,.12);
-    border-radius:4px; padding:2px 6px; margin-left:7px; vertical-align:1px; }
   .attente-carte { display:flex; gap:20px; align-items:center; background:var(--surface); border:none; border-radius:14px; padding:32px 30px; box-shadow:var(--shadow-sm); }
   .attente-ic { font-size:40px; color:var(--muted-2); flex-shrink:0; }
   .attente-titre { font-family:var(--font-h); font-size:17px; font-weight:700; color:var(--royal); margin-bottom:6px; }
@@ -4365,6 +4379,7 @@ const PROGRAMS = [
       { id:"explor-comp",  label:"Comparateur de provinces", status:"green" },
       { id:"explor-alert", label:"Alertes actives",          status:"green" },
       { id:"explor-rech",  label:"Recherche & export",       status:"green" },
+      { id:"explor-dd",    label:"Analyse approfondie",      status:"green" },
     ]
   },
   {
@@ -9587,6 +9602,105 @@ function cidAlertes() {
   return A;
 }
 
+/* ==============================================================
+   EXPLORATEUR · ANALYSE DU REGISTRE D'ALERTES
+   Une alerte prise seule dit qu'un seuil est franchi. Prises
+   ensemble, elles disent autre chose : de quoi le systeme se
+   plaint, a quel niveau la reponse se decide, et sur quelles
+   donnees le jugement repose.
+============================================================== */
+
+/* Nature de l'alerte. Un ecart a une cible se traite par une decision
+   de programme ; un defaut de rapportage ou une valeur aberrante se
+   traite avec la source. Confondre les deux revient a demander a une
+   direction de corriger une performance que personne ne mesure. */
+const CID_AL_QUALITE = /rapportage|complétude|promptitude|relevé|saisie|négatif|aberrant|sans relevé|décrochage|repli de 15/i;
+function cidAlNature(a) {
+  if (a.dom === "Rapportage") return "qualite";
+  if (CID_AL_QUALITE.test(a.txt + " " + a.det)) return "qualite";
+  return "performance";
+}
+/* Niveau ou la reponse se decide. Une alerte nationale sur un stock
+   central ne se traite pas dans une province, et l'inverse est vrai. */
+function cidAlNiveauReponse(a) {
+  if (/province/i.test(a.txt)) return "province";
+  if (a.dom === "Logistique" || a.dom === "Rapportage") return "direction";
+  if (a.niv === "rouge") return "cabinet";
+  return "direction";
+}
+/* Age de la donnee sur laquelle repose l'alerte, en mois pleins. Une
+   alerte fondee sur un releve de plus de trois mois informe sur le
+   passe : elle est signalee comme telle plutot que retiree. */
+function cidAlAge(a) {
+  if (!a.periode) return null;
+  const p = String(a.periode).slice(0, 7).split("-");
+  if (p.length < 2) return null;
+  const d = new Date(Number(p[0]), Number(p[1]) - 1, 1);
+  const n = new Date();
+  return (n.getFullYear() - d.getFullYear()) * 12 + (n.getMonth() - d.getMonth());
+}
+function cidAlAnalyse() {
+  const A = cidAlertes().map(a => Object.assign({}, a, {
+    nature: cidAlNature(a), reponse: cidAlNiveauReponse(a), age: cidAlAge(a)
+  }));
+  const par = (cle) => {
+    const o = {};
+    A.forEach(a => { const k = a[cle] == null ? "sans période" : a[cle]; (o[k] = o[k] || []).push(a); });
+    return o;
+  };
+  return { A, parDom: par("dom"), parNat: par("nature"), parRep: par("reponse"), parNiv: par("niv") };
+}
+
+/* ==============================================================
+   EXPLORATEUR · DISPERSION INTER-PROVINCIALE
+   Le comparateur superpose quatre provinces choisies a la main.
+   L'analyse porte sur les vingt-trois, et sur ce que leur ecart
+   dit du pilotage : concentration, provinces atypiques, sens de
+   l'evolution.
+============================================================== */
+function cidStat(v) {
+  const x = v.filter(k => k != null && isFinite(k)).sort((a, b) => a - b);
+  if (!x.length) return null;
+  const n = x.length;
+  const q = (p) => { const i = (n - 1) * p, b = Math.floor(i), r = i - b;
+    return b + 1 < n ? x[b] + r * (x[b + 1] - x[b]) : x[b]; };
+  const moy = x.reduce((a, k) => a + k, 0) / n;
+  const sd = n > 1 ? Math.sqrt(x.reduce((a, k) => a + (k - moy) * (k - moy), 0) / (n - 1)) : 0;
+  const q1 = q(0.25), q3 = q(0.75), ei = q3 - q1;
+  return { n, min: x[0], max: x[n - 1], med: q(0.5), q1, q3, ei, moy, sd,
+    cv: moy ? sd / moy * 100 : null,
+    borneBasse: q1 - 1.5 * ei, borneHaute: q3 + 1.5 * ei };
+}
+/* Coupe de l'indicateur sur les 23 provinces, a la derniere periode ou
+   au moins la moitie d'entre elles est renseignee : une coupe faite sur
+   trois provinces ne mesure pas une dispersion nationale. */
+function cidCoupeProv(ind, annee) {
+  const series = {}, periodes = new Set();
+  PROVINCES.forEach(p => {
+    const s = ind.serie(p.id) || {};
+    series[p.id] = s;
+    Object.keys(s).forEach(k => { if (!annee || k.slice(0, 4) === String(annee)) periodes.add(k); });
+  });
+  const tri = Array.from(periodes).sort();
+  if (!tri.length) return null;
+  let retenue = null;
+  for (let i = tri.length - 1; i >= 0; i--) {
+    const n = PROVINCES.filter(p => series[p.id][tri[i]] != null).length;
+    if (n >= Math.ceil(PROVINCES.length / 2)) { retenue = tri[i]; break; }
+  }
+  if (!retenue) retenue = tri[tri.length - 1];
+  const vals = PROVINCES.map(p => ({ id: p.id, nom: cidProvNom(p.id), v: series[p.id][retenue] }))
+    .filter(x => x.v != null).sort((a, b) => b.v - a.v);
+  const st = cidStat(vals.map(x => x.v));
+  /* Sens de l'evolution de l'ecart : la dispersion se resserre-t-elle
+     ou se creuse-t-elle sur la periode couverte ? */
+  const debut = tri.find(p => PROVINCES.filter(x => series[x.id][p] != null).length >= Math.ceil(PROVINCES.length / 2));
+  const stDebut = debut && debut !== retenue
+    ? cidStat(PROVINCES.map(p => series[p.id][debut])) : null;
+  return { periode: retenue, debut: debut, vals, st, stDebut,
+    manquantes: PROVINCES.length - vals.length };
+}
+
 /* ---- pastille et fil d'alertes ---- */
 function cidPastille(niv) { return `<span class="cid-dot ${niv}"></span>`; }
 function cidFilAlertes(max) {
@@ -10526,7 +10640,7 @@ function dsrTableauSources(dir, sansDir) {
       if (i.grp !== g0) { g0 = i.grp; out += `<tr class="dsr-grp"><td colspan="5">${g0}</td></tr>`; }
       const dispo = !!i.code;
       out += `<tr>
-        <td class="ind">${i.lib}${i.ajout ? `<span class="dsr-nouveau">Ajout DSR</span>` : ""}</td>
+        <td class="ind">${i.lib}</td>
         <td class="cad-calc">${cidModeCalcul(i.calc)}</td>
         <td class="num">${i.unite || "—"}</td>
         <td>${dispo ? `<span class="pill green">alimenté</span>` : `<span class="pill na">en attente</span>`}
@@ -10600,7 +10714,7 @@ VIEWS["dsr-mat"] = () => {
           { name: "2025", data: cidAnnee(DSRN.indicateurs.mort_mat_hosp.serie, 2025), color: "#A09A93", style: "dash" },
         ]), "")}
       </div>
-      ${card("Indicateurs adossés à la consultation prénatale<span class=\"dsr-nouveau\">Ajout DSR</span>", "Ce que la CPN doit délivrer au-delà du contact", `
+      ${card("Indicateurs adossés à la consultation prénatale", "Ce que la CPN doit délivrer au-delà du contact", `
         <div class="kpi-grid">
           ${kpi("Vaccination antitétanique TD2+", td2.v == null ? null : td2.v, "%",
                 "Médiane des " + td2.n + " provinces · " + (td2.p ? cidMois(td2.p) : "ND"), "", "flat", pevRag(td2.v, 80))}
@@ -10622,7 +10736,7 @@ VIEWS["dsr-mat"] = () => {
           showVal: valProv[id] + (uniteCarte === "%" ? "%" : "")
         }))), "Un ratio hospitalier élevé peut aussi refléter un faible volume d'accouchements institutionnels : lecture conjointe avec la couverture recommandée.")}
       </div>
-      ${card("Complications obstétricales<span class=\"dsr-nouveau\">Ajout DSR</span>", "Référence, prise en charge et issue des complications", `
+      ${card("Complications obstétricales", "Référence, prise en charge et issue des complications", `
         <div class="kpi-grid">
           ${kpi("Accouchements avec complication", compl.v == null ? null : Math.round(compl.v * 10) / 10, "%",
                 "Survenue · " + (compl.p ? cidMois(compl.p) : "ND"), "", "flat", compl.v == null ? "na" : "yellow")}
@@ -10757,7 +10871,7 @@ VIEWS["dsr-pf"] = () => {
         ${kpi("Nouvelles acceptantes · méthodes longues", dL.v == null ? null : cidFmtNb(dL.v), "", "implants et DIU · " + (dL.p ? cidMois(dL.p) : "ND") + (dC != null ? " · méthodes courtes " + cidFmtNb(dC) : ""), "", "flat", dL.v == null ? "na" : "green")}
         ${kpi("Part des moins de 19 ans", dJ.v, "%", "parmi les nouvelles acceptantes · " + (dJ.p ? cidMois(dJ.p) : "ND"), "", "flat", dJ.v == null ? "na" : "green")}
       </div>
-      ${card("Indicateurs retenus par la direction<span class=\"dsr-nouveau\">Ajout DSR</span>", "Méthodes modernes, post-partum immédiat et continuité de l'approvisionnement", `
+      ${card("Indicateurs retenus par la direction", "Méthodes modernes, post-partum immédiat et continuité de l'approvisionnement", `
         <div class="kpi-grid">
           ${kpi("Contraception du post-partum immédiat", pp.v, "%", "Médiane des " + pp.n + " provinces · " + (pp.p ? cidMois(pp.p) : "ND"), "", "flat",
                 pp.v == null ? "na" : pp.v >= 30 ? "green" : pp.v >= 15 ? "yellow" : pp.v >= 5 ? "orange" : "red")}
@@ -11081,6 +11195,168 @@ VIEWS["explor-rech"] = () => {
         ${card("Formations sanitaires · " + cidFmtNb(fosa.length) + " résultat" + (fosa.length > 1 ? "s" : ""), fosa.length > 60 ? "60 affichés, export complet disponible" : "", fosa.length ? `
           <div class="cid-table-defile"><table class="dt"><thead><tr><th>Province</th><th>District</th><th>Formation sanitaire</th></tr></thead><tbody>${lignesFosa}</tbody></table></div>` : '<div class="cid-res-note">Aucune formation sanitaire ne répond à cette recherche.</div>', "")}
         <div>${cidBoutonCSV("recherche", "recherche_cid.csv")}</div>`}
+    </div>` };
+};
+
+/* ==============================================================
+   EXPLORATEUR : analyse approfondie
+   Le comparateur et le registre montrent. Cette vue interprete :
+   de quoi le systeme se plaint, ou la reponse se decide, et ce que
+   l'ecart entre provinces dit du pilotage d'un indicateur.
+============================================================== */
+function setExplDdInd(v) { window.__ddInd = v; renderMain(); }
+
+VIEWS["explor-dd"] = () => {
+  const crumbs = ["Explorateur & alertes", "Analyse approfondie"];
+  const et = `<div class="ph"><div class="ph-tag">Analyse approfondie · Explorateur</div>
+    <div class="ph-title">Ce que les alertes et les écarts disent ensemble</div>`;
+  const cat = cidCat();
+  const AN = cidAlAnalyse();
+  const A = AN.A;
+  if (!A.length && !cat.length)
+    return { crumbs, html: et + `<div class="ph-sub">Sources en cours de chargement.</div></div>` };
+
+  const pc = (x, t) => t ? Math.round(x / t * 100) : 0;
+  const nQual = (AN.parNat.qualite || []).length, nPerf = (AN.parNat.performance || []).length;
+  const anciennes = A.filter(a => a.age != null && a.age >= 3);
+  const sansPer = A.filter(a => a.age == null);
+
+  /* --- Volet 1 : anatomie du registre --- */
+  const ligneNature = [
+    ["Écart à une cible", nPerf, "Une décision de programme : cible, ciblage, allocation."],
+    ["Qualité de la donnée", nQual, "Une reprise avec la source : variable éteinte, valeur hors bornes, rapportage incomplet."]
+  ].map(([l, n, d]) => `<tr><td class="l"><strong>${l}</strong><div class="dsr-o">${d}</div></td>
+    <td class="num">${n}</td><td class="num">${pc(n, A.length)}%</td></tr>`).join("");
+
+  const ordreRep = ["cabinet", "direction", "province"];
+  const libRep = { cabinet: "Cabinet du Ministre", direction: "Direction ou programme", province: "Niveau provincial" };
+  const detRep = {
+    cabinet: "Arbitrage ou saisine : l'écart dépasse ce qu'une direction peut corriger seule.",
+    direction: "Correction technique par la direction qui tient la source ou le programme.",
+    province: "Action de terrain sur des provinces nommées, avec appui de la direction."
+  };
+  const ligneRep = ordreRep.filter(k => (AN.parRep[k] || []).length).map(k => {
+    const n = (AN.parRep[k] || []).length;
+    return `<tr><td class="l"><strong>${libRep[k]}</strong><div class="dsr-o">${detRep[k]}</div></td>
+      <td class="num">${n}</td><td class="num">${pc(n, A.length)}%</td></tr>`;
+  }).join("");
+
+  const domTri = Object.keys(AN.parDom).sort((a, b) => AN.parDom[b].length - AN.parDom[a].length);
+  const barreDom = domTri.map(d => {
+    const l = AN.parDom[d], mx = AN.parDom[domTri[0]].length;
+    const r = l.filter(x => x.niv === "rouge").length, o = l.filter(x => x.niv === "orange").length, j = l.filter(x => x.niv === "jaune").length;
+    const seg = (n, c) => n ? `<span style="flex:${n};background:${c}"></span>` : "";
+    return `<div class="ddx-dom">
+      <div class="ddx-dom-n">${d}</div>
+      <div class="ddx-dom-b" style="width:${Math.round(l.length / mx * 100)}%">
+        ${seg(r, "#B3372F")}${seg(o, "#D97B29")}${seg(j, "#C9A227")}</div>
+      <div class="ddx-dom-v">${l.length}</div>
+    </div>`;
+  }).join("");
+
+  /* --- Volet 2 : dispersion inter-provinciale --- */
+  const provIndex = cat.filter(c => !c.natDispo || c.id.indexOf("dsr:") === 0 || c.id.indexOf("pev:") === 0);
+  const dispo = provIndex.length ? provIndex : cat;
+  if (!window.__ddInd || !dispo.some(c => c.id === window.__ddInd))
+    window.__ddInd = dispo.some(c => c.id === "dsr:cpn1") ? "dsr:cpn1" : dispo[0].id;
+  const ind = dispo.find(c => c.id === window.__ddInd);
+  const grp = {};
+  dispo.forEach(c => { (grp[c.dom] = grp[c.dom] || []).push(c); });
+  const sel = Object.keys(grp).map(g => `<optgroup label="${g}">` +
+    grp[g].map(c => `<option value="${c.id}" ${c.id === ind.id ? "selected" : ""}>${c.libelle}</option>`).join("") +
+    `</optgroup>`).join("");
+
+  const cp = ind ? cidCoupeProv(ind) : null;
+  let dispHTML = '<div class="cid-res-note">Aucune province renseignée pour cet indicateur.</div>';
+  let lectureDisp = "";
+  if (cp && cp.st) {
+    const st = cp.st;
+    const atyp = cp.vals.filter(x => x.v > st.borneHaute || x.v < st.borneBasse);
+    const rapport = st.min > 0 ? (st.max / st.min) : null;
+    /* Part du premier quart des provinces dans le total : mesure la
+       concentration quand l'indicateur est un effectif ou un deficit. */
+    const total = cp.vals.reduce((a, x) => a + x.v, 0);
+    const nQuart = Math.max(1, Math.round(cp.vals.length / 4));
+    const partQuart = total ? cp.vals.slice(0, nQuart).reduce((a, x) => a + x.v, 0) / total * 100 : null;
+    const sens = cp.stDebut && cp.stDebut.cv != null && st.cv != null
+      ? (st.cv > cp.stDebut.cv + 2 ? "creuse" : st.cv < cp.stDebut.cv - 2 ? "resserre" : "stable") : null;
+    const f = (x) => x == null ? "ND" : cidFmtNb(Math.round(x * 10) / 10);
+
+    dispHTML = `
+      <div class="ddx-stats">
+        ${[["Provinces renseignées", cp.vals.length + " sur " + PROVINCES.length, cp.manquantes ? cp.manquantes + " en ND" : "couverture complète"],
+           ["Médiane", f(st.med) + " " + ind.unite, "moitié des provinces au-dessus"],
+           ["Écart interquartile", f(st.ei) + " " + ind.unite, "amplitude du milieu de distribution"],
+           ["Coefficient de variation", f(st.cv) + " %", "dispersion rapportée au niveau moyen"],
+           ["Rapport extrême", rapport == null ? "ND" : f(rapport) + " ×", cidProvNom(cp.vals[0].id) + " sur " + cidProvNom(cp.vals[cp.vals.length - 1].id)],
+           ["Part du quart le plus haut", partQuart == null ? "ND" : f(partQuart) + " %", nQuart + " provinces sur " + cp.vals.length]
+          ].map(([l, v, d]) => `<div class="ddx-st"><div class="ddx-st-l">${l}</div><div class="ddx-st-v">${v}</div><div class="ddx-st-d">${d}</div></div>`).join("")}
+      </div>
+      <div class="ddx-barres">
+        ${cp.vals.map(x => {
+          const w = st.max ? Math.max(2, Math.round(x.v / st.max * 100)) : 2;
+          const hors = x.v > st.borneHaute || x.v < st.borneBasse;
+          return `<div class="ddx-l"><div class="ddx-l-n">${x.nom}</div>
+            <div class="ddx-l-b"><span style="width:${w}%;background:${hors ? "#B3372F" : "#1F3864"}"></span></div>
+            <div class="ddx-l-v">${f(x.v)}</div></div>`;
+        }).join("")}
+      </div>`;
+
+    lectureDisp = `Coupe de ${cidMois(cp.periode)}, retenue parce qu'au moins la moitié des provinces y est renseignée.
+      ${atyp.length ? `${atyp.length} province${atyp.length > 1 ? "s sortent" : " sort"} de l'intervalle habituel de la distribution : ${atyp.map(x => x.nom).join(", ")}.
+        Un point atypique appelle une vérification de la donnée avant toute lecture de performance.` : "Aucune province ne sort de l'intervalle habituel de la distribution."}
+      ${sens === "creuse" ? " L'écart entre provinces se creuse depuis " + cidMois(cp.debut) + " : sans ciblage explicite, la moyenne nationale progressera sans que les provinces les plus basses bougent."
+        : sens === "resserre" ? " L'écart entre provinces se resserre depuis " + cidMois(cp.debut) + "."
+        : sens === "stable" ? " L'écart entre provinces reste stable sur la période." : ""}
+      ${cp.manquantes ? ` ${cp.manquantes} province${cp.manquantes > 1 ? "s restent" : " reste"} en ND : la dispersion est mesurée sur les provinces renseignées, elle n'est pas extrapolée.` : ""}`;
+  }
+
+  /* --- Volet 3 : sur quoi le jugement repose --- */
+  const fraicheur = `
+    <div class="ddx-stats">
+      ${[["Alertes actives", A.length, "règles évaluées sur les seules valeurs présentes"],
+         ["Fondées sur un relevé de moins de trois mois", A.length - anciennes.length - sansPer.length, "lecture du présent"],
+         ["Fondées sur un relevé de trois mois ou plus", anciennes.length, anciennes.length ? "informent sur le passé" : "aucune"],
+         ["Sans période de référence", sansPer.length, sansPer.length ? "à rattacher à un relevé daté" : "aucune"]
+        ].map(([l, v, d]) => `<div class="ddx-st"><div class="ddx-st-l">${l}</div><div class="ddx-st-v">${v}</div><div class="ddx-st-d">${d}</div></div>`).join("")}
+    </div>
+    ${anciennes.length ? `<div class="cid-res-note">Alerte${anciennes.length > 1 ? "s" : ""} sur relevé ancien :
+      ${anciennes.map(a => `${a.txt} (${cidMoisC(String(a.periode).slice(0, 7))}, ${a.age} mois)`).join(" · ")}.
+      Elles restent affichées : une donnée qui cesse d'arriver est elle-même un signal.</div>` : ""}`;
+
+  return { crumbs, html: et + `<div class="ph-sub">Le registre compte ${A.length} alerte${A.length > 1 ? "s" : ""} et le catalogue ${cat.length} indicateurs branchés.
+      Cette vue ne les liste pas : elle en tire la structure, pour que la réponse s'adresse au bon niveau et porte sur le bon objet.</div></div>
+    <div class="content">
+      ${card("De quoi le système se plaint", "Répartition des alertes selon leur nature", `
+        <table class="dt"><thead><tr><th>Nature</th><th style="text-align:right">Alertes</th><th style="text-align:right">Part</th></tr></thead>
+        <tbody>${ligneNature}</tbody></table>`,
+        nQual > nPerf
+          ? "La majorité des alertes porte sur la donnée elle-même et non sur la santé des populations. Tant que cette proportion ne s'inverse pas, le tableau de bord mesure surtout l'état de son propre approvisionnement, et les écarts de performance restent en partie invisibles derrière les trous de rapportage."
+          : "La majorité des alertes porte sur des écarts à une cible, donc sur des décisions de programme. Les alertes de qualité restent minoritaires, ce qui rend les écarts mesurés interprétables.")}
+
+      ${card("Où la réponse se décide", "Niveau auquel chaque alerte peut être traitée", `
+        <table class="dt"><thead><tr><th>Niveau</th><th style="text-align:right">Alertes</th><th style="text-align:right">Part</th></tr></thead>
+        <tbody>${ligneRep}</tbody></table>`,
+        "Le classement suit l'objet de l'alerte, pas sa gravité. Une alerte rouge sur un stock central se traite avec la direction qui tient l'entrepôt ; une alerte orange nommant des provinces se traite avec elles. Adresser une alerte au mauvais niveau est la cause la plus fréquente d'une alerte qui reste ouverte.")}
+
+      ${card("Sur quels domaines", "Alertes par domaine, empilées par niveau de gravité", `
+        <div class="ddx-doms">${barreDom}</div>
+        ${cholLegendeStatut ? "" : ""}
+        <div class="chol-st-legende">
+          <span class="chol-st-lib"><span class="chol-st-pastille" style="background:#B3372F"></span>Seuil critique franchi</span>
+          <span class="chol-st-lib"><span class="chol-st-pastille" style="background:#D97B29"></span>Écart marqué à la cible</span>
+          <span class="chol-st-lib"><span class="chol-st-pastille" style="background:#C9A227"></span>Qualité ou continuité des données</span>
+        </div>`,
+        `${domTri.length ? domTri[0] + " concentre le plus d'alertes. " : ""}Un domaine qui n'apparaît pas ici n'est pas pour autant au vert : il peut n'avoir aucune règle évaluable faute de source branchée. La lecture de ce graphique se fait avec le cadre d'indicateurs, qui dit ce qui manque.`)}
+
+      ${card("Sur quoi le jugement repose", "Fraîcheur des relevés qui fondent les alertes", fraicheur,
+        "Une alerte n'est valable que si le relevé qui la fonde l'est. Celles qui reposent sur un relevé de trois mois ou plus décrivent une situation qui peut avoir changé, sans qu'on puisse le savoir.")}
+
+      <div class="cid-outils" style="margin-top:6px">
+        <select class="cid-select" onchange="setExplDdInd(this.value)">${sel}</select>
+      </div>
+      ${card("Ce que l'écart entre provinces dit du pilotage", ind ? ind.libelle + " · unité " + ind.unite + " · source " + ind.src : "",
+        dispHTML, lectureDisp)}
     </div>` };
 };
 
