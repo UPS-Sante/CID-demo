@@ -3976,8 +3976,11 @@
   .cn-carte { min-height:0; display:flex; align-items:center; justify-content:center; }
   .cn-carte svg { width:100%; height:100%; max-height:100%; display:block; }
   .cn-droite { min-height:0; display:flex; flex-direction:column; gap:0.85cqw; }
+  .cn-droite > .cn-bloc:not(.cn-bloc-ins) { flex:0 0 auto; }
   .cn-bloc { background:var(--surface-2); border:1px solid var(--border); border-radius:0.62cqw; padding:0.7cqw 0.88cqw; }
-  .cn-bloc-ins { flex:1 1 auto; overflow:hidden; }
+  .cn-bloc-ins { flex:1 1 auto; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+  .cn-bloc-ins .cn-ins:last-child { min-height:0; overflow:hidden; }
+  .cn-droite svg { max-height:14cqw; }
   .cn-bloc-t { font-family:var(--font-h); font-size:1cqw; font-weight:700; color:var(--ink); margin-bottom:0.48cqw;
     display:flex; justify-content:space-between; align-items:baseline; gap:0.8cqw; }
   .cn-bloc-s { font-family:var(--font); font-size:0.8cqw; font-weight:600; color:var(--muted); white-space:nowrap; }
@@ -4009,12 +4012,15 @@
   .cn-pied .chol-st-lib { font-size:0.82cqw; }
   .cn-pied .chol-st-pastille { width:0.72cqw; height:0.72cqw; margin-right:0.4cqw; }
   .cn-src { font-size:0.78cqw; color:var(--muted); text-align:right; }
-  /* En dessous de sept cents pixels de cadre, la troisieme lecture ne tient
-     plus sans reduire les deux premieres sous le seuil de lisibilite : elle
-     est masquee plutot que compressee. */
-  @container (max-width: 760px){
+  /* En dessous de mille pixels de cadre, la derniere lecture ne tient plus
+     sans reduire les precedentes sous le seuil de lisibilite : le texte se
+     resserre, puis le troisieme constat est masque plutot que compresse. */
+  @container (max-width: 1150px){
+    .cn-ins-d { line-height:1.34; font-size:0.8cqw; }
+    .cn-ins { margin-bottom:0.42cqw; }
+  }
+  @container (max-width: 900px){
     .cn-ins:nth-child(4) { display:none; }
-    .cn-ins-d { line-height:1.34; }
   }
   /* Sous une certaine largeur, le format diapositive n'a plus de sens :
      le cadre se deplie en une colonne et retrouve des tailles absolues. */
@@ -4508,6 +4514,7 @@ const PROGRAMS = [
       { id:"explor-alert", label:"Alertes actives",          status:"green" },
       { id:"explor-rech",  label:"Recherche & export",       status:"green" },
       { id:"explor-dd",    label:"Analyse approfondie",      status:"green" },
+      { id:"explor-mdo",   label:"Carte des maladies sous surveillance", status:"green" },
     ]
   },
   {
@@ -5340,6 +5347,7 @@ const state = {
   cholCarte: "cas",
   cholEchelle: "foyer",
   cadreDir: null,
+  mdo: "rougeole",
   infraNiv: "cs",
   infraEq: "ambulance",
   infraRegle: null,
@@ -11642,6 +11650,154 @@ VIEWS["explor-rech"] = () => {
         ${card("Formations sanitaires · " + cidFmtNb(fosa.length) + " résultat" + (fosa.length > 1 ? "s" : ""), fosa.length > 60 ? "60 affichés, export complet disponible" : "", fosa.length ? `
           <div class="cid-table-defile"><table class="dt"><thead><tr><th>Province</th><th>District</th><th>Formation sanitaire</th></tr></thead><tbody>${lignesFosa}</tbody></table></div>` : '<div class="cid-res-note">Aucune formation sanitaire ne répond à cette recherche.</div>', "")}
         <div>${cidBoutonCSV("recherche", "recherche_cid.csv")}</div>`}
+    </div>` };
+};
+
+/* ==============================================================
+   SURVEILLANCE · CARTE NATIONALE DES MALADIES A POTENTIEL EPIDEMIQUE
+   Repartition provinciale des maladies suivies par le comite
+   technique national. L'export ne porte que des taux : la carte
+   montre donc une intensite rapportee a la population et non un
+   nombre de cas, ce qu'elle dit explicitement.
+============================================================== */
+const MDO_LISTE = [
+  { c: "rougeole",     l: "Rougeole",   det: "Maladie évitable par la vaccination, surveillance cas par cas" },
+  { c: "meningite",    l: "Méningite",  det: "Potentiel épidémique en saison sèche, ceinture méningitique" },
+  { c: "diphterie",    l: "Diphtérie",  det: "Résurgence liée aux poches de sous-vaccination" },
+  { c: "pfa",          l: "PFA · polio", det: "La paralysie flasque aiguë est l'indicateur de surveillance de la poliomyélite" },
+  { c: "fievre jaune", l: "Fièvre jaune", det: "Surveillance par cas suspect avec confirmation biologique" },
+  { c: "tnn",          l: "Tétanos néonatal", det: "Indicateur de la protection des femmes en âge de procréer" }
+];
+const MDO_RAMPE = ["#EDE6DA", "#E3C98A", "#D97B29", "#B3372F", "#7C2018"];
+function setMdo(c) { state.mdo = c; renderMain(); }
+function mdoCoul(v, vmax) {
+  if (v == null) return "var(--surface-2)";
+  if (v <= 0) return "#E9F0E7";
+  const q = vmax ? Math.min(0.999, v / vmax) : 0;
+  return MDO_RAMPE[Math.min(MDO_RAMPE.length - 1, 1 + Math.floor(q * (MDO_RAMPE.length - 1)))];
+}
+
+VIEWS["explor-mdo"] = () => {
+  const crumbs = ["Explorateur & alertes", "Maladies sous surveillance"];
+  const et = `<div class="ph"><div class="ph-tag">Surveillance intégrée · CID</div>
+    <div class="ph-title">Répartition provinciale des maladies sous surveillance</div>`;
+  if (!SURV) return { crumbs, html: et + `<div class="ph-sub">Relevé de surveillance en cours de chargement.</div></div>` };
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const code = state.mdo || "rougeole";
+  const M = MDO_LISTE.find(x => x.c === code) || MDO_LISTE[0];
+
+  /* La coupe porte sur le dernier mois complet, un mois incomplet
+     sous-estimant tout taux. Le mois partiel n'est ecarte que s'il est
+     effectivement present : le chargeur peut l'avoir deja retire, et
+     reculer alors d'un cran ferait perdre un mois de donnee. */
+  const dispo = Object.keys(SURV.valeurs).sort();
+  const dernier = dispo[dispo.length - 1];
+  const per = (SURV.meta.derniere_periode_partielle && dernier === SURV.meta.derniere_periode_couverte && dispo.length > 1)
+    ? dispo[dispo.length - 2] : dernier;
+  const V = SURV.valeurs[per] || {};
+  const nat = (V["National"] || {})[code] || {};
+  const lig = PROVINCES.map(p => {
+    const u = V[PROV_CANON[p.id]];
+    const o = u ? u[code] : null;
+    return { id: p.id, nom: p.name, att: o ? (o.att != null ? o.att : o.inc) : null, let: o ? o.let : null };
+  });
+  const avec = lig.filter(x => x.att != null);
+  const touch = avec.filter(x => x.att > 0).sort((a, b) => b.att - a.att);
+  const vmax = Math.max(0.0001, ...avec.map(x => x.att));
+  const abs = lig.filter(x => x.att == null);
+
+  /* Serie nationale sur les douze derniers mois disponibles. */
+  const pers = Object.keys(SURV.valeurs).filter(p => p <= per).sort().slice(-12);
+  const serie = pers.map(p => {
+    const o = ((SURV.valeurs[p] || {})["National"] || {})[code] || {};
+    return o.att != null ? o.att : (o.inc != null ? o.inc : null);
+  });
+  const smax = Math.max(0.0001, ...serie.filter(x => x != null));
+  const CW = 680, CH = 84, PL = 34, PB = 15, bw = (CW - PL - 4) / Math.max(1, serie.length);
+  let cg = "";
+  for (let k = 0; k <= 2; k++) { const yy = 4 + (CH - PB - 4) * (1 - k / 2);
+    cg += `<line x1="${PL}" y1="${yy.toFixed(1)}" x2="${CW - 4}" y2="${yy.toFixed(1)}" stroke="#E4E0D5" stroke-width=".8"/>
+      <text x="${PL - 4}" y="${(yy + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="#75706B">${d1(smax * k / 2)}</text>`; }
+  serie.forEach((v, k) => {
+    if (v != null) { const h = (CH - PB - 4) * v / smax;
+      cg += `<rect x="${(PL + k * bw + bw * .16).toFixed(1)}" y="${(CH - PB - h).toFixed(1)}" width="${(bw * .68).toFixed(1)}"
+        height="${h.toFixed(1)}" fill="${mdoCoul(v, smax)}" rx=".8"><title>${cidMois(pers[k])} : ${d1(v)} pour 100 000</title></rect>`; }
+    if (k % 2 === 0 || k === serie.length - 1)
+      cg += `<text x="${(PL + k * bw + bw * .5).toFixed(1)}" y="${CH - 4}" text-anchor="middle" font-size="9" fill="#75706B">${cidMoisC(pers[k]).split(" ")[0]}</text>`;
+  });
+
+  const paths = PROVINCES.map(p => {
+    const geo = PROVINCE_PATHS[p.id]; if (!geo) return "";
+    const o = lig.find(x => x.id === p.id);
+    const c = mdoCoul(o.att, vmax);
+    return `<path d="${geo.d}" fill="${c}" stroke="#fff" stroke-width="1.2"
+      ><title>${p.name} · ${o.att == null ? "aucun relevé" : d1(o.att) + " pour 100 000" + (o.let != null ? ", létalité " + d1(o.let) + "%" : "")}</title></path>`;
+  }).join("");
+  const lab = PROVINCES.map(p => {
+    const geo = PROVINCE_PATHS[p.id], o = lig.find(x => x.id === p.id);
+    if (!geo || o.att == null || o.att <= 0) return "";
+    const fort = o.att >= vmax * 0.45;
+    return `<text x="${geo.cx}" y="${geo.cy + 4}" text-anchor="middle" font-size="13" font-weight="700"
+      fill="${fort ? "#fff" : "#1F3864"}" style="paint-order:stroke;stroke:${fort ? "rgba(0,0,0,.3)" : "rgba(255,255,255,.85)"};stroke-width:2.6px"
+      pointer-events="none">${d1(o.att)}</text>`;
+  }).join("");
+
+  const onglets = MDO_LISTE.map(m =>
+    `<button class="chc-tab ${code === m.c ? "on" : ""}" onclick="setMdo('${m.c}')">${m.l}</button>`).join("");
+
+  const q = [0.25, 0.5, 0.75, 1].map(x => vmax * x);
+  const legende = `<div class="chol-st-legende">
+    <span class="chol-st-lib"><span class="chol-st-pastille" style="background:#E9F0E7"></span>Aucun cas notifié</span>
+    ${q.map((v, i) => `<span class="chol-st-lib"><span class="chol-st-pastille" style="background:${MDO_RAMPE[i + 1]}"></span>${i === 0 ? "jusqu'à " : "jusqu'à "}${d1(v)}</span>`).join("")}
+    <span class="chol-st-lib"><span class="chol-st-pastille" style="background:var(--surface-2)"></span>Province sans relevé</span></div>`;
+
+  return { crumbs, html: et + `<div class="ph-sub">Les six maladies suivies par le comité technique national, province par province.
+      La source ne porte que des taux : la carte montre une intensité rapportée à la population et non un nombre de cas.</div></div>
+    <div class="content">
+      <div class="chc-tabs">${onglets}</div>
+      <div class="chol-nat-cadre" style="margin-top:12px">
+        <div class="cn-tete">
+          <div class="cn-titre">${M.l} · ${cidMois(per)}<span>Surveillance intégrée des maladies · relevé DHIS2</span></div>
+          <div class="cn-kpis">
+            ${[["Taux d'attaque national", d1(nat.att != null ? nat.att : nat.inc) + " /100k", "pour 100 000 habitants"],
+               ["Létalité nationale", nat.let != null ? d1(nat.let) + " %" : "ND", nat.let != null ? "parmi les cas notifiés" : "non renseignée ce mois"],
+               ["Provinces ayant notifié", touch.length + " / " + avec.length, abs.length ? abs.length + " sans relevé" : "toutes renseignées"],
+               ["Province la plus atteinte", touch.length ? touch[0].nom : "aucune", touch.length ? d1(touch[0].att) + " pour 100 000" : "aucun cas notifié"],
+               ["Effectifs de cas", "ND", "absents de l'export, taux seuls"]
+              ].map(([l, v, d]) => `<div class="cn-k"><div class="cn-k-l">${l}</div><div class="cn-k-v">${v}</div><div class="cn-k-d">${d}</div></div>`).join("")}
+          </div>
+        </div>
+        <div class="cn-corps">
+          <div class="cn-carte"><svg viewBox="0 0 620 946.5" preserveAspectRatio="xMidYMid meet">${paths}${lab}</svg></div>
+          <div class="cn-droite">
+            <div class="cn-bloc">
+              <div class="cn-bloc-t">Provinces ayant notifié<span class="cn-bloc-s">taux pour 100 000, ordre décroissant</span></div>
+              <table class="cn-tbl"><thead><tr><th>Province</th><th>Taux</th><th>Létalité</th></tr></thead>
+              <tbody>${(touch.length ? touch.slice(0, 5) : []).map(x => `<tr>
+                <td class="l">${x.nom}</td>
+                <td class="cn-b"><div class="cn-bar"><span style="width:${(x.att / vmax * 100).toFixed(0)}%;background:${mdoCoul(x.att, vmax)}"></span></div><span>${d1(x.att)}</span></td>
+                <td class="num">${x.let == null ? "ND" : d1(x.let) + " %"}</td></tr>`).join("")
+                || `<tr><td colspan="3" class="l">Aucune province n'a notifié de cas sur la période.</td></tr>`}</tbody></table>
+            </div>
+            <div class="cn-bloc">
+              <div class="cn-bloc-t">Évolution nationale<span class="cn-bloc-s">douze derniers mois, taux pour 100 000</span></div>
+              <svg viewBox="0 0 ${CW} ${CH}" style="width:100%;height:auto;display:block">${cg}</svg>
+            </div>
+            <div class="cn-bloc cn-bloc-ins">
+              <div class="cn-bloc-t">Ce que la carte dit</div>
+              <div class="cn-ins n-orange"><div class="cn-ins-t">${M.l}</div>
+                <div class="cn-ins-d">${M.det}. ${touch.length} province${touch.length > 1 ? "s ont" : " a"} notifié des cas en ${cidMois(per)}${touch.length ? `, la plus atteinte étant ${touch[0].nom} à ${d1(touch[0].att)} pour 100 000` : ""}.${abs.length ? ` ${abs.map(x => x.nom).join(", ")} ${abs.length > 1 ? "ne figurent pas" : "ne figure pas"} dans l'export : l'absence de relevé n'est pas une absence de cas.` : ""}</div></div>
+              <div class="cn-ins n-red"><div class="cn-ins-t">Une intensité, pas un dénombrement</div>
+                <div class="cn-ins-d">L'export ne porte que des taux. Une province peu peuplée et fortement colorée peut compter moins de cas qu'une province vaste au taux modéré. Le relevé hebdomadaire du comité technique porte les effectifs et n'est pas versé au dépôt.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="cn-pied">
+          ${legende}
+          <span class="cn-src">Surveillance intégrée des maladies · export DHIS2, ${cidMois(per)}</span>
+        </div>
+      </div>
     </div>` };
 };
 
