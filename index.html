@@ -3306,6 +3306,15 @@
   .sup-av-g { height:11px; background:#F1EFEA; border-radius:2px; overflow:hidden; }
   .sup-av-g i { display:block; height:100%; border-radius:2px; }
   .sup-av-l .v1 { text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); }
+  /* --- croisement de la grille de supervision --- */
+  .sup-duo-l { display:grid; grid-template-columns:170px 1fr 130px 92px; gap:12px; align-items:center;
+               margin-bottom:10px; font-size:12px; }
+  .sup-duo-l .l { color:var(--body); }
+  .sup-duo-l .v { text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); }
+  .sup-duo-l .n { text-align:right; font-size:10.5px; color:var(--muted); }
+  .sup-mx td.c { font-variant-numeric:tabular-nums; font-weight:600; }
+  .sup-mx tbody tr:hover td { background-clip:padding-box; }
+  @media (max-width:760px){ .sup-duo-l { grid-template-columns:1fr 90px; } .sup-duo-l .sup-av-g, .sup-duo-l .n { display:none; } }
   @media (max-width:760px){ .rim-tr { grid-template-columns:1.4fr 1fr .6fr; } .rim-tr-b, .rim-tr-o { display:none; } }
   /* --- fil des quatre lectures --- */
   .fn-fil { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-bottom:16px; }
@@ -4491,7 +4500,7 @@ const PROGRAMS = [
       { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"yellow" },
       { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"yellow" },
       { id:"vacc-super",     label:"Supervision & monitorage", status:"orange" },
-      { id:"vacc-sup-effet", label:"Effet des supervisions",   status:"orange" },
+      { id:"vacc-sup-effet", label:"Grille de supervision",    status:"orange" },
       { id:"vacc-deepdive",  i18n_key:"sub_vacc_deepdive", label:"Analyse approfondie", status:"orange" },
     ]
   },
@@ -14647,7 +14656,7 @@ VIEWS["vacc-super"] = function () {
         <p>Le taux porté sur cette page est administratif : il compte des visites déclarées, sans dire ce qu'elles ont
         trouvé ni ce qu'elles ont changé. Les relevés de terrain répondent aux deux questions, sur un autre périmètre
         et sur d'autres années.</p>
-        <div class="mini-liens"><button class="lien-btn" onclick="selectSub('vacc','vacc-sup-effet')">Effet des supervisions sur la routine →</button></div>`,
+        <div class="mini-liens"><button class="lien-btn" onclick="selectSub('vacc','vacc-sup-effet')">Tableau de bord de la grille de supervision →</button></div>`,
         "Les deux lectures ne se remplacent pas. Le taux administratif dit si le geste est posé et couvre les vingt-trois provinces en 2026 ; le relevé de terrain dit ce que le geste produit et couvre douze provinces de 2020 à 2024. Rapprocher les deux demande d'abord de fixer une définition commune, ce que la page de terrain examine.")
     + card("Districts les moins couverts par le dispositif", "Dix-huit premiers du classement", tblD,
         "Le rapprochement avec la couverture et l'abandon se lit district par district et non comme une règle. Un district sans supervision et à couverture élevée existe dans ce tableau : il signale soit un dénominateur trop bas, soit un dispositif qui tient sans visite, et la distinction se fait sur place.")
@@ -14655,173 +14664,298 @@ VIEWS["vacc-super"] = function () {
 };
 
 /* ==============================================================
-   PEV · CE QUE LA SUPERVISION PRODUIT
-   Les releves de supervision sont collectes pour ameliorer la
-   routine. La question est de savoir s'ils y parviennent, et
-   elle se tranche sur les centres visites plusieurs fois : le
-   meme centre, avant et apres. Le dispositif ne comporte pas de
-   temoin, et cette vue le dit plutot que de conclure a sa place.
+   PEV · TABLEAU DE BORD DES SUPERVISIONS
+   Les onze exigences de la grille se croisent avec trois
+   indicateurs de resultat, sous filtre de province, d'annee et de
+   rang de visite. Le jeu affiche est simule et cale sur le releve
+   reel de 2020 a 2023 : les marges de chaque exigence, le lien
+   entre conformite et couverture, l'ampleur du gain entre deux
+   visites et sa concentration sur les centres partis bas y sont
+   reproduits. Les mesures reelles restent sur la page voisine.
 ============================================================== */
-let PEVSUP = null;
-fetch("pev_supervision.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
-  .then(j => { PEVSUP = j; if (String(state.sub).indexOf("vacc") === 0) renderMain(); }).catch(() => {});
+let SUPSIM = null;
+fetch("pev_sup_sim.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { SUPSIM = j; if (String(state.sub).indexOf("vacc") === 0) renderMain(); }).catch(() => {});
 
-function supP(p) {
-  if (p == null) return "ND";
-  return p < 0.0001 ? "moins de 0,0001" : String(Math.round(p * 10000) / 10000).replace(".", ",");
+const SUP_RES = {
+  cov: { lib: "Penta 3 local", unite: " pts de cible", sens: 1, det: "Penta 3 du mois rapporté à la cible annuelle de la zone" },
+  ab: { lib: "Abandon Penta 1 à Penta 3", unite: " %", sens: -1, det: "Écart entre première et troisième dose" },
+  sc: { lib: "Score de conformité", unite: " %", sens: 1, det: "Part des onze exigences tenues" }
+};
+const SUP_RANGS = { "*": "Toutes les visites", "1": "Première visite", "2": "Deuxième et suivantes" };
+
+/* Selection courante du tableau de bord. */
+function supSel() {
+  const S = SUPSIM;
+  const prov = S && S.provinces.indexOf(window.__supProv) >= 0 ? window.__supProv : "*";
+  const an = S && S.annees.indexOf(Number(window.__supAn)) >= 0 ? String(window.__supAn) : "*";
+  const rang = SUP_RANGS[window.__supRang] ? window.__supRang : "*";
+  const item = S && S.grille.some(g => g.code === window.__supItem) ? window.__supItem : (S ? S.grille[1].code : null);
+  const res = SUP_RES[window.__supRes] ? window.__supRes : "cov";
+  return { prov: prov, an: an, rang: rang, item: item, res: res };
+}
+/* Indices des visites retenues par les filtres. */
+function supFiltre(sel) {
+  const V = SUPSIM.visites, n = V.sc.length, out = [];
+  for (let i = 0; i < n; i++) {
+    if (sel.prov !== "*" && V.p[i] !== sel.prov) continue;
+    if (sel.an !== "*" && V.an[i] !== Number(sel.an)) continue;
+    if (sel.rang === "1" && V.r[i] !== 1) continue;
+    if (sel.rang === "2" && V.r[i] < 2) continue;
+    out.push(i);
+  }
+  return out;
+}
+function supMoy(idx, cle) {
+  const V = SUPSIM.visites;
+  if (!idx.length) return null;
+  let s = 0; for (let k = 0; k < idx.length; k++) s += V[cle][idx[k]];
+  return s / idx.length;
+}
+function supMed(idx, cle) {
+  const V = SUPSIM.visites;
+  if (!idx.length) return null;
+  const v = idx.map(i => V[cle][i]).sort((a, b) => a - b);
+  return v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+}
+function supEcartType(idx, cle) {
+  const V = SUPSIM.visites, m = supMoy(idx, cle);
+  if (m == null || idx.length < 2) return null;
+  let s = 0; for (let k = 0; k < idx.length; k++) { const d = V[cle][idx[k]] - m; s += d * d; }
+  return Math.sqrt(s / (idx.length - 1));
+}
+/* Comparaison de deux groupes sur un indicateur : ecart, effectifs et
+   statistique de Welch, qui ne suppose pas des variances egales. */
+function supCompare(idxA, idxB, cle) {
+  const mA = supMoy(idxA, cle), mB = supMoy(idxB, cle);
+  const sA = supEcartType(idxA, cle), sB = supEcartType(idxB, cle);
+  let t = null;
+  if (mA != null && mB != null && sA != null && sB != null && idxA.length > 1 && idxB.length > 1) {
+    const se = Math.sqrt(sA * sA / idxA.length + sB * sB / idxB.length);
+    t = se ? (mA - mB) / se : null;
+  }
+  return { nA: idxA.length, nB: idxB.length, mA: mA, mB: mB,
+           ecart: mA == null || mB == null ? null : mA - mB, t: t == null ? null : Math.round(t * 100) / 100 };
+}
+function supSepare(idx, code) {
+  const j = SUPSIM.grille.findIndex(g => g.code === code);
+  const V = SUPSIM.visites, oui = [], non = [];
+  idx.forEach(function (i) { (V.it[i] & (1 << j) ? oui : non).push(i); });
+  return { oui: oui, non: non, j: j };
+}
+
+/* Nuage de points : conformite en abscisse, indicateur en ordonnee. */
+function supNuage(idx, cle) {
+  const V = SUPSIM.visites, W = 860, H = 260, ml = 40, mr = 14, mt = 12, mb = 32;
+  const iw = W - ml - mr, ih = H - mt - mb;
+  const ys = idx.map(i => V[cle][i]);
+  const ymax = Math.max.apply(null, ys.concat([1])), ymin = Math.min.apply(null, ys.concat([0]));
+  const X = s => ml + (s / 100) * iw;
+  const Y = v => mt + ih - ((v - ymin) / Math.max(0.001, ymax - ymin)) * ih;
+  const pts = idx.map(function (i) {
+    const j = ((i * 2654435761) % 1000) / 1000 - 0.5;
+    return '<circle cx="' + (X(V.sc[i]) + j * (iw / 26)).toFixed(1) + '" cy="' + Y(V[cle][i]).toFixed(1)
+      + '" r="2.1" fill="#1F3864" fill-opacity="0.22"/>';
+  }).join("");
+  /* Moyenne de l'indicateur par tranche de dix points de conformite : la
+     tendance se lit sur les tranches, non sur le nuage. */
+  const tr = [];
+  for (let b = 0; b < 10; b++) {
+    const s = idx.filter(i => V.sc[i] >= b * 10 && V.sc[i] < (b + 1) * 10 + (b === 9 ? 1 : 0));
+    if (s.length >= 5) tr.push({ x: b * 10 + 5, y: supMoy(s, cle), n: s.length });
+  }
+  let d = "";
+  tr.forEach(function (p, k) { d += (k ? "L" : "M") + X(p.x).toFixed(1) + "," + Y(p.y).toFixed(1) + " "; });
+  const marq = tr.map(p => '<circle cx="' + X(p.x).toFixed(1) + '" cy="' + Y(p.y).toFixed(1)
+    + '" r="3.6" fill="#B4913C"><title>Conformité ' + p.x + ' % · moyenne ' + (Math.round(p.y * 100) / 100)
+    + ' · ' + p.n + ' visites</title></circle>').join("");
+  const gr = [0, 0.5, 1].map(function (f) {
+    const y = mt + ih - f * ih, v = ymin + f * (ymax - ymin);
+    return '<line x1="' + ml + '" y1="' + y + '" x2="' + (W - mr) + '" y2="' + y + '" stroke="#E4E0D5"/>'
+      + '<text x="' + (ml - 6) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="9.5" fill="#75706B">'
+      + (Math.round(v * 10) / 10) + '</text>';
+  }).join("");
+  const ax = [0, 25, 50, 75, 100].map(function (v) {
+    return '<text x="' + X(v).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="9.5" fill="#75706B">'
+      + v + ' %</text>';
+  }).join("");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%">' + gr + pts
+    + '<path d="' + d.trim() + '" fill="none" stroke="#B4913C" stroke-width="2"/>' + marq + ax + '</svg>'
+    + '<div class="fn-lg"><span><i style="background:#1F3864;opacity:.35"></i>une visite</span>'
+    + '<span><i style="background:#B4913C"></i>moyenne par tranche de dix points de conformité</span></div>';
 }
 
 VIEWS["vacc-sup-effet"] = function () {
-  const crumbs = ["Vaccination · PEV", "Effet des supervisions"];
-  const et = '<div class="ph"><div class="ph-tag">Programme Élargi de Vaccination · relevés de terrain</div>'
-    + '<div class="ph-title">La supervision améliore-t-elle la routine</div>';
-  if (!PEVSUP) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevés de supervision en cours de chargement.</div></div>' };
+  const crumbs = ["Vaccination · PEV", "Tableau de bord des supervisions"];
+  const et = '<div class="ph"><div class="ph-tag">Programme Élargi de Vaccination · grille de supervision</div>'
+    + '<div class="ph-title">Supervision des centres de santé</div>';
+  if (!SUPSIM) return { crumbs: crumbs, html: et + '<div class="ph-sub">Jeu de supervisions en cours de chargement.</div></div>' };
 
-  const S = PEVSUP, M = S.meta, A = S.appariement, R = A.routine;
-  const d1 = function (x) { return x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ","); };
-  const d2 = function (x) { return x == null ? "ND" : String(Math.round(x * 100) / 100).replace(".", ","); };
+  const S = SUPSIM, sel = supSel(), M = S.meta;
+  const idx = supFiltre(sel);
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const d2 = x => x == null ? "ND" : String(Math.round(x * 100) / 100).replace(".", ",");
+  const RES = SUP_RES[sel.res];
+  const itemLib = (S.grille.filter(g => g.code === sel.item)[0] || {}).lib;
 
-  /* Grille des exigences, rangee de la moins tenue a la mieux tenue : c'est
-     l'ordre de ce qu'une visite peut corriger. */
-  const gr = S.grille.slice().sort(function (a, b) { return a.taux - b.taux; });
-  const tblG = '<table class="dt"><thead><tr><th>Exigence</th><th>Pilier</th>'
-    + '<th style="text-align:right">Conforme</th><th style="text-align:right">Visites renseignées</th></tr></thead><tbody>'
-    + gr.map(function (g) {
-        const cls = g.taux >= 85 ? "green" : g.taux >= 70 ? "orange" : "red";
-        return '<tr><td class="l"><strong>' + g.lib + '</strong></td><td>' + g.pilier + '</td>'
-          + '<td class="num"><span class="pill ' + cls + '">' + d1(g.taux) + ' %</span></td>'
-          + '<td class="num">' + g.conf + ' / ' + g.n + '</td></tr>';
-      }).join("")
-    + S.conditionnels.map(function (g) {
-        const cls = g.taux >= 85 ? "green" : g.taux >= 70 ? "orange" : "red";
-        return '<tr><td class="l">' + g.lib + '<div class="dsr-o">observé seulement lorsqu\'une séance est en cours</div></td>'
-          + '<td>prestation</td><td class="num"><span class="pill ' + cls + '">' + d1(g.taux) + ' %</span></td>'
-          + '<td class="num">' + g.conf + ' / ' + g.n + '</td></tr>';
-      }).join("")
-    + '</tbody></table>';
+  /* ---- filtres ---- */
+  const chipsProv = [{ v: "*", l: "Toutes" }].concat(S.provinces.map(p => ({ v: p, l: cidProvNom(p) })));
+  const chipsAn = [{ v: "*", l: "Toutes" }].concat(S.annees.map(a => ({ v: String(a), l: String(a) })));
+  const chipsRang = Object.keys(SUP_RANGS).map(k => ({ v: k, l: SUP_RANGS[k] }));
+  const chipsItem = S.grille.map(g => ({ v: g.code, l: g.lib }));
+  const chipsRes = Object.keys(SUP_RES).map(k => ({ v: k, l: SUP_RES[k].lib }));
+  const barre = '<div class="fn-f">'
+    + foncGroupeFiltre("Province", chipsProv, "__supProv", sel.prov)
+    + foncGroupeFiltre("Année", chipsAn, "__supAn", sel.an)
+    + foncGroupeFiltre("Rang de la visite", chipsRang, "__supRang", sel.rang)
+    + '</div><div class="fn-f">'
+    + foncGroupeFiltre("Constat croisé", chipsItem, "__supItem", sel.item)
+    + foncGroupeFiltre("Indicateur", chipsRes, "__supRes", sel.res)
+    + '</div>';
 
-  /* Progression appariee : premiere et derniere visite du meme centre. */
-  const barres = '<div class="sup-av">'
-    + [["Score de conformité à la grille", A.sc0, A.sc1, "%", "sur " + A.n_centres + " centres"],
-       ["Penta 3 rapporté à la cible de la zone", R ? R.v0 : null, R ? R.v1 : null, " points de cible", R ? "sur " + R.n + " centres" : ""]]
+  if (!idx.length) {
+    return { crumbs: crumbs, html: et + '<div class="ph-sub">Aucune visite ne répond à ces filtres.</div></div>'
+      + '<div class="content">' + barre + '</div>' };
+  }
+
+  /* ---- croisement principal ---- */
+  const sep = supSepare(idx, sel.item);
+  const cmp = supCompare(sep.oui, sep.non, sel.res);
+  const vmax = Math.max(cmp.mA || 0, cmp.mB || 0, 0.001);
+  const duo = '<div class="sup-duo">'
+    + [["Exigence tenue", cmp.mA, cmp.nA, "#1F3864"], ["Exigence non tenue", cmp.mB, cmp.nB, "#B3372F"]]
       .map(function (x) {
-        const w0 = Math.min(100, (x[1] || 0) / (x[0].indexOf("Score") === 0 ? 100 : 15) * 100);
-        const w1 = Math.min(100, (x[2] || 0) / (x[0].indexOf("Score") === 0 ? 100 : 15) * 100);
-        return '<div class="sup-av-b"><div class="sup-av-t">' + x[0] + '<span>' + x[4] + '</span></div>'
-          + '<div class="sup-av-l"><span class="l1">Première visite</span>'
-          + '<div class="sup-av-g"><i style="width:' + w0 + '%;background:#8FA6C9"></i></div>'
-          + '<span class="v1">' + d2(x[1]) + '</span></div>'
-          + '<div class="sup-av-l"><span class="l1">Dernière visite</span>'
-          + '<div class="sup-av-g"><i style="width:' + w1 + '%;background:#1F3864"></i></div>'
-          + '<span class="v1"><strong>' + d2(x[2]) + '</strong></span></div></div>';
+        return '<div class="sup-duo-l"><span class="l">' + x[0] + '</span>'
+          + '<div class="sup-av-g"><i style="width:' + (x[1] == null ? 0 : x[1] / vmax * 100) + '%;background:' + x[3] + '"></i></div>'
+          + '<span class="v"><strong>' + d2(x[1]) + '</strong>' + RES.unite + '</span>'
+          + '<span class="n">' + x[2] + ' visites</span></div>';
       }).join("") + '</div>';
 
-  const tblT = '<table class="dt"><thead><tr><th>Groupe selon le score de la première visite</th>'
-    + '<th style="text-align:right">Score initial moyen</th><th style="text-align:right">Gain moyen</th>'
-    + '<th style="text-align:right">Centres</th></tr></thead><tbody>'
-    + A.terciles.map(function (t) {
-        return '<tr><td class="l"><strong>' + t.lib + '</strong></td>'
-          + '<td class="num">' + d1(t.sc0) + '</td>'
-          + '<td class="num" style="color:' + (t.gain > 0 ? "#2E7D32" : "#B3372F") + ';font-weight:700">'
-          + (t.gain >= 0 ? "+" : "") + d2(t.gain) + '</td>'
-          + '<td class="num">' + t.n + '</td></tr>';
+  /* ---- matrice complete des croisements ---- */
+  const cles = ["cov", "ab", "sc"];
+  const lignes = S.grille.map(function (g) {
+    const s = supSepare(idx, g.code);
+    const c = cles.map(k => supCompare(s.oui, s.non, k));
+    return { g: g, part: idx.length ? s.oui.length / idx.length * 100 : null, c: c };
+  }).sort(function (a, b) { return (a.part || 0) - (b.part || 0); });
+  const coulEcart = function (e, sens, ampl) {
+    if (e == null) return "transparent";
+    const bon = sens > 0 ? e > 0 : e < 0;
+    const f = Math.min(1, Math.abs(e) / ampl);
+    return (bon ? "rgba(46,125,50," : "rgba(179,55,47,") + (0.10 + 0.65 * f) + ")";
+  };
+  const ampl = cles.map(function (k, ci) {
+    return Math.max.apply(null, lignes.map(l => Math.abs(l.c[ci].ecart || 0)).concat([0.01]));
+  });
+  const matrice = '<table class="fn-mx sup-mx"><thead><tr><th>Exigence</th><th class="c">Tenue</th>'
+    + cles.map(k => '<th class="c">' + SUP_RES[k].lib + '</th>').join("")
+    + '</tr></thead><tbody>'
+    + lignes.map(function (l) {
+        return '<tr><td>' + l.g.lib + '<div class="dsr-o">' + l.g.pilier + '</div></td>'
+          + '<td class="c">' + d1(l.part) + ' %</td>'
+          + l.c.map(function (c, ci) {
+              const k = cles[ci];
+              return '<td class="c" style="background:' + coulEcart(c.ecart, SUP_RES[k].sens, ampl[ci]) + '"'
+                + ' title="tenue ' + d2(c.mA) + ' sur ' + c.nA + ' visites · non tenue ' + d2(c.mB) + ' sur ' + c.nB
+                + ' visites · t de Welch ' + (c.t == null ? "ND" : d2(c.t)) + '">'
+                + (c.ecart == null ? "ND" : (c.ecart >= 0 ? "+" : "") + d2(c.ecart)) + '</td>';
+            }).join("") + '</tr>';
       }).join("") + '</tbody></table>';
 
-  const T = A.trajectoire;
-  const tests = `<div class="ddx-stats">
-    <div class="ddx-st"><div class="ddx-st-l">Écart de conformité, dernière moins première visite</div>
-      <div class="ddx-st-v">+${d2(A.ecart)}</div>
-      <div class="ddx-st-d">intervalle de confiance à 95 % de ${d2(A.ic[0])} à ${d2(A.ic[1])} points</div></div>
-    <div class="ddx-st"><div class="ddx-st-l">Test des signes sur la conformité</div>
-      <div class="ddx-st-v">p = ${supP(A.p)}</div>
-      <div class="ddx-st-d">${A.pos} en hausse, ${A.neg} en baisse, ${A.nul} stables</div></div>
-    <div class="ddx-st"><div class="ddx-st-l">Test des signes sur le Penta 3 local</div>
-      <div class="ddx-st-v">p = ${R ? supP(R.p) : "ND"}</div>
-      <div class="ddx-st-d">${R ? R.pos + " en hausse, " + R.neg + " en baisse" : ""}</div></div>
-    <div class="ddx-st"><div class="ddx-st-l">Corrélation entre score initial et gain</div>
-      <div class="ddx-st-v">${String(A.corr_initial_gain).replace(".", ",")}</div>
-      <div class="ddx-st-d">signature d'un retour vers la moyenne</div></div>
-    <div class="ddx-st"><div class="ddx-st-l">Trajectoire des centres vus au moins trois fois</div>
-      <div class="ddx-st-v">${d1(T.p)} → ${d1(T.m)} → ${d1(T.d)}</div>
-      <div class="ddx-st-d">première, intermédiaire, dernière · ${T.n} centres</div></div>
-    <div class="ddx-st"><div class="ddx-st-l">Lien transversal entre conformité et couverture</div>
-      <div class="ddx-st-v">${String(A.corr_score_couv).replace(".", ",")}</div>
-      <div class="ddx-st-d">toutes visites confondues</div></div>
-  </div>`;
-
-  const F = S.froid, D = S.denominateur;
-  const motifs = Object.keys(F.motifs_non_livraison).map(function (k) {
-    return '<tr><td class="l">' + k + '</td><td class="num">' + F.motifs_non_livraison[k] + '</td></tr>'; }).join("");
-  const tblF = '<table class="dt"><thead><tr><th>Motif porté au relevé quand le vaccin n\'est pas livré</th>'
-    + '<th style="text-align:right">Visites</th></tr></thead><tbody>' + motifs + '</tbody></table>';
-
-  const C = S.croisement;
-  const tblC = '<table class="dt"><thead><tr><th>Province</th>'
-    + '<th style="text-align:right">Zones 2023</th><th style="text-align:right">Zones 2026</th>'
-    + '<th style="text-align:right">Taux trimestriel 2023</th><th style="text-align:right">Au moins une visite au trimestre 2023</th>'
-    + '<th style="text-align:right">Taux administratif 2026</th></tr></thead><tbody>'
-    + C.map(function (x) {
-        const ev = x.zr_2023 && x.zr_2026 ? (x.zr_2026 - x.zr_2023) : null;
-        return '<tr><td class="l"><strong>' + x.nom + '</strong></td>'
-          + '<td class="num">' + (x.zr_2023 || "ND") + '</td>'
-          + '<td class="num">' + (x.zr_2026 || "ND") + (ev ? '<div class="dsr-o">' + (ev > 0 ? "+" : "") + ev + '</div>' : "") + '</td>'
-          + '<td class="num">' + (x.taux_2023_trim == null ? '<span class="dsr-o">ND</span>' : d1(x.taux_2023_trim) + " %") + '</td>'
-          + '<td class="num">' + (x.taux_2023_aumoins1 == null ? '<span class="dsr-o">ND</span>' : d1(x.taux_2023_aumoins1) + " %") + '</td>'
-          + '<td class="num">' + (x.taux_2026 == null ? '<span class="dsr-o">ND</span>' : d1(x.taux_2026) + " %") + '</td></tr>';
+  /* ---- progression par rang de visite ---- */
+  const rangs = [1, 2, 3, 4, 5, 6];
+  const parRang = rangs.map(function (r) {
+    const s = idx.filter(i => S.visites.r[i] === r);
+    return { r: r, n: s.length, sc: supMoy(s, "sc"), cov: supMoy(s, "cov"), ab: supMoy(s, "ab") };
+  }).filter(x => x.n >= 5);
+  const serieRang = foncSerieSVG([
+    { lib: "Score de conformité", coul: "#1F3864", v: parRang.map(x => x.sc) },
+    { lib: "Penta 3 local, mis à l'échelle", coul: "#2E7D32", v: parRang.map(x => x.cov * 8) },
+    { lib: "Abandon Penta 1 à Penta 3, mis à l'échelle", coul: "#B3372F", v: parRang.map(x => x.ab * 4) }
+  ], parRang.map(x => x.r), 100, function (r) { return r === 1 ? "1re visite" : r + "e visite"; });
+  const tblRang = '<table class="dt"><thead><tr><th>Rang de la visite</th><th style="text-align:right">Visites</th>'
+    + '<th style="text-align:right">Conformité</th><th style="text-align:right">Penta 3 local</th>'
+    + '<th style="text-align:right">Abandon</th></tr></thead><tbody>'
+    + parRang.map(function (x) {
+        return '<tr><td class="l"><strong>' + (x.r === 1 ? "Première visite" : x.r + "e visite") + '</strong></td>'
+          + '<td class="num">' + x.n + '</td><td class="num">' + d1(x.sc) + ' %</td>'
+          + '<td class="num">' + d2(x.cov) + '</td><td class="num">' + d1(x.ab) + ' %</td></tr>';
       }).join("") + '</tbody></table>';
 
-  const zrPlus = C.filter(function (x) { return x.zr_2023 && x.zr_2026 && x.zr_2026 > x.zr_2023; }).length;
-  const CN = S.croisement_national || {};
+  /* ---- classement provincial ---- */
+  const parProv = S.provinces.map(function (p) {
+    const s = idx.filter(i => S.visites.p[i] === p);
+    if (!s.length) return null;
+    const sp = supSepare(s, sel.item);
+    return { p: p, n: s.length, sc: supMoy(s, "sc"), res: supMoy(s, RES === SUP_RES.sc ? "sc" : sel.res),
+             part: s.length ? sp.oui.length / s.length * 100 : null };
+  }).filter(Boolean).sort(function (a, b) { return a.sc - b.sc; });
+  const tblProv = '<table class="dt"><thead><tr><th>Province</th><th style="text-align:right">Visites</th>'
+    + '<th style="text-align:right">Conformité</th><th style="text-align:right">' + itemLib + ' tenue</th>'
+    + '<th style="text-align:right">' + RES.lib + '</th></tr></thead><tbody>'
+    + parProv.map(function (x) {
+        const cls = x.sc >= 85 ? "green" : x.sc >= 70 ? "orange" : "red";
+        return '<tr><td class="l"><strong>' + cidProvNom(x.p) + '</strong></td>'
+          + '<td class="num">' + x.n + '</td>'
+          + '<td class="num"><span class="pill ' + cls + '">' + d1(x.sc) + ' %</span></td>'
+          + '<td class="num">' + d1(x.part) + ' %</td>'
+          + '<td class="num">' + d2(x.res) + '</td></tr>';
+      }).join("") + '</tbody></table>';
+
+  const C = S.controle;
+  const tblC = '<table class="dt"><thead><tr><th>Propriété reproduite</th>'
+    + '<th style="text-align:right">Relevé réel</th><th style="text-align:right">Jeu simulé</th></tr></thead><tbody>'
+    + [["Score de conformité médian", C.score_med_reel, C.score_med_sim],
+       ["Lien conformité et couverture locale", C.corr_sc_cov_reel, C.corr_sc_cov_sim],
+       ["Gain entre première et dernière visite", C.ecart_reel, C.ecart_sim],
+       ["Lien score de départ et gain", C.corr_init_gain_reel, C.corr_init_gain_sim],
+       ["Penta 3 local médian", C.cov_med_reel, C.cov_med_sim]]
+      .map(function (x) {
+        return '<tr><td class="l">' + x[0] + '</td><td class="num">' + String(x[1]).replace(".", ",")
+          + '</td><td class="num"><strong>' + String(x[2]).replace(".", ",") + '</strong></td></tr>';
+      }).join("") + '</tbody></table>';
+
+  const nProv = sel.prov === "*" ? S.provinces.length : 1;
+  const cadre = sel.prov === "*" ? "23 provinces" : cidProvNom(sel.prov);
 
   return { crumbs: crumbs, html: et
-    + '<div class="ph-sub">Les relevés de supervision existent pour redresser la routine, et le seul moyen de savoir '
-    + 's\'ils y parviennent est de suivre le même centre d\'une visite à l\'autre. ' + M.n_visites + ' visites de '
-    + M.annee_min + ' à ' + M.annee_max + ' dans ' + M.n_centres + ' centres de ' + M.n_provinces + ' provinces, '
-    + 'dont ' + A.n_centres + ' centres vus au moins deux fois. La réponse est affirmative sur ce que la visite mesure, '
-    + 'et le dispositif ne permet pas de l\'attribuer à la visite seule.</div></div>'
+    + '<div class="ph-sub">Onze exigences relevées à chaque visite, croisées avec trois indicateurs de résultat, '
+    + 'sous filtre de province, d\'année et de rang de visite. ' + cadre + ' · '
+    + (sel.an === "*" ? "2023 à 2026" : sel.an) + ' · ' + SUP_RANGS[sel.rang].toLowerCase() + ' · '
+    + idx.length.toLocaleString("fr-FR") + ' visites retenues sur ' + M.n_visites.toLocaleString("fr-FR") + '.</div>'
+    + '<div class="ph-fenetre">Jeu simulé, calé sur le relevé réel de 2020 à 2023. Les mesures réelles figurent sur la page Supervision et monitorage.</div></div>'
     + '<div class="content">'
+    + barre
     + '<div class="kpi-grid">'
-    + kpi("Conformité à la grille", d1(S.score.med), " %", "Médiane des " + M.n_visites + " visites · onze exigences",
-        "—", "flat", S.score.med >= 85 ? "green" : S.score.med >= 70 ? "orange" : "red", true)
-    + kpi("Gain entre première et dernière visite", "+" + d2(A.ecart), " points", A.pos + " centres en hausse contre " + A.neg + " en baisse",
-        "—", "flat", "green", true)
-    + kpi("Penta 3 local, même comparaison", R ? "+" + d2(R.ecart) : "ND", " points de cible",
-        R ? R.pos + " en hausse contre " + R.neg + " en baisse" : "", "—", "flat", "green", true)
-    + kpi("Intervalle médian entre deux visites", A.jours_med, " jours", "Un même centre est revu deux fois par an environ",
+    + kpi("Visites retenues", idx.length.toLocaleString("fr-FR"), "", nProv + (nProv > 1 ? " provinces" : " province") + " · " + M.n_centres.toLocaleString("fr-FR") + " centres au total",
         "—", "flat", "", true)
+    + kpi("Conformité médiane", d1(supMed(idx, "sc")), " %", "Onze exigences relevées à chaque visite",
+        "—", "flat", supMed(idx, "sc") >= 85 ? "green" : supMed(idx, "sc") >= 70 ? "orange" : "red", true)
+    + kpi(itemLib + ", tenue", d1(idx.length ? sep.oui.length / idx.length * 100 : null), " %",
+        sep.oui.length + " visites sur " + idx.length, "—", "flat",
+        sep.oui.length / idx.length >= 0.85 ? "green" : sep.oui.length / idx.length >= 0.7 ? "orange" : "red", true)
+    + kpi("Écart sur " + RES.lib.toLowerCase(), (cmp.ecart >= 0 ? "+" : "") + d2(cmp.ecart), RES.unite,
+        "Exigence tenue moins exigence non tenue", "—", "flat",
+        (RES.sens > 0 ? cmp.ecart > 0 : cmp.ecart < 0) ? "green" : "orange", true)
     + '</div>'
-    + card("Ce que la visite trouve", "Onze exigences posées à chaque visite, rangées de la moins tenue à la mieux tenue", tblG,
-        "La formation au PEV est l'exigence la moins tenue et la seule qui ne se corrige pas sur place : une visite peut faire afficher une courbe ou rouvrir un échéancier dans la journée, elle ne forme pas un agent. Les six dernières lignes ne sont observées que lorsqu'une séance est en cours, soit une visite sur deux : leurs taux portent sur un autre dénominateur et ne se comparent pas aux onze premières.")
-    + card("Le même centre, avant et après", "Première et dernière visite des " + A.n_centres + " centres revus", barres,
-        "La comparaison porte sur le même centre, ce qui écarte l'effet de composition : ce n'est pas parce que les centres visités seraient différents des autres que les deux moyennes diffèrent. Le Penta 3 est rapporté à la cible annuelle de la zone telle que le relevé la porte, et se lit en points de cette cible atteints au moment de la visite, non en couverture annuelle.")
-    + card("Ce que les tests établissent", "Et ce qu'ils n'établissent pas", tests,
-        "La conformité progresse de " + d2(A.ecart) + " points et l'indicateur de routine du même centre progresse aussi : deux tests des signes concordants, sur des mesures indépendantes l'une de l'autre. "
-        + "La corrélation de " + String(A.corr_initial_gain).replace(".", ",") + " entre le score de départ et le gain est cependant la signature classique d'un retour vers la moyenne : un centre mesuré bas une fois remonte en partie à la mesure suivante, visite ou pas. "
-        + "La trajectoire des centres vus trois fois joue en sens inverse, puisqu'elle continue de monter après le deuxième passage là où un simple retour vers la moyenne se serait arrêté. "
-        + "Enfin le lien transversal entre conformité et couverture est faible : c'est le mouvement qui va de pair, pas le niveau.")
-    + card("Selon le point de départ", "Centres répartis en trois groupes selon leur première visite", tblT,
-        "Tout le gain se concentre sur le tiers parti le plus bas, et le tiers le mieux tenu ne bouge pas. Deux lectures restent ouvertes et le relevé ne permet pas de choisir entre elles : la visite corrige ce qui est corrigeable et n'a rien à corriger ailleurs, ou la mesure basse du premier passage était en partie fortuite. "
-        + "Trancher demanderait des centres témoins non visités, mesurés aux mêmes dates. Le dispositif actuel n'en produit pas, et c'est la seule chose qui manque pour conclure.")
-    + card("Ce que le relevé dit de la chaîne du froid", "Réponses portées aux " + F.visites + " visites", tblF,
-        "Aucune des " + F.visites + " visites ne relève de réfrigérateur au centre de santé, et l'absence de réfrigérateur fonctionnel est le motif porté à "
-        + F.motifs_non_livraison["Pas de réfrigérateur fonctionnel dans le centre de santé"] + " des " + (F.livraison["Non"] || 0) + " non-livraisons. "
-        + "La condition de chaîne du froid au point de vaccination, portée comme non mesurée au référentiel de fonctionnalité, est donc mesurée sur cet échantillon et n'y est pas remplie. L'échantillon ne couvre pas le pays et suffit à ouvrir la question auprès de la DLMVSE.")
-    + card("Contrôle des dénominateurs", "Cible annuelle rapportée à la population de la zone, " + D.n + " zones",
-        `<div class="ddx-stats">
-          <div class="ddx-st"><div class="ddx-st-l">Rapport médian</div><div class="ddx-st-v">${d2(D.med)} %</div>
-            <div class="ddx-st-d">convention nationale ${d2(D.convention)} %</div></div>
-          <div class="ddx-st"><div class="ddx-st-l">Premier décile</div><div class="ddx-st-v">${d2(D.p10)} %</div><div class="ddx-st-d">—</div></div>
-          <div class="ddx-st"><div class="ddx-st-l">Dernier décile</div><div class="ddx-st-v">${d2(D.p90)} %</div><div class="ddx-st-d">—</div></div>
-          <div class="ddx-st"><div class="ddx-st-l">Zones hors de la fourchette de 3 à 6 %</div>
-            <div class="ddx-st-v">${D.hors_convention}</div><div class="ddx-st-d">sur ${D.n} zones</div></div>
-        </div>`,
-        "Le rapport entre la cible des zéro à onze mois et la population de la zone vaut " + d2(D.med) + " pour cent du premier au dernier décile : la convention est appliquée telle quelle sur le terrain. "
-        + "Les couvertures au-dessus de cent pour cent relevées dans le rapport intégré ne viennent donc pas de ce rapport, mais de la population de base retenue ou du numérateur. C'est une piste que le contrôle ferme, ce qui vaut mieux que de la laisser ouverte.")
-    + card("Croisement des deux sources", "Relevé opérationnel 2023 et rapport administratif 2026", tblC,
-        "Les deux sources ne se recouvrent pas dans le temps, et le relevé 2023 ne porte que sur " + CN.n_provinces + " provinces. Leur rapprochement tient donc aux définitions et à la géographie, non aux mêmes mois : le total 2026 est ramené aux mêmes provinces pour que la comparaison ait un sens. "
-        + "Trois mesures nommées de la même façon y donnent trois résultats : " + d1(CN.trim_2023) + " pour cent au taux trimestriel 2023, " + d1(CN.aumoins1_2023) + " pour cent pour les zones vues au moins une fois dans le trimestre, " + d1(CN.taux_2026) + " pour cent au taux mensuel cumulé de 2026. "
-        + "Entre la première et la deuxième, l'écart est de " + d1(CN.aumoins1_2023 - CN.trim_2023) + " points sans qu'une seule visite change. Le choix de la définition pèse donc autant que le dispositif lui-même, et il doit être arrêté avant d'être suivi. "
-        + "Le nombre de zones de responsabilité augmente par ailleurs dans " + zrPlus + " des " + C.length + " provinces communes, de " + CN.zr_2023 + " à " + CN.zr_2026 + " au total, jusqu'à cinquante-cinq zones pour le seul Ouaddaï : un taux qui monte peut traduire un dénominateur qui bouge autant qu'un dispositif qui s'étend, et la comparaison d'une année sur l'autre demande de fixer d'abord la carte sanitaire de référence.")
+    + card(itemLib + " croisé avec " + RES.lib.toLowerCase(), RES.det + " · " + cadre, duo,
+        "Les deux groupes sont les visites où l'exigence est tenue et celles où elle ne l'est pas, sur le même périmètre de filtres. "
+        + "L'écart vaut " + d2(cmp.ecart) + RES.unite + " pour une statistique de Welch de " + (cmp.t == null ? "ND" : d2(cmp.t))
+        + ". Un écart n'est pas un effet : les centres qui tiennent une exigence en tiennent d'autres, et la comparaison ne les sépare pas.")
+    + card("Matrice des croisements", "Écart entre visites conformes et non conformes, sur les " + idx.length.toLocaleString("fr-FR") + " visites retenues", matrice,
+        "Chaque cellule porte l'écart de moyenne entre les visites où l'exigence est tenue et celles où elle ne l'est pas. "
+        + "Le vert marque un écart favorable, le rouge un écart défavorable, l'intensité l'ampleur relative au sein de la colonne. "
+        + "Le survol donne les deux moyennes, les effectifs et la statistique de Welch. Les lignes sont rangées de l'exigence la moins tenue à la mieux tenue.")
+    + card("Conformité et " + RES.lib.toLowerCase(), "Une visite par point · moyenne par tranche de dix points", supNuage(idx, sel.res),
+        "Le score ne prend que douze valeurs, une par nombre d'exigences tenues : les points sont décalés horizontalement pour rester lisibles, et leur abscisse exacte se lit sur la ligne des moyennes. "
+        + "Le nuage brut ne montre presque rien, ce qui est le résultat : la dispersion entre centres dépasse largement l'écart lié à la conformité, et la pente des moyennes par tranche reste faible.")
+    + card("Progression au fil des visites", "Le même centre, visite après visite", serieRang + tblRang,
+        "Les trois séries du graphique sont mises à l'échelle pour tenir sur un même axe : seule leur forme se compare, non leur niveau. Le tableau donne les valeurs réelles. "
+        + "La progression entre rangs mêle deux choses que ce jeu ne sépare pas, l'effet de la visite et le fait que les centres revus plusieurs fois ne sont pas tirés au hasard.")
+    + card("Provinces", "Rangées de la moins conforme à la plus conforme · filtres appliqués", tblProv,
+        "La colonne du milieu porte l'exigence retenue en filtre, ce qui permet de voir si une province basse au score global l'est sur cette exigence-là ou sur d'autres.")
+    + card("Calage du jeu simulé", "Ce qui est repris du relevé réel et ce qui est tiré au sort", tblC,
+        M.note)
     + '</div>' };
 };
 
@@ -15483,7 +15617,8 @@ function foncPortee(S) {
 }
 
 /* ---- graphique de serie ---- */
-function foncSerieSVG(series, mois, ymax) {
+function foncSerieSVG(series, mois, ymax, fmt) {
+  fmt = fmt || cidMoisC;
   const W = 860, H = 210, ml = 32, mr = 26, mt = 12, mb = 30;
   const n = mois.length, iw = W - ml - mr, ih = H - mt - mb;
   let toutes = [];
@@ -15512,7 +15647,7 @@ function foncSerieSVG(series, mois, ymax) {
   const axe = mois.map(function (m, i) {
     if (i % 3 !== 0 && i !== n - 1) return "";
     const anc = i === n - 1 ? "end" : "middle";
-    return '<text x="' + X(i).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="' + anc + '" font-size="9.5" fill="#75706B">' + cidMoisC(m) + '</text>';
+    return '<text x="' + X(i).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="' + anc + '" font-size="9.5" fill="#75706B">' + fmt(m) + '</text>';
   }).join("");
   const leg = series.map(function (s) { return '<span><i style="background:' + s.coul + '"></i>' + s.lib + '</span>'; }).join("");
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%">' + grille + traces + axe + '</svg><div class="fn-lg">' + leg + '</div>';
