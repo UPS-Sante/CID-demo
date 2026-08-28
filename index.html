@@ -4439,6 +4439,8 @@ const PROGRAMS = [
     sub:[
       { id:"diem-apercu", label:"État du parc",         status:"orange" },
       { id:"diem-prov",   label:"Lecture provinciale",  status:"orange" },
+      { id:"diem-equip",  label:"Équipements et mobilité", status:"red" },
+      { id:"diem-fonct",  label:"Fonctionnalité des HD", status:"red" },
       { id:"diem-dd",     label:"Analyse approfondie",  status:"green" },
     ]
   },
@@ -5305,6 +5307,8 @@ const state = {
   cholEchelle: "foyer",
   cadreDir: null,
   infraNiv: "cs",
+  infraEq: "ambulance",
+  infraRegle: null,
   minSection: "A",
   lang: "fr",                  // 'fr' | 'en' | 'ar'
   // Map view controls (zoom/pan/size)
@@ -10929,6 +10933,43 @@ const CID_AUTRES = [
   { dir: "DGPML", grp: "Pharmacie et logistique", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
     code: null, unite: "", src: "Direction générale de la pharmacie, du médicament et des laboratoires",
     voisin: "Stocks de fin de mois, ruptures et péremptions sont suivis sur les traceurs. La liste des traceurs retenus reste à valider." },
+  /* --- DIEM : le cadre est arrete, l'etat du bati est servi, les
+     equipements et la fonctionnalite attendent leur releve. --- */
+  { dir: "DIEM", grp: "État du bâti", lib: "Part des centres de santé en bon état",
+    calc: { num: "Centres de santé relevés en bon état", den: "Centres de santé recensés" },
+    code: "cs_bon", niv: "province et district", unite: "%", src: "Relevé DIEM 2026" },
+  { dir: "DIEM", grp: "État du bâti", lib: "Part des hôpitaux de district en bon état",
+    calc: { num: "Hôpitaux de district relevés en bon état", den: "Hôpitaux de district recensés" },
+    code: "hd_bon", niv: "province", unite: "%", src: "Relevé DIEM 2026" },
+  { dir: "DIEM", grp: "État du bâti", lib: "Part des hôpitaux de province en bon état",
+    calc: { num: "Hôpitaux de province relevés en bon état", den: "Hôpitaux de province, un par province" },
+    code: "hp_etat", niv: "province", unite: "%", src: "Relevé DIEM 2026" },
+  { dir: "DIEM", grp: "Équipements et mobilité", lib: "Couverture du besoin en ambulances",
+    calc: { num: "Ambulances en activité, parc diminué des véhicules en panne", den: "Besoin calculé selon la règle de dimensionnement retenue" },
+    code: null, unite: "%", src: "Parc d'ambulances par district, à relever par la DIEM",
+    voisin: "Le besoin est déjà calculé depuis le nombre d'hôpitaux de district. Seule la disponibilité manque." },
+  { dir: "DIEM", grp: "Équipements et mobilité", lib: "Part des ambulances immobilisées",
+    calc: { num: "Ambulances en panne", den: "Ambulances du parc" },
+    code: null, unite: "%", src: "Parc d'ambulances par district, à relever par la DIEM" },
+  { dir: "DIEM", grp: "Équipements et mobilité", lib: "Couverture du besoin en motos",
+    calc: { num: "Motos en état de marche affectées aux centres de santé", den: "Centres de santé recensés" },
+    code: null, unite: "%", src: "Parc de motos par centre de santé, à relever par la DIEM" },
+  { dir: "DIEM", grp: "Équipements et mobilité", lib: "Part des centres de santé équipés d'un kit solaire",
+    calc: { num: "Centres de santé dotés d'un kit solaire en marche", den: "Centres de santé recensés" },
+    code: null, unite: "%", src: "Inventaire des kits solaires, à relever par la DIEM",
+    voisin: "Conditionne la chaîne du froid et les accouchements de nuit : à croiser avec le suivi des vaccins de la DLMVSE." },
+  { dir: "DIEM", grp: "Fonctionnalité des services", lib: "Part des hôpitaux de district au bloc opératoire fonctionnel",
+    calc: { num: "Hôpitaux de district dont le bloc opératoire est équipé, en marche et doté d'un chirurgien", den: "Hôpitaux de district recensés" },
+    code: null, unite: "%", src: "Relevé de fonctionnalité par hôpital, DIEM et DOSS",
+    voisin: "L'état du bâti est disponible et ne s'y substitue pas : un hôpital debout n'est pas un hôpital qui opère." },
+  { dir: "DIEM", grp: "Fonctionnalité des services", lib: "Part des hôpitaux de district pleinement fonctionnels",
+    calc: { num: "Hôpitaux réunissant bloc, maternité, laboratoire, imagerie, banque de sang et oxygène en marche", den: "Hôpitaux de district recensés" },
+    code: null, unite: "%", src: "Relevé de fonctionnalité par hôpital, DIEM et DOSS" },
+  { dir: "DIEM", grp: "Fonctionnalité des services", lib: "Population provinciale de référence",
+    calc: { def: "Population totale projetée par province, année de projection déclarée" },
+    code: null, unite: "effectif", src: "INSEED, via la DPSIS",
+    voisin: "Sans elle, aucun besoin ne peut être rapporté à la population : les règles démographiques de dimensionnement restent inapplicables." },
+
   { dir: "DRH", grp: "Ressources humaines", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
     code: null, unite: "", src: "Direction des ressources humaines" },
   { dir: "PNLP", grp: "Paludisme", lib: "Cadre d'indicateurs à arrêter", calc: { def: "Mode de calcul à arrêter avec les indicateurs" },
@@ -10941,7 +10982,7 @@ const CID_AUTRES = [
     voisin: "Les trois indicateurs de prévention de la transmission mère-enfant sont déjà attendus au titre du cadre DSR." }
 ];
 const CID_CADRE = DSR_RETENUS.concat(CID_AUTRES);
-const CID_DIR_ORDRE = ["Cabinet du Ministre", "DSR", "COUSP", "DLMVSE", "DPSIS", "DGPML", "DRH", "PNLP", "PNT", "PSLS"];
+const CID_DIR_ORDRE = ["Cabinet du Ministre", "DSR", "COUSP", "DLMVSE", "DPSIS", "DGPML", "DIEM", "DRH", "PNLP", "PNT", "PSLS"];
 
 
 /* Lecture nationale d'un indicateur du registre. */
@@ -12759,6 +12800,198 @@ VIEWS["diem-apercu"] = () => {
         `À l'autre extrémité, ${haut.map(p => p.nom + " (" + d1(infraPart(p, "cs")) + " %)").join(", ")}.
          L'écart entre la province la mieux dotée et la moins bien dotée est de
          ${d1(infraPart(prov[prov.length - 1], "cs") - infraPart(prov[0], "cs"))} points.`)}
+    </div>` };
+};
+
+/* ==============================================================
+   INFRASTRUCTURES · EQUIPEMENTS ET MOBILITE
+   Le besoin se calcule depuis le parc deja recense, la disponibilite
+   se releve. Le premier est donc etabli, la seconde attendue : le
+   tableau porte le denominateur et laisse le numerateur en ND
+   jusqu'a transmission, sans estimation intermediaire.
+============================================================== */
+
+/* Regles de dimensionnement. Ce ne sont pas des normes nationales : ce
+   sont les hypotheses retenues pour chiffrer un besoin, a arreter avec la
+   direction. Chacune dit sur quelle base elle compte, de sorte qu'un
+   changement de regle se lise dans le resultat. */
+const INFRA_REGLES = {
+  ambulance: [
+    { cle: "hd", lib: "Une par hôpital de district", base: p => p.hd_total,
+      det: "Le district sanitaire est l'échelon de la référence : l'ambulance y est rattachée à l'hôpital qui reçoit." },
+    { cle: "hd2", lib: "Deux par hôpital de district", base: p => p.hd_total * 2,
+      det: "Un véhicule en service et un en relais, pour que la panne de l'un ne suspende pas la référence." },
+    { cle: "pop", lib: "Une pour 50 000 habitants", base: () => null,
+      det: "Règle démographique. Elle reste en ND : la population provinciale n'est pas versée au dépôt." }
+  ],
+  moto: [
+    { cle: "cs", lib: "Une par centre de santé", base: p => p.cs_total,
+      det: "La moto sert la supervision et le rattrapage vaccinal depuis le centre de santé." },
+    { cle: "csbon", lib: "Une par centre de santé en bon état", base: p => p.cs_bon,
+      det: "Restreint le besoin aux structures en mesure de fonctionner." }
+  ],
+  solaire: [
+    { cle: "cs", lib: "Un par centre de santé", base: p => p.cs_total,
+      det: "Chaîne du froid et éclairage des accouchements de nuit, sur chaque site de premier contact." },
+    { cle: "tout", lib: "Un par structure, tous échelons", base: p => p.cs_total + p.hd_total + 1,
+      det: "Étend le besoin aux hôpitaux de district et à l'hôpital de province." }
+  ]
+};
+const INFRA_EQ = {
+  ambulance: { lib: "Ambulances", court: "ambulance", u: "véhicules",
+    champs: "parc total, véhicules en panne, véhicules en activité, date du dernier contrôle" },
+  moto: { lib: "Motos", court: "moto", u: "motos",
+    champs: "motos affectées par centre de santé, motos en panne" },
+  solaire: { lib: "Kits solaires", court: "kit solaire", u: "kits",
+    champs: "kits installés, kits en panne, structures raccordées au réseau" }
+};
+function setInfraEq(v) { state.infraEq = v; state.infraRegle = null; renderMain(); }
+function setInfraRegle(v) { state.infraRegle = v; renderMain(); }
+
+VIEWS["diem-equip"] = () => {
+  const crumbs = ["Infrastructures sanitaires", "Équipements et mobilité"];
+  const et = `<div class="ph"><div class="ph-tag">Infrastructures sanitaires · DIEM</div>
+    <div class="ph-title">Équipements et mobilité</div>`;
+  if (!INFRA) return { crumbs, html: et + `<div class="ph-sub">Relevé en cours de chargement.</div></div>` };
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const eq = state.infraEq || "ambulance";
+  const regles = INFRA_REGLES[eq];
+  const reg = regles.find(r => r.cle === state.infraRegle) || regles[0];
+  const E = INFRA_EQ[eq];
+  /* Les valeurs relevees, si la direction les a versees. En leur absence
+     l'ensemble du volet disponibilite reste en ND. */
+  const dispo = (INFRA.equipements && INFRA.equipements[eq]) || null;
+
+  const lignes = INFRA.provinces.slice().sort((a, b) => (reg.base(b) || 0) - (reg.base(a) || 0)).map(p => {
+    const besoin = reg.base(p);
+    const d = dispo && dispo[p.id];
+    const parc = d ? d.parc : null, panne = d ? d.panne : null;
+    const actif = (parc != null && panne != null) ? parc - panne : null;
+    const ecart = (besoin != null && actif != null) ? actif - besoin : null;
+    const couv = (besoin && actif != null) ? actif / besoin * 100 : null;
+    return `<tr>
+      <td class="l"><strong>${p.nom}</strong></td>
+      <td class="num">${besoin == null ? "ND" : nb(besoin)}</td>
+      <td class="num">${parc == null ? "ND" : nb(parc)}</td>
+      <td class="num">${panne == null ? "ND" : nb(panne)}</td>
+      <td class="num">${actif == null ? "ND" : nb(actif)}</td>
+      <td class="num">${couv == null ? "ND" : `<span class="pill ${couv >= 90 ? "green" : couv >= 60 ? "yellow" : couv >= 30 ? "orange" : "red"}">${d1(couv)} %</span>`}</td>
+      <td class="num">${ecart == null ? "ND" : (ecart >= 0 ? "+" : "") + nb(ecart)}</td>
+    </tr>`;
+  }).join("");
+
+  const totBesoin = INFRA.provinces.reduce((a, p) => { const b = reg.base(p); return b == null ? a : a + b; }, 0);
+  const besoinConnu = reg.base(INFRA.provinces[0]) != null;
+
+  const ongEq = Object.keys(INFRA_EQ).map(k =>
+    `<button class="chc-tab ${eq === k ? "on" : ""}" onclick="setInfraEq('${k}')">${INFRA_EQ[k].lib}</button>`).join("");
+  const ongReg = regles.map(r =>
+    `<button class="chc-tab ${reg.cle === r.cle ? "on" : ""}" onclick="setInfraRegle('${r.cle}')">${r.lib}</button>`).join("");
+
+  return { crumbs, html: et + `<div class="ph-sub">Le besoin se calcule depuis le parc déjà recensé, la disponibilité se relève.
+      Le premier est établi, la seconde attendue : le tableau porte le dénominateur et laisse le numérateur en ND
+      jusqu'à transmission, sans estimation intermédiaire.</div></div>
+    <div class="content">
+      <div class="chc-tabs">${ongEq}</div>
+      <div class="chc-tabs cad-tabs" style="margin-top:10px">${ongReg}</div>
+      <div class="kpi-grid">
+        ${kpi("Besoin national", besoinConnu ? nb(totBesoin) : null, " " + E.u, reg.lib.toLowerCase(),
+          besoinConnu ? "calculé sur le parc recensé" : "règle non calculable", "flat", besoinConnu ? "" : "na", true)}
+        ${kpi("Parc en place", dispo ? null : null, "", "Relevé attendu de la DIEM", "—", "flat", "na", true)}
+        ${kpi(E.lib + " en panne", null, "", "Relevé attendu de la DIEM", "—", "flat", "na", true)}
+        ${kpi("Taux de couverture du besoin", null, " %", "Parc en activité rapporté au besoin", "—", "flat", "na", true)}
+      </div>
+      ${card("Besoin et disponibilité par province", reg.lib + " · " + E.u, `
+        <div class="cid-table-defile"><table class="dt"><thead><tr>
+          <th>Province</th><th style="text-align:right">Besoin</th><th style="text-align:right">Parc</th>
+          <th style="text-align:right">En panne</th><th style="text-align:right">En activité</th>
+          <th style="text-align:right">Couverture</th><th style="text-align:right">Écart au besoin</th></tr></thead>
+        <tbody>${lignes}</tbody></table></div>`,
+        `${reg.det} ${besoinConnu
+          ? `Le besoin national s'établit à ${nb(totBesoin)} ${E.u} sous cette règle. Changer de règle change le besoin sans rien changer au parc : c'est pourquoi la règle est affichée avec le résultat plutôt que fixée dans le code.`
+          : `Cette règle ne peut pas être appliquée : la population provinciale n'est pas versée au dépôt. Elle figure ici pour que la demande soit nommée.`}
+         Les colonnes de disponibilité restent en ND : elles s'afficheront d'elles-mêmes dès que le relevé sera transmis, sans nouvelle intervention.`)}
+      ${card("Ce qu'il faut obtenir pour servir ce module", "Champs attendus, par échelon de relevé", `
+        <table class="dt"><thead><tr><th>Objet</th><th>Champs</th><th>Échelon</th><th>Interlocuteur</th></tr></thead><tbody>
+          ${Object.keys(INFRA_EQ).map(k => `<tr><td class="l"><strong>${INFRA_EQ[k].lib}</strong></td>
+            <td>${INFRA_EQ[k].champs}</td><td>${k === "ambulance" ? "district" : "centre de santé"}</td><td>DIEM</td></tr>`).join("")}
+          <tr><td class="l"><strong>Population provinciale</strong></td><td>population totale par province, année de projection</td>
+            <td>province</td><td>INSEED, via la DPSIS</td></tr>
+          <tr><td class="l"><strong>Fonctionnalité des services</strong></td>
+            <td>par hôpital de district : bloc opératoire, maternité, laboratoire, imagerie, banque de sang, oxygène</td>
+            <td>hôpital de district</td><td>DIEM et DOSS</td></tr>
+        </tbody></table>`,
+        "Un seul fichier par objet suffit, à la maille indiquée. La structure d'accueil est en place : chaque champ transmis remplit sa colonne sans développement supplémentaire.")}
+    </div>` };
+};
+
+/* ==============================================================
+   INFRASTRUCTURES · FONCTIONNALITE DES HOPITAUX DE DISTRICT
+   Un hopital debout n'est pas un hopital qui opere. L'etat du bati
+   et la fonctionnalite des services sont deux mesures distinctes :
+   la seconde reste a relever.
+============================================================== */
+const INFRA_SERVICES = [
+  { cle: "bloc", lib: "Bloc opératoire", det: "Césarienne et chirurgie d'urgence" },
+  { cle: "mat", lib: "Maternité", det: "Accouchements assistés et soins obstétricaux d'urgence" },
+  { cle: "labo", lib: "Laboratoire", det: "Analyses de base et confirmation biologique" },
+  { cle: "img", lib: "Imagerie", det: "Radiologie et échographie" },
+  { cle: "sang", lib: "Banque de sang", det: "Transfusion, condition de la césarienne sécurisée" },
+  { cle: "oxy", lib: "Oxygène médical", det: "Réanimation et prise en charge respiratoire" }
+];
+
+VIEWS["diem-fonct"] = () => {
+  const crumbs = ["Infrastructures sanitaires", "Fonctionnalité des HD"];
+  const et = `<div class="ph"><div class="ph-tag">Infrastructures sanitaires · DIEM</div>
+    <div class="ph-title">Fonctionnalité des services des hôpitaux de district</div>`;
+  if (!INFRA) return { crumbs, html: et + `<div class="ph-sub">Relevé en cours de chargement.</div></div>` };
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const F = INFRA.fonctionnalite || null;
+  const M = INFRA.meta;
+
+  const tri = INFRA.provinces.slice().sort((a, b) => b.hd_total - a.hd_total);
+  const lignes = tri.map(p => {
+    const f = F && F[p.id];
+    return `<tr><td class="l"><strong>${p.nom}</strong></td>
+      <td class="num">${p.hd_total}</td>
+      <td class="num">${p.hd_bon} / ${p.hd_total}</td>
+      ${INFRA_SERVICES.map(sv => {
+        const v = f ? f[sv.cle] : null;
+        return `<td class="num">${v == null ? '<span class="dsr-o">ND</span>'
+          : `<span class="pill ${v / p.hd_total >= 0.9 ? "green" : v / p.hd_total >= 0.6 ? "yellow" : v / p.hd_total >= 0.3 ? "orange" : "red"}">${v} / ${p.hd_total}</span>`}</td>`;
+      }).join("")}</tr>`;
+  }).join("");
+
+  return { crumbs, html: et + `<div class="ph-sub">Un hôpital debout n'est pas un hôpital qui opère.
+      L'état du bâti est relevé, la fonctionnalité des services ne l'est pas encore : les ${M.hd.total} hôpitaux
+      de district figurent ici avec leur état connu et les six services dont la présence conditionne leur rôle
+      dans la référence.</div></div>
+    <div class="content">
+      <div class="kpi-grid">
+        ${kpi("Hôpitaux de district", M.hd.total, "", "Un par district sanitaire", "—", "flat", "", true)}
+        ${kpi("En bon état", M.hd.bon, " /" + M.hd.total, d1(M.hd.bon / M.hd.total * 100) + " % du parc",
+          "état du bâti", "flat", infraRag(M.hd.bon / M.hd.total * 100), true)}
+        ${kpi("Services relevés", F ? null : 0, " /" + INFRA_SERVICES.length, "Bloc, maternité, laboratoire, imagerie, sang, oxygène",
+          F ? "—" : "relevé de fonctionnalité attendu", "flat", "na", true)}
+        ${kpi("Hôpitaux pleinement fonctionnels", null, "", "Six services présents et en marche", "—", "flat", "na", true)}
+      </div>
+      ${card("Services attendus dans un hôpital de district", "Ce que la fonctionnalité recouvre, service par service", `
+        <table class="dt"><thead><tr><th>Service</th><th>Ce qu'il conditionne</th><th style="text-align:right">Hôpitaux couverts</th></tr></thead>
+        <tbody>${INFRA_SERVICES.map(sv => `<tr><td class="l"><strong>${sv.lib}</strong></td><td>${sv.det}</td>
+          <td class="num"><span class="dsr-o">ND</span></td></tr>`).join("")}</tbody></table>`,
+        "La fonctionnalité se relève service par service et non par un jugement global : un hôpital dont le bloc opératoire est à l'arrêt n'assure pas la césarienne, quel que soit l'état de ses murs. C'est cette distinction qui rend le relevé nécessaire, l'état du bâti ne s'y substituant pas.")}
+      ${card("Grille par province", "État du bâti relevé, fonctionnalité en attente", `
+        <div class="cid-table-defile"><table class="dt"><thead><tr>
+          <th>Province</th><th style="text-align:right">HD</th><th style="text-align:right">Bâti en bon état</th>
+          ${INFRA_SERVICES.map(sv => `<th style="text-align:right">${sv.lib}</th>`).join("")}</tr></thead>
+        <tbody>${lignes}</tbody></table></div>`,
+        `La colonne du bâti est servie par le relevé DIEM. Les six colonnes de service attendent un relevé à la maille
+         de l'hôpital, portant pour chacun la présence de l'équipement, son état de marche et la disponibilité du
+         personnel qualifié qui le met en œuvre : un bloc équipé sans chirurgien ne rend pas le service.
+         ${M.hd.mauvais} hôpitaux sont en mauvais état, ce qui donne une borne haute au nombre d'hôpitaux
+         pleinement fonctionnels sans en donner la valeur.`)}
     </div>` };
 };
 
