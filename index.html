@@ -589,8 +589,17 @@
     transition: max-height 0.3s ease;
   }
   .prog.open .subprog-list {
-    max-height: 800px;
+    max-height: 1200px;
   }
+  .subprog-grp {
+    padding: 11px 14px 4px 28px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .subprog-grp:first-child { padding-top: 5px; }
 
   .subprog {
     padding: 7px 14px 7px 47px;
@@ -4490,18 +4499,23 @@ const PROGRAMS = [
     id:"vacc", c:"vacc", icon:"PEV", label:"Vaccination · PEV",
     dir:"DLMVSE", groupe:"Programmes prioritaires",
     sub:[
-      { id:"vacc-apercu",    i18n_key:"sub_vacc_apercu",   label:"Aperçu du programme", status:"orange" },
-      { id:"vacc-couv",      i18n_key:"sub_vacc_couv",     label:"Couverture vaccinale",status:"green" },
-      { id:"vacc-zd",        i18n_key:"sub_vacc_zd",       label:"Zéro-dose",           status:"orange" },
-      { id:"vacc-surv",      i18n_key:"sub_vacc_surv",     label:"Surveillance épidémio.", status:"green" },
-      { id:"vacc-intrants",  i18n_key:"sub_vacc_intrants", label:"Vaccins & intrants",  status:"ok" },
-      { id:"vacc-palu",      i18n_key:"sub_vacc_palu",     label:"Vaccin antipaludique",status:"yellow" },
-      { id:"vacc-pda",       i18n_key:"sub_vacc_pda",      label:"PDA · Protocole d'Accord", status:"yellow", pda:true },
-      { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"yellow" },
-      { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"yellow" },
-      { id:"vacc-super",     label:"Supervision & monitorage", status:"orange" },
-      { id:"vacc-sup-effet", label:"Grille de supervision",    status:"orange" },
-      { id:"vacc-deepdive",  i18n_key:"sub_vacc_deepdive", label:"Analyse approfondie", status:"orange" },
+      /* Quatre familles, dans l'ordre où la question se pose : ce que le
+         programme produit, ce qui le rend possible, la façon dont il est
+         conduit, puis les dispositifs qui ont leur propre cadre. Les deux
+         vues de synthèse ouvrent la liste parce qu'elles s'appuient sur
+         toutes les autres. */
+      { id:"vacc-apercu",    i18n_key:"sub_vacc_apercu",   label:"Aperçu du programme", status:"orange", g:"Synthèses" },
+      { id:"vacc-deepdive",  i18n_key:"sub_vacc_deepdive", label:"Analyse approfondie", status:"orange", g:"Synthèses" },
+      { id:"vacc-couv",      i18n_key:"sub_vacc_couv",     label:"Couverture vaccinale",status:"green",  g:"Résultats" },
+      { id:"vacc-zd",        i18n_key:"sub_vacc_zd",       label:"Zéro-dose",           status:"orange", g:"Résultats" },
+      { id:"vacc-surv",      i18n_key:"sub_vacc_surv",     label:"Surveillance épidémio.", status:"green", g:"Résultats" },
+      { id:"vacc-intrants",  i18n_key:"sub_vacc_intrants", label:"Vaccins & intrants",  status:"ok",     g:"Moyens" },
+      { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"yellow", g:"Moyens" },
+      { id:"vacc-super",     label:"Supervision et monitorage", status:"orange",        g:"Conduite du programme" },
+      { id:"vacc-sup-effet", label:"Grille de supervision",     status:"orange",        g:"Conduite du programme" },
+      { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"yellow", g:"Conduite du programme" },
+      { id:"vacc-palu",      i18n_key:"sub_vacc_palu",     label:"Vaccin antipaludique",status:"yellow", g:"Dispositifs dédiés" },
+      { id:"vacc-pda",       i18n_key:"sub_vacc_pda",      label:"PDA · Protocole d'Accord", status:"yellow", pda:true, g:"Dispositifs dédiés" },
     ]
   },
   {
@@ -6120,13 +6134,20 @@ function renderSidebar() {
         <div class="prog-chev"></div>
       </div>
       <div class="subprog-list">
-        ${p.sub.map(s => `
+        ${(() => {
+          /* Les sous-sections peuvent porter une famille. Son intitule
+             s'insere une fois, au premier element qui l'ouvre : un
+             programme sans famille garde une liste plate. */
+          let fam = null;
+          return p.sub.map(s => {
+            const tete = (s.g && s.g !== fam) ? `<div class="subprog-grp">${(fam = s.g)}</div>` : (s.g && (fam = s.g), "");
+            return tete + `
           <div class="subprog " data-sub="${s.id}" onclick="selectSub('${p.id}','${s.id}')">
             <span class="sp-label">${s.i18n_key ? t(s.i18n_key) : s.label}</span>
             ${s.pda ? '<span class="sp-pda-badge">PDA</span>' : ''}
-            
-          </div>
-        `).join("")}
+          </div>`;
+          }).join("");
+        })()}
       </div>
     </div>
   `;
