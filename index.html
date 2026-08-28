@@ -13042,8 +13042,36 @@ VIEWS["diem-dd"] = () => {
   const petits = dens.slice(-8);
   const partPetits = petits.reduce((a, x) => a + x.p.cs_bon, 0) / petits.reduce((a, x) => a + x.p.cs_total, 0) * 100;
 
-  /* --- 4. Ecarts de perimetre entre les deux releves --- */
+  /* --- 4. Croisement a la maille du district --- */
+  /* Le releve des hopitaux nomme les districts : les deux sources se
+     croisent donc au district et non seulement a la province. C'est la
+     bonne maille, un district etant l'unite ou l'hopital et le reseau de
+     centres de sante forment un meme dispositif de soins. */
+  const CR = M.croisement || {};
+  const dsAp = (INFRA.districts || []).filter(x => x.hd && x.t);
+  const partCs = x => x.b / x.t * 100;
+  const medCs = (() => { const v = dsAp.map(partCs).sort((a, b) => a - b);
+    if (!v.length) return null;
+    return v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2; })();
+  const quad = { bh: [], bb: [], mh: [], mb: [] };
+  dsAp.forEach(x => {
+    const haut = partCs(x) >= medCs;
+    quad[(x.hd === "bon" ? "b" : "m") + (haut ? "h" : "b")].push(x);
+  });
+  /* Phi : lien entre l'etat de l'hopital et celui de son reseau, sur le
+     tableau deux par deux. Il dit si les deux echelons d'un meme district
+     se degradent ensemble. */
+  const a11 = quad.bh.length, a10 = quad.bb.length, a01 = quad.mh.length, a00 = quad.mb.length;
+  const den = Math.sqrt((a11 + a10) * (a01 + a00) * (a11 + a01) * (a10 + a00));
+  const phi = den ? (a11 * a00 - a10 * a01) / den : null;
+  const nomP = {}; PR.forEach(p => { nomP[p.id] = p.nom; });
+  const pires = quad.mb.slice().sort((x, y) => partCs(x) - partCs(y)).slice(0, 8);
+
+  /* --- 5. Ecarts de perimetre entre les deux releves --- */
   const nDsCs = M.n_districts_liste, nDsHd = M.hd.total;
+  const AN2 = M.anomalies || { doublon_district: {}, cs_nommes: {} };
+  AN2.doublon = AN2.doublon_district || {};
+  AN2.cs_nommes = AN2.cs_nommes || {};
 
   const tblCoh = divergent.map(x => `
     <tr><td class="l"><strong>${x.p.nom}</strong></td>
@@ -13106,17 +13134,53 @@ VIEWS["diem-dd"] = () => {
              ? "Les grands réseaux sont mieux entretenus que les petits, ce qui laisse les provinces les moins dotées avec un parc à la fois restreint et dégradé : le déficit s'y cumule."
              : "Les petits réseaux sont mieux entretenus, la charge d'entretien croissant plus vite que la capacité à la porter dans les provinces au réseau dense."}`)}
 
+      ${card("Le district, unité où les deux échelons se rencontrent", "Croisement de l'état de l'hôpital de district et de celui de son réseau de centres de santé", `
+        <div class="ddx-stats">
+          ${[["Hôpital en bon état, réseau au-dessus de la médiane", a11, "dispositif complet"],
+             ["Hôpital en bon état, réseau en dessous", a10, "la référence tient, la proximité non"],
+             ["Hôpital en mauvais état, réseau au-dessus", a01, "le premier contact tient, la référence non"],
+             ["Hôpital en mauvais état, réseau en dessous", a00, "les deux échelons à reprendre"]
+            ].map(([l, v, d]) => `<div class="ddx-st"><div class="ddx-st-l">${l}</div><div class="ddx-st-v">${v}</div><div class="ddx-st-d">${d}</div></div>`).join("")}
+        </div>
+        <table class="dt"><thead><tr><th>District</th><th>Province</th><th style="text-align:right">CS en bon état</th>
+          <th style="text-align:right">Part</th><th>Hôpital de district</th></tr></thead>
+        <tbody>${pires.map(x => `<tr><td class="l"><strong>${x.d}</strong></td><td>${nomP[x.p] || x.p}</td>
+          <td class="num">${x.b} / ${x.t}</td>
+          <td class="num"><span class="pill ${infraRag(partCs(x))}">${d1(partCs(x))} %</span></td>
+          <td><span class="pill red">mauvais état</span></td></tr>`).join("")}</tbody></table>`,
+        `Le croisement porte sur ${dsAp.length} districts, la médiane du réseau s'établissant à ${d1(medCs)} % de centres de santé en bon état.
+         Le coefficient de liaison entre les deux échelons vaut ${d1(phi)} :
+         ${Math.abs(phi) < 0.20
+           ? "une liaison négligeable. L'état de l'hôpital ne permet pas de préjuger de celui de son réseau : un district peut avoir un hôpital debout et un réseau effondré, ou l'inverse, ce qui interdit de déduire l'un de l'autre et impose de relever les deux."
+           : Math.abs(phi) < 0.40
+             ? (phi > 0 ? "une liaison faible, dans le sens d'une dégradation conjointe. Elle ne suffit pas à fonder un ciblage sur le seul état de l'hôpital."
+                        : "une liaison faible, en sens inverse. Elle ne suffit pas à conclure à un arbitrage entre les deux échelons.")
+             : (phi > 0 ? "une liaison marquée : les deux échelons d'un même district se dégradent ensemble, ce qui oriente vers une cause commune, budget de maintenance ou éloignement."
+                        : "une liaison marquée en sens inverse, ce qui oriente vers un arbitrage de l'investissement entre hôpital et réseau.")}
+         Les ${a00} districts où les deux échelons sont atteints n'ont ni premier contact utilisable ni référence : ils forment la priorité,
+         le tableau en donne les huit plus dégradés.
+         ${a01 ? `À l'inverse, ${a01} districts ont un réseau au-dessus de la médiane et un hôpital en mauvais état : le patient y est identifié puis référé vers une structure qui ne peut pas le prendre.` : ""}`)}
+
       ${card("Ce que les deux relevés ne recouvrent pas", "Périmètre et limites du relevé DIEM", `
         <div class="ddx-stats">
-          ${[["Districts dans la liste des centres de santé", nDsCs, "relevé par district"],
+          ${[["Districts dans la liste des centres de santé", nDsCs, "dont un doublon"],
              ["Districts dans le relevé des hôpitaux", nDsHd, "un hôpital par district"],
-             ["Échelon du relevé hospitalier", "provincial", "aucune ventilation par district"],
-             ["États relevés", "deux", "bon état ou mauvais état, sans degré"]
+             ["Districts croisés entre les deux sources", CR.apparies || 0, (CR.flous || 0) + " par rapprochement orthographique"],
+             ["Centres de santé nommés", nb((AN2.cs_nommes.bon || 0) + (AN2.cs_nommes.mauvais || 0)),
+              "pour " + nb(M.cs.total) + " comptés"],
+             ["États relevés", "deux", "bon ou mauvais, sans degré"]
             ].map(([l, v, d]) => `<div class="ddx-st"><div class="ddx-st-l">${l}</div><div class="ddx-st-v">${v}</div><div class="ddx-st-d">${d}</div></div>`).join("")}
+        </div>
+        <div class="cid-res-note"><strong>Trois écarts relevés au contrôle, affichés sans correction.</strong>
+          Le district d'${AN2.doublon.nom} figure sous ${AN2.doublon.provinces.join(" et ")} avec les mêmes effectifs,
+          soit ${AN2.doublon.cs} centres de santé comptés deux fois dans le total national. ${AN2.doublon.note}
+          Les listes nominatives totalisent ${nb(M.cs.total - (AN2.cs_nommes.bon + AN2.cs_nommes.mauvais))} centres de santé de moins
+          que les colonnes de comptage : ${AN2.cs_nommes.bon} noms pour ${AN2.cs_nommes.bon_compte} comptés en bon état,
+          ${AN2.cs_nommes.mauvais} pour ${AN2.cs_nommes.mauvais_compte} en mauvais état.
+          ${CR.ndj_ecarte ? `Les ${CR.ndj_ecarte} districts de N'Djamena ne sont pas croisés : la liste des centres de santé les désigne par leur numéro d'arrondissement, le relevé des hôpitaux par des noms de quartier. Les deux nomenclatures ne se recouvrent pas et un rapprochement automatique y produirait des correspondances fausses.` : ""}
         </div>`,
-        `${nDsCs !== nDsHd ? `Les deux relevés ne comptent pas le même nombre de districts : ${nDsCs} dans la liste des
-          centres de santé, ${nDsHd} dans celle des hôpitaux. L'écart d'une unité est à trancher avec la direction avant
-          tout croisement district par district. ` : ""}L'état est relevé en deux modalités sans degré de gravité ni
+        `L'écart d'une unité entre les deux relevés s'explique par le doublon signalé plus haut : hors ce doublon,
+         les deux sources décrivent le même nombre de districts. L'état est relevé en deux modalités sans degré de gravité ni
          estimation de coût : le relevé permet de dire combien de structures sont à reprendre, non ce que la reprise
          coûterait ni par quoi commencer. Les hôpitaux de province sont classés en bon état ou partiellement
          endommagés, les autres échelons en bon ou mauvais état : les deux échelles ne se superposent pas et sont
