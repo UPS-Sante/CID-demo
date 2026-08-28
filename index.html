@@ -3232,6 +3232,7 @@
   .cad-frac .cad-num { display:block; padding-bottom:3px; }
   .cad-frac .cad-den { display:block; padding-top:3px; border-top:1px solid var(--border-2); color:var(--muted); }
   .cad-def { font-size:11px; line-height:1.5; color:var(--muted); font-style:italic; }
+  .ddx-etat { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
   .ddx-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:16px; }
   .ddx-st { background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
   .ddx-st-l { font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
@@ -4396,6 +4397,7 @@ const PROGRAMS = [
       { id:"vacc-scenario", i18n_key:"sub_vacc_scenario", label:"Que produirait chaque décision", status:"yellow" },
       { id:"inference",   label:"Tests d'inférence",     status:"green" },
       { id:"econometrie", label:"Tests économétriques", status:"green" },
+      { id:"simu-dd",     label:"Analyse approfondie",   status:"green" },
     ]
   },
   {
@@ -11908,6 +11910,40 @@ let SIMCAT = null;
 fetch("sim_catalogue.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
   .then(j => { SIMCAT = j; if (state.sub === "vacc-scenario") renderMain(); }).catch(() => {});
 const SCEN = { ind: "Penta3", pts: 10, prov: 7, horizon: 12, preset: "rattrapage" };
+
+/* Atteignabilite d'une cible nationale. Trois pieges se cumulaient dans le
+   calcul precedent, tous produits par une valeur absolue.
+   L'ecart a la cible etait pris en valeur absolue : un indicateur deja
+   au-dessus de sa cible affichait un effort a fournir alors qu'il n'y a
+   rien a combler au national. La pente observee l'etait aussi : un
+   indicateur qui se degrade etait traite comme s'il progressait, et le
+   rapport des deux donnait un multiple d'acceleration la ou il faut
+   d'abord inverser le sens. Enfin la pente etait utilisee sans egard a
+   sa significativite : une tendance qui n'explique presque rien de la
+   variance produisait un multiple stable en apparence et vide en fait. */
+const SIM_R2_MIN = 0.10;
+function simAtteignabilite(ind, horizon) {
+  const ecart = ind.sens === "haut" ? ind.cible - ind.actuel : ind.actuel - ind.cible;
+  const pente = ind.sens === "haut" ? ind.tend : -ind.tend;   // progression dans le bon sens
+  if (ecart <= 0) return { etat: "atteinte", ecart: ecart, requis: 0, pente: pente,
+    lib: "Cible atteinte au national", det: "L'écart se joue entre provinces, pas au niveau national." };
+  const requis = ecart / horizon;
+  if (ind.r2 < SIM_R2_MIN) return { etat: "nonEtabli", ecart: ecart, requis: requis, pente: pente,
+    lib: "Rythme non établi", det: "La tendance explique " + Math.round(ind.r2 * 100) + "% de la variance : la pente observée ne peut pas servir de référence." };
+  if (pente <= 0) return { etat: "inversion", ecart: ecart, requis: requis, pente: pente,
+    lib: "Inversion de tendance requise", det: "L'indicateur évolue de " + String(Math.round(Math.abs(pente) * 100) / 100).replace(".", ",") + " point par mois dans le sens contraire à la cible." };
+  const ratio = requis / pente;
+  return { etat: ratio <= 1 ? "tenable" : ratio <= 2 ? "acceleration" : "rupture",
+    ecart: ecart, requis: requis, pente: pente, ratio: ratio,
+    lib: "×" + String(Math.round(ratio * 10) / 10).replace(".", ","),
+    det: String(Math.round(requis * 10) / 10).replace(".", ",") + " pt par mois demandé, " + String(Math.round(pente * 100) / 100).replace(".", ",") + " observé." };
+}
+/* Une couverture au-dessus de cent pour cent met en cause le denominateur,
+   quel que soit le depassement. Le catalogue ne signalait que les ecarts
+   les plus francs, laissant passer des couvertures a 101 et 109%. */
+function simDenominateurSuspect(ind) {
+  return ind.unite === "%" && ind.sens === "haut" && ind.actuel > 100;
+}
 function setScen(k, v) { SCEN[k] = (k === "ind") ? v : parseFloat(v); if (k !== "ind") SCEN.preset = "libre"; renderMain(); }
 function scenPreset(nom) {
   const P = { prudent: [5, 5, 18], rattrapage: [10, 7, 12], ambition: [20, 12, 12], maximal: [40, 23, 24] }[nom];
@@ -11938,14 +11974,10 @@ VIEWS["vacc-scenario"] = () => {
   const part = ind.deficit ? Math.min(100, 100 * gain / ind.deficit) : 0;
   const reste = Math.max(0, ind.deficit - gain);
   const parMois = Math.round(gain / SCEN.horizon);
-  /* rythme requis contre rythme observe */
-  const ecartNat = Math.abs(ind.cible - ind.actuel);
-  const rythme = ecartNat / SCEN.horizon;
-  const obs = Math.abs(ind.tend);
-  const faisable = obs > 0 ? rythme / obs : null;
+  const ATT = simAtteignabilite(ind, SCEN.horizon);
 
   const rag = v => v >= 80 ? "g" : v >= 50 ? "y" : v >= 20 ? "o" : "r";
-  const ragF = v => v == null ? "" : v <= 1 ? "g" : v <= 2 ? "y" : v <= 4 ? "o" : "r";
+  const ragATT = { atteinte: "g", tenable: "g", acceleration: "y", rupture: "r", inversion: "r", nonEtabli: "" };
   const RAGN = { g: "green", y: "yellow", o: "orange", r: "red", "": "na" };
   const K = (l, v, u, d, c) => kpi(l, v, u, d, "", "flat", RAGN[c] || "na");
   const out =
@@ -11953,8 +11985,7 @@ VIEWS["vacc-scenario"] = () => {
     K("Personnes atteintes en plus", nb(gain), "", `${nb(parMois)} par mois sur ${SCEN.horizon} mois`, "g") +
     K("Provinces ramenées à la cible", atteintes, ` /${cibles.length}`, `${ind.sous_cible} provinces sous ${d1(ind.cible)}% aujourd'hui`,
       atteintes === cibles.length ? "g" : atteintes ? "y" : "o") +
-    K("Effort requis contre rythme observé", faisable == null ? "ND" : "×" + d1(faisable), "",
-      `${d1(rythme)} pt par mois demandé, ${d1(obs)} observé`, ragF(faisable));
+    K("Effort requis contre rythme observé", ATT.lib, "", ATT.det, ragATT[ATT.etat]);
 
   /* ---------- panneau ---------- */
   const doms = [...new Set(C.map(x => x.dom))];
@@ -12019,10 +12050,11 @@ VIEWS["vacc-scenario"] = () => {
     return `<tr><td>${q.nom}</td><td>${nb(q.pop)}</td><td>${d1(q.val)}%</td><td>${d1(ap)}%</td>
       <td class="gain">${gg >= 1 ? "+" + nb(gg) : "—"}</td><td>${nb(Math.max(0, q.deficit - gg))}</td></tr>`; }).join("");
 
-  const reserve = ind.fiable ? "" :
+  const reserve = (ind.fiable && !simDenominateurSuspect(ind)) ? "" :
     `<div class="sc-note" style="border-left-color:var(--rag-red);margin-bottom:12px">
       <strong>Lecture réservée.</strong> Niveau observé de ${d1(ind.actuel)}% pour une cible de ${d1(ind.cible)}% :
-      ${ind.motif || "écart de plausibilité"}. L'anomalie porte sur la source, pas sur la performance. Les pourcentages
+      ${ind.motif || (simDenominateurSuspect(ind) ? "une couverture au-dessus de cent pour cent met en cause le dénominateur" : "écart de plausibilité")}.
+      L'anomalie porte sur la source, pas sur la performance. Les pourcentages
       restent lisibles, les volumes projetés sont à traiter comme des ordres de grandeur et l'anomalie est à
       transmettre à la direction concernée.</div>`;
 
@@ -12040,8 +12072,12 @@ VIEWS["vacc-scenario"] = () => {
              <div class="sc-note"><strong>Comment lire.</strong> Le gain est plafonné à la cible : pousser une province
              déjà conforme ne récupère personne, ce que la colonne Gain marque par un tiret. Le compteur
              « effort requis contre rythme observé » compare le rythme mensuel qu'exige la cible au rythme
-             effectivement constaté sur l'historique. Au-delà de deux, l'ambition suppose une rupture de rythme,
-             pas une accélération.</div>`)}
+             effectivement constaté, à trois réserves près. Une cible déjà atteinte au national ne demande aucun
+             effort national et le compteur le dit : l'écart se joue alors entre provinces. Un indicateur qui
+             évolue dans le sens contraire à sa cible appelle une inversion de tendance, non un multiple
+             d'accélération. Une tendance qui explique moins d'un dixième de la variance ne peut servir de
+             référence, et le rythme est déclaré non établi. Hors de ces cas, au-delà de deux, l'ambition
+             suppose une rupture de rythme.</div>`)}
           ${card("Ce que le modèle suppose", "Hypothèses et limites, à énoncer avant toute décision",
             `<div class="dd-limites">
               <div class="dd-lim"><div class="dd-lim-t">Socle</div>${ind.n} mois observés. La tendance explique
@@ -12058,6 +12094,152 @@ VIEWS["vacc-scenario"] = () => {
                 atteindre, pas si les moyens le permettent.</div></div>`)}
         </div>
       </div>
+    </div>` };
+};
+
+/* ==============================================================
+   SIMULATION · ANALYSE APPROFONDIE
+   Le simulateur traite un indicateur a la fois. Cette vue les
+   prend ensemble : lesquels peuvent porter une cible, ou le
+   deficit se concentre, et ce que la moyenne nationale masque.
+============================================================== */
+VIEWS["simu-dd"] = () => {
+  const crumbs = ["Simulation de scénarios", "Analyse approfondie"];
+  const et = `<div class="ph"><div class="ph-tag">Analyse approfondie · Simulation</div>
+    <div class="ph-title">Quelles cibles peuvent être tenues, et par qui</div>`;
+  if (!SIMCAT) return { crumbs, html: et + `<div class="ph-sub">Catalogue en cours de chargement.</div></div>` };
+
+  const C = SIMCAT.catalogue;
+  const H = SCEN.horizon;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+
+  /* Chaque indicateur est evalue sur trois plans : l'atteignabilite de sa
+     cible, la concentration de son deficit, la solidite de son socle. */
+  const L = C.map(x => {
+    const a = simAtteignabilite(x, H);
+    const pr = x.provinces.filter(p => p.deficit > 0).slice().sort((u, v) => v.deficit - u.deficit);
+    const tot = pr.reduce((s2, p) => s2 + p.deficit, 0);
+    let cum = 0, n80 = 0;
+    for (const p of pr) { cum += p.deficit; n80++; if (tot && cum >= 0.8 * tot) break; }
+    const part5 = tot ? pr.slice(0, 5).reduce((s2, p) => s2 + p.deficit, 0) / tot * 100 : null;
+    return { x, a, pr, tot, n80, part5, suspect: simDenominateurSuspect(x) };
+  });
+
+  const ordre = { rupture: 0, inversion: 1, nonEtabli: 2, acceleration: 3, tenable: 4, atteinte: 5 };
+  const libEtat = { atteinte: "Cible atteinte au national", tenable: "Rythme actuel suffisant",
+    acceleration: "Accélération à obtenir", rupture: "Rupture de rythme", inversion: "Inversion de tendance",
+    nonEtabli: "Rythme non établi" };
+  const colEtat = { atteinte: "#2E7D32", tenable: "#2E7D32", acceleration: "#C9A227",
+    rupture: "#B3372F", inversion: "#B3372F", nonEtabli: "#75706B" };
+  const detEtat = {
+    atteinte: "Aucun effort national à fournir : la cible est franchie en moyenne. Ce qui reste à traiter se joue entre provinces.",
+    tenable: "Le rythme observé suffit à atteindre la cible dans l'horizon retenu, à condition qu'il se maintienne.",
+    acceleration: "La cible demande d'aller plus vite que le rythme observé, dans un rapport de un à deux.",
+    rupture: "La cible demande plus du double du rythme observé : elle suppose un changement de dispositif, pas un effort accru.",
+    inversion: "L'indicateur s'éloigne de sa cible. Avant toute ambition chiffrée, il faut arrêter la dégradation.",
+    nonEtabli: "La tendance n'explique pas assez de la variance pour servir de référence : le rythme observé n'est pas mesurable."
+  };
+
+  const parEtat = {};
+  L.forEach(e => { (parEtat[e.a.etat] = parEtat[e.a.etat] || []).push(e); });
+  const etatsTri = Object.keys(parEtat).sort((u, v) => ordre[u] - ordre[v]);
+
+  /* --- Volet 1 : atteignabilite --- */
+  const tblAtt = L.slice().sort((u, v) => ordre[u.a.etat] - ordre[v.a.etat] || v.tot - u.tot).map(e => `
+    <tr><td class="l"><strong>${e.x.lib}</strong><div class="dsr-o">${e.x.dom}</div></td>
+      <td class="num">${d1(e.x.actuel)}${e.x.unite}</td>
+      <td class="num">${d1(e.x.cible)}${e.x.unite}</td>
+      <td class="num">${e.a.ecart <= 0 ? "—" : d1(e.a.requis)}</td>
+      <td class="num">${e.x.r2 < SIM_R2_MIN ? "ND" : d1(e.a.pente)}</td>
+      <td><span class="ddx-etat" style="background:${colEtat[e.a.etat]}"></span>${libEtat[e.a.etat]}</td>
+    </tr>`).join("");
+
+  const nAtt = (parEtat.atteinte || []).length, nTen = (parEtat.tenable || []).length;
+  const nDur = (parEtat.rupture || []).length + (parEtat.inversion || []).length;
+  const nNE = (parEtat.nonEtabli || []).length;
+
+  /* --- Volet 2 : concentration du deficit --- */
+  const avecDef = L.filter(e => e.tot > 0).sort((u, v) => v.tot - u.tot);
+  const tblConc = avecDef.map(e => `
+    <tr><td class="l"><strong>${e.x.lib}</strong></td>
+      <td class="num">${nb(e.tot)}</td>
+      <td class="num">${e.n80}</td>
+      <td class="num">${d1(e.part5)} %</td>
+      <td class="l">${e.pr.slice(0, 3).map(p => p.nom).join(", ")}</td>
+    </tr>`).join("");
+  const concMoy = avecDef.length ? avecDef.reduce((a, e) => a + e.n80, 0) / avecDef.length : null;
+
+  /* --- Volet 3 : ce que le national masque --- */
+  const masque = L.filter(e => e.a.etat === "atteinte" && e.x.sous_cible > 0)
+    .sort((u, v) => v.x.sous_cible - u.x.sous_cible);
+  const tblMasque = masque.map(e => `
+    <tr><td class="l"><strong>${e.x.lib}</strong></td>
+      <td class="num">${d1(e.x.actuel)}${e.x.unite}</td>
+      <td class="num">${e.x.sous_cible}</td>
+      <td class="num">${nb(e.tot)}</td>
+      <td class="l">${e.pr.length ? e.pr[0].nom + " · " + d1(e.pr[0].val) + e.x.unite : "—"}</td>
+    </tr>`).join("");
+
+  /* --- Volet 4 : solidite du socle --- */
+  const socle = L.slice().sort((u, v) => u.x.r2 - v.x.r2).map(e => `
+    <tr><td class="l"><strong>${e.x.lib}</strong></td>
+      <td class="num">${e.x.n}</td>
+      <td class="num">${d1(e.x.r2 * 100)} %</td>
+      <td class="num">${d1(e.x.se)}</td>
+      <td>${e.suspect ? `<span class="pill red">dénominateur en cause</span>`
+        : !e.x.fiable ? `<span class="pill red">lecture réservée</span>`
+        : e.x.r2 < SIM_R2_MIN ? `<span class="pill na">tendance non informative</span>`
+        : `<span class="pill green">exploitable</span>`}</td>
+    </tr>`).join("");
+  const nSuspect = L.filter(e => e.suspect || !e.x.fiable).length;
+  const nFaible = L.filter(e => e.x.r2 < SIM_R2_MIN).length;
+  const nSain = L.filter(e => !e.suspect && e.x.fiable && e.x.r2 >= SIM_R2_MIN).length;
+
+  return { crumbs, html: et + `<div class="ph-sub">Les ${C.length} indicateurs du simulateur, pris ensemble.
+      Horizon de ${H} mois, celui réglé dans le simulateur. Une cible ne se juge pas seulement à son écart :
+      elle se juge au rythme qu'elle demande, à la concentration de ce qui reste à combler et à la solidité de
+      la série qui la mesure.</div></div>
+    <div class="content">
+      ${card("Quelles cibles peuvent être tenues", `Rythme mensuel demandé pour atteindre la cible en ${H} mois, comparé au rythme observé`, `
+        <table class="dt"><thead><tr><th>Indicateur</th><th style="text-align:right">Niveau</th><th style="text-align:right">Cible</th>
+          <th style="text-align:right">Demandé /mois</th><th style="text-align:right">Observé /mois</th><th>Verdict</th></tr></thead>
+        <tbody>${tblAtt}</tbody></table>
+        <div class="chol-st-legende">${etatsTri.map(k => `<span class="chol-st-lib"><span class="chol-st-pastille" style="background:${colEtat[k]}"></span>${libEtat[k]} · ${parEtat[k].length}</span>`).join("")}</div>`,
+        `${nAtt + nTen} des ${C.length} cibles sont hors de portée d'un effort supplémentaire au sens strict :
+         ${nAtt} sont déjà franchies au national et ${nTen} le seront au rythme actuel.
+         ${nDur} ${nDur > 1 ? "demandent" : "demande"} une rupture de rythme ou une inversion de tendance, donc un changement de dispositif plutôt qu'un effort accru.
+         ${nNE} ${nNE > 1 ? "reposent" : "repose"} sur une série dont la pente n'est pas mesurable : fixer une cible chiffrée y revient à s'engager sans référence.
+`)}
+
+      ${card("Où le déficit se concentre", "Provinces nécessaires pour couvrir quatre cinquièmes de l'écart à la cible", `
+        <table class="dt"><thead><tr><th>Indicateur</th><th style="text-align:right">Écart total</th>
+          <th style="text-align:right">Provinces pour 80%</th><th style="text-align:right">Part des 5 premières</th><th>Trois premières</th></tr></thead>
+        <tbody>${tblConc}</tbody></table>`,
+        `En moyenne ${d1(concMoy)} provinces portent quatre cinquièmes de l'écart, sur vingt-trois.
+         Plus ce nombre est bas, plus un ciblage géographique est efficace ; plus il est haut, plus l'écart est
+         structurel et appelle une mesure nationale. Le curseur du simulateur qui règle le nombre de provinces
+         ciblées trouve ici son point d'arrêt : au-delà de la colonne « provinces pour 80% », chaque province
+         ajoutée coûte autant et rapporte beaucoup moins.`)}
+
+      ${masque.length ? card("Ce que la moyenne nationale masque", "Indicateurs à la cible au national, avec des provinces en dessous", `
+        <table class="dt"><thead><tr><th>Indicateur</th><th style="text-align:right">Niveau national</th>
+          <th style="text-align:right">Provinces sous la cible</th><th style="text-align:right">Écart à combler</th><th>Province la plus basse</th></tr></thead>
+        <tbody>${tblMasque}</tbody></table>`,
+        `Ces ${masque.length} indicateurs apparaissent au vert dans toute lecture nationale et concentrent pourtant
+         un écart réel. Y renoncer parce que la moyenne est atteinte revient à laisser les provinces les plus
+         basses hors de tout dispositif. Le compteur d'effort national les déclare sans objet, à raison : leur
+         pilotage est provincial.`) : ""}
+
+      ${card("Sur quelles séries les cibles reposent", "Solidité du socle statistique de chaque indicateur", `
+        <table class="dt"><thead><tr><th>Indicateur</th><th style="text-align:right">Mois observés</th>
+          <th style="text-align:right">Variance expliquée</th><th style="text-align:right">Écart-type résiduel</th><th>Statut</th></tr></thead>
+        <tbody>${socle}</tbody></table>`,
+        `${nSain} indicateurs sur ${C.length} réunissent les conditions d'une projection : dénominateur plausible et
+         tendance informative. ${nSuspect} portent une anomalie de source, ${nFaible} une tendance qui explique moins
+         d'un dixième de la variance. Une cible fixée sur ces séries engage sur un chiffre que la donnée ne
+         permet pas de suivre. La condition première d'un pilotage par cible n'est pas l'ambition, c'est une
+         série qui mesure ce qu'elle prétend mesurer.`)}
     </div>` };
 };
 
