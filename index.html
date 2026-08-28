@@ -3239,6 +3239,32 @@
   .inf-c-b { background:var(--surface-2); border:1px solid var(--border); border-radius:4px; height:20px; overflow:hidden; }
   .inf-c-b span { display:block; height:100%; }
   .inf-c-d { font-size:11.5px; color:var(--muted); margin-top:4px; }
+  .fn-grille { display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); gap:16px; margin-bottom:18px; }
+  .fn-p { background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--fc);
+    border-radius:9px; padding:13px 15px; }
+  .fn-p-h { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .fn-p-t { font-family:var(--font-h); font-size:15px; font-weight:700; color:var(--ink); }
+  .fn-p-s { font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+  .fn-p-v { font-size:12px; font-weight:700; white-space:nowrap; text-align:right; }
+  .fn-p-d { font-size:11.5px; color:var(--body); line-height:1.45; margin:7px 0 9px; }
+  .fn-jauge { display:flex; gap:3px; margin-bottom:5px; }
+  .fn-jauge span { flex:1; height:7px; border-radius:2px; }
+  .fn-p-c { font-size:10.5px; color:var(--muted); margin-bottom:9px; }
+  .fn-tbl { width:100%; border-collapse:collapse; font-size:11.5px; }
+  .fn-tbl td { padding:5px 0; border-top:1px solid var(--border); vertical-align:top; }
+  .fn-tbl tr:first-child td { border-top:1px solid var(--border-2); }
+  .fn-e { width:14px; padding-top:9px !important; }
+  .fn-e span { display:block; width:8px; height:8px; border-radius:50%; }
+  .fn-l { color:var(--ink); font-weight:600; padding-right:8px !important; }
+  .fn-nec { display:inline-block; margin-left:6px; font-size:8.5px; font-weight:700; letter-spacing:.4px;
+    text-transform:uppercase; color:#8C4A5E; background:#F6EEF0; border:1px solid #E5D2D7;
+    border-radius:3px; padding:1px 4px; vertical-align:1px; }
+  .fn-det { font-size:10.5px; font-weight:400; color:var(--muted); line-height:1.4; margin-top:2px; }
+  .fn-v { text-align:right; white-space:nowrap; font-weight:700; color:var(--ink); padding-right:10px !important; }
+  .fn-cible { font-weight:400; color:var(--muted); }
+  .fn-s { font-size:10.5px; color:var(--muted); text-align:right; white-space:nowrap; }
+  .fn-pt { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
+  @media (max-width:640px){ .fn-grille { grid-template-columns:1fr; } .fn-s { display:none; } }
   .ddx-etat { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
   .ddx-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:16px; }
   .ddx-st { background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
@@ -4482,6 +4508,14 @@ const PROGRAMS = [
       { id:"explor-alert", label:"Alertes actives",          status:"green" },
       { id:"explor-rech",  label:"Recherche & export",       status:"green" },
       { id:"explor-dd",    label:"Analyse approfondie",      status:"green" },
+    ]
+  },
+  {
+    id:"fonc", c:"min", icon:"FON", label:"Fonctionnalité des programmes",
+    dir:"UPS-SANTÉ", groupe:"Outils transversaux",
+    sub:[
+      { id:"fonc-vue",  label:"État de fonctionnalité", status:"orange" },
+      { id:"fonc-dd",   label:"Analyse approfondie",    status:"green" },
     ]
   },
   {
@@ -14145,6 +14179,344 @@ VIEWS["dsr-apercu"] = () => {
     </div>` };
 };
 
+
+/* ==============================================================
+   FONCTIONNALITE DES PROGRAMMES
+   Un programme n'est pas fonctionnel a hauteur d'une moyenne. Il
+   l'est si chacune de ses conditions de fonctionnement est remplie,
+   et il cesse de l'etre des qu'une condition necessaire tombe : on
+   ne vaccine pas sans chaine du froid, quelle que soit la couverture
+   affichee. La fonctionnalite se lit donc comme une conjonction, et
+   une condition non mesuree interdit de conclure plutot que de
+   compter pour zero ou d'etre ignoree.
+============================================================== */
+
+const FONC_PILIERS = {
+  intrant:   { lib: "Intrants",   det: "Produits sans lesquels l'acte ne peut pas être posé" },
+  plateau:   { lib: "Plateau technique", det: "Équipement et infrastructure indispensables" },
+  personnel: { lib: "Personnel",  det: "Compétences requises pour poser l'acte" },
+  info:      { lib: "Information", det: "Le programme sait-il ce qu'il produit" },
+  presta:    { lib: "Prestation", det: "Le service atteint-il effectivement la population" }
+};
+
+/* Chaque condition declare son pilier, son caractere necessaire et la
+   fonction qui la mesure. Une fonction qui rend null signale une condition
+   non mesuree : c'est un etat distinct de la condition non remplie. */
+function foncReferentiel() {
+  const val = (f) => { try { const v = f(); return (v == null || Number.isNaN(v)) ? null : v; } catch (e) { return null; } };
+  const derDpsis = () => DPSISQ && DPSISQ.meta.derniere_periode_couverte;
+  const natDpsis = (sys, ch) => val(() => {
+    const u = (DPSISQ.valeurs[derDpsis()] || {})["National"] || {};
+    return u[sys] ? u[sys][ch] : null;
+  });
+  const infraPct = (k) => val(() => {
+    const t = INFRA.meta[k]; return t.total ? t.bon / t.total * 100 : null;
+  });
+  const dsrNat = (code) => val(() => {
+    const ind = DSRN.indicateurs[code]; const d = cidDerniere(ind.serie, DSRN.meta.mois_max); return d.v;
+  });
+
+  return [
+    { prog: "PEV", lib: "Programme élargi de vaccination", dir: "DLMVSE", conditions: [
+      { p: "plateau", l: "Chaîne du froid fonctionnelle au point de vaccination", nec: true,
+        src: "eSMT · inventaire et température des réfrigérateurs", f: () => null,
+        det: "Sans chaîne du froid, le vaccin administré n'immunise pas : la couverture rapportée cesse de mesurer une protection." },
+      { p: "intrant", l: "Disponibilité des vaccins traceurs", nec: true,
+        src: "eSMT · stocks de vaccins", f: () => null,
+        det: "Une rupture d'antigène interrompt la séance, quelle que soit la présence du personnel." },
+      { p: "plateau", l: "Alimentation électrique des centres de santé", nec: true,
+        src: "Inventaire des kits solaires · DIEM", f: () => null,
+        det: "Condition de la chaîne du froid dans les structures hors réseau." },
+      { p: "presta", l: "Couverture en Penta 3", nec: false, cible: 90,
+        src: "RIM PEV · DLMVSE", f: () => val(() => PEV.national.couvertures.Penta3.v2026) },
+      { p: "presta", l: "Abandon Penta 1 à Penta 3 contenu", nec: false, cible: 10, inv: true,
+        src: "RIM PEV · DLMVSE", f: () => val(() => PEV.national.abandon_p1p3) },
+      { p: "personnel", l: "Vaccinateurs formés et affectés", nec: true,
+        src: "IHRIS · DRH", f: () => null },
+      { p: "info", l: "Complétude du rapportage de surveillance", nec: false, cible: 90,
+        src: "Relevé DPSIS", f: () => natDpsis("ids", "comp") }
+    ]},
+    { prog: "SR", lib: "Santé de la reproduction", dir: "DSR", conditions: [
+      { p: "plateau", l: "Bloc opératoire fonctionnel pour la césarienne", nec: true,
+        src: "Relevé de fonctionnalité des hôpitaux · DIEM", f: () => null,
+        det: "Sans bloc, la complication obstétricale ne trouve pas d'issue au niveau du district." },
+      { p: "plateau", l: "Banque de sang approvisionnée", nec: true,
+        src: "Relevé de fonctionnalité des hôpitaux · DIEM", f: () => null,
+        det: "La césarienne sans transfusion possible n'est pas une césarienne sécurisée." },
+      { p: "intrant", l: "Oxytocine disponible en maternité", nec: true,
+        src: "SIGL · DGPML", f: () => null,
+        det: "Produit de la prise en charge de l'hémorragie du post-partum, première cause de décès maternel." },
+      { p: "personnel", l: "Personnel qualifié à l'accouchement", nec: true, cible: 80,
+        src: "SMI.csv · DHIS2", f: () => dsrNat("acc_qualifie") },
+      { p: "presta", l: "Recrutement prénatal", nec: false, cible: 95,
+        src: "SMI.csv · DHIS2", f: () => dsrNat("cpn1") },
+      { p: "presta", l: "Suivi prénatal complet", nec: false, cible: 65,
+        src: "SMI.csv · DHIS2", f: () => dsrNat("cpn4") },
+      { p: "plateau", l: "Hôpitaux de district en état de recevoir", nec: false, cible: 80,
+        src: "Relevé DIEM", f: () => infraPct("hd") },
+      { p: "info", l: "Complétude du rapportage RMA", nec: false, cible: 95,
+        src: "Relevé DPSIS", f: () => natDpsis("rma_global", "comp") }
+    ]},
+    { prog: "PF", lib: "Planification familiale", dir: "DSR", conditions: [
+      { p: "intrant", l: "Aucune rupture d'une méthode traceuse dans le mois", nec: true,
+        src: "SIGL · DGPML", f: () => null,
+        det: "Une rupture de méthode renvoie la femme sans solution et rompt la continuité contraceptive." },
+      { p: "personnel", l: "Prestataires formés à l'insertion des méthodes de longue durée", nec: true,
+        src: "IHRIS · DRH et DSR", f: () => null },
+      { p: "presta", l: "Prévalence contraceptive", nec: false, cible: 30,
+        src: "SMI.csv · DHIS2", f: () => dsrNat("prev_contra") },
+      { p: "presta", l: "Acceptation du post-partum immédiat", nec: false, cible: 30,
+        src: "Relevé provincial DSR", f: () => val(() => dsrMedianeProv("accept_pp").v) },
+      { p: "info", l: "Ventilation par méthode disponible", nec: false,
+        src: "DHIS2, variable à ouvrir", f: () => null }
+    ]},
+    { prog: "NUT", lib: "Nutrition", dir: "DLMVSE", conditions: [
+      { p: "intrant", l: "Disponibilité des aliments thérapeutiques prêts à l'emploi", nec: true,
+        src: "SIGL · DGPML et UNICEF", f: () => null },
+      { p: "plateau", l: "Unités nutritionnelles thérapeutiques fonctionnelles", nec: true,
+        src: "Cartographie des UNT et UNA, à établir", f: () => null },
+      { p: "personnel", l: "Personnel formé au dépistage et à la prise en charge", nec: true,
+        src: "IHRIS · DRH", f: () => null },
+      { p: "presta", l: "Couverture du dépistage de la malnutrition aiguë", nec: false,
+        src: "DHIS2 nutrition, non versé au dépôt", f: () => null },
+      { p: "info", l: "Rapportage nutritionnel intégré au RMA", nec: false,
+        src: "Relevé DPSIS", f: () => null }
+    ]},
+    { prog: "PMA", lib: "Paquet minimum d'activités", dir: "DOSS", conditions: [
+      { p: "plateau", l: "Centres de santé en état de fonctionner", nec: true, cible: 80,
+        src: "Relevé DIEM", f: () => infraPct("cs"),
+        det: "Le paquet minimum se délivre au centre de santé : son état conditionne l'ensemble des activités." },
+      { p: "intrant", l: "Médicaments essentiels disponibles", nec: true,
+        src: "SIGL · DGPML", f: () => null },
+      { p: "plateau", l: "Moyen de déplacement pour la supervision et la stratégie avancée", nec: false,
+        src: "Parc de motos · DIEM", f: () => null },
+      { p: "personnel", l: "Effectif minimal par centre de santé", nec: true,
+        src: "IHRIS · DRH", f: () => null },
+      { p: "info", l: "Complétude du rapportage des centres de santé", nec: false, cible: 95,
+        src: "Relevé DPSIS", f: () => natDpsis("rma_cs", "comp") }
+    ]}
+  ];
+}
+
+/* Etat d'une condition : remplie, non remplie, hors bornes, ou non mesuree.
+   Une couverture au-dessus de cent pour cent ne vaut pas remplissage : elle
+   met en cause le denominateur, et valider une condition sur une valeur
+   invraisemblable reviendrait a faire passer un defaut de mesure pour une
+   performance. Elle suspend le verdict au meme titre qu'une absence. */
+function foncEtat(c) {
+  const v = c.f();
+  if (v == null) return { etat: "nd", v: null };
+  if (c.cible == null) return { etat: "mesure", v: v };
+  /* Cent pour cent est la borne logique d'un taux de couverture : au-dela,
+     le numerateur excede son propre denominateur. Le meme seuil vaut ici et
+     dans le simulateur de scenarios. */
+  if (!c.inv && c.pct !== false && v > 100) return { etat: "hb", v: v };
+  const ok = c.inv ? v <= c.cible : v >= c.cible;
+  return { etat: ok ? "ok" : "ko", v: v };
+}
+/* Verdict du programme. Une condition necessaire non mesuree interdit de
+   conclure : le programme est declare non etabli, ce qui n'est ni un echec
+   ni un satisfecit mais l'aveu que la question n'est pas instruite. */
+function foncVerdict(p) {
+  const e = p.conditions.map(c => Object.assign({ c: c }, foncEtat(c)));
+  const nec = e.filter(x => x.c.nec);
+  const necKo = nec.filter(x => x.etat === "ko");
+  const necNd = nec.filter(x => x.etat === "nd" || x.etat === "hb");
+  const mesurees = e.filter(x => x.etat !== "nd" && x.etat !== "hb");
+  const remplies = e.filter(x => x.etat === "ok" || x.etat === "mesure");
+  let statut, lib, det;
+  if (necKo.length) { statut = "ko"; lib = "Non fonctionnel";
+    det = necKo.length + " condition" + (necKo.length > 1 ? "s nécessaires ne sont pas remplies" : " nécessaire n'est pas remplie") + "."; }
+  else if (necNd.length) { statut = "nd"; lib = "Non établi";
+    det = necNd.length + " condition" + (necNd.length > 1 ? "s nécessaires ne sont pas exploitables" : " nécessaire n'est pas exploitable") + " : la fonctionnalité ne peut pas être affirmée."; }
+  else if (mesurees.length < e.length) { statut = "reserve"; lib = "Fonctionnel sous réserve";
+    det = "Toutes les conditions nécessaires sont remplies, " + (e.length - mesurees.length) + " condition" + (e.length - mesurees.length > 1 ? "s secondaires restent" : " secondaire reste") + " non mesurée."; }
+  else { statut = "ok"; lib = "Fonctionnel"; det = "Toutes les conditions sont mesurées et remplies."; }
+  return { e: e, statut: statut, lib: lib, det: det,
+    nMes: mesurees.length, nTot: e.length, nOk: remplies.length,
+    nNec: nec.length, nNecNd: necNd.length, nNecKo: necKo.length };
+}
+const FONC_COUL = { ok: "#2E7D32", reserve: "#7FA83C", ko: "#B3372F", nd: "#75706B" };
+const FONC_ETC = { ok: "#2E7D32", mesure: "#3E6E78", ko: "#B3372F", hb: "#D97B29", nd: "#CEC8BA" };
+
+VIEWS["fonc-vue"] = () => {
+  const crumbs = ["Outils transversaux", "Fonctionnalité des programmes"];
+  const R = foncReferentiel().map(p => Object.assign({}, p, { v: foncVerdict(p) }));
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const nTotC = R.reduce((a, p) => a + p.v.nTot, 0);
+  const nMesC = R.reduce((a, p) => a + p.v.nMes, 0);
+  const nEtabli = R.filter(p => p.v.statut === "ok" || p.v.statut === "reserve").length;
+
+  const carte = (p) => {
+    const V = p.v, c = FONC_COUL[V.statut];
+    const parPil = {};
+    V.e.forEach(x => { (parPil[x.c.p] = parPil[x.c.p] || []).push(x); });
+    return `<div class="fn-p" style="--fc:${c}">
+      <div class="fn-p-h">
+        <div><div class="fn-p-t">${p.lib}</div><div class="fn-p-s">${p.prog} · ${p.dir}</div></div>
+        <div class="fn-p-v" style="color:${c}">${V.lib}</div>
+      </div>
+      <div class="fn-p-d">${V.det}</div>
+      <div class="fn-jauge">${V.e.map(x => `<span title="${x.c.l}" style="background:${FONC_ETC[x.etat]}"></span>`).join("")}</div>
+      <div class="fn-p-c">${V.nMes} des ${V.nTot} conditions exploitables · ${V.nNec} nécessaires dont ${V.nNecNd} non exploitable${V.nNecNd > 1 ? "s" : ""}</div>
+      <table class="fn-tbl"><tbody>
+        ${V.e.map(x => `<tr class="e-${x.etat}">
+          <td class="fn-e"><span style="background:${FONC_ETC[x.etat]}"></span></td>
+          <td class="fn-l">${x.c.l}${x.c.nec ? '<span class="fn-nec">nécessaire</span>' : ""}
+            ${x.c.det ? `<div class="fn-det">${x.c.det}</div>` : ""}</td>
+          <td class="fn-v">${x.etat === "nd" ? '<span class="dsr-o">ND</span>'
+            : x.etat === "hb" ? `${d1(x.v)}<span class="fn-cible"> hors bornes</span>`
+            : d1(x.v) + (x.c.cible != null ? `<span class="fn-cible"> / ${x.c.inv ? "≤ " : ""}${x.c.cible}</span>` : "")}</td>
+          <td class="fn-s">${x.c.src}</td></tr>`).join("")}
+      </tbody></table>
+    </div>`;
+  };
+
+  return { crumbs, html: `
+    <div class="ph"><div class="ph-tag">Fonctionnalité · UPS-Santé</div>
+      <div class="ph-title">Ce qui fait qu'un programme fonctionne</div>
+      <div class="ph-sub">Un programme n'est pas fonctionnel à hauteur d'une moyenne : il l'est si chacune de ses
+        conditions de fonctionnement est remplie. On ne vaccine pas sans chaîne du froid, quelle que soit la
+        couverture affichée. La fonctionnalité se lit donc comme une conjonction, et une condition non mesurée
+        interdit de conclure plutôt que de compter pour zéro.</div></div>
+    <div class="content">
+      <div class="kpi-grid">
+        ${kpi("Programmes examinés", R.length, "", "Conditions de fonctionnement recensées", "—", "flat", "", true)}
+        ${kpi("Conditions mesurées", nMesC, " /" + nTotC, d1(nMesC / nTotC * 100) + " % du référentiel",
+          nTotC - nMesC + " en attente de source", "flat", nMesC / nTotC >= 0.7 ? "green" : nMesC / nTotC >= 0.4 ? "orange" : "red", true)}
+        ${kpi("Programmes dont la fonctionnalité est établie", nEtabli, " /" + R.length,
+          "Toutes conditions nécessaires mesurées et remplies", "—", "flat", nEtabli ? "orange" : "red", true)}
+        ${kpi("Conditions nécessaires non mesurées", R.reduce((a, p) => a + p.v.nNecNd, 0), "",
+          "Chacune interdit de conclure sur son programme", "—", "flat", "red", true)}
+      </div>
+      <div class="fn-grille">${R.map(carte).join("")}</div>
+      ${card("Comment ce verdict est établi", "Règle de lecture, identique pour tous les programmes", `
+        <table class="dt"><thead><tr><th>Verdict</th><th>Condition d'attribution</th><th>Ce qu'il autorise</th></tr></thead><tbody>
+          <tr><td class="l"><span class="fn-pt" style="background:${FONC_COUL.ok}"></span><strong>Fonctionnel</strong></td>
+            <td>Toutes les conditions sont mesurées et remplies</td><td>Le programme peut être piloté sur ses résultats</td></tr>
+          <tr><td class="l"><span class="fn-pt" style="background:${FONC_COUL.reserve}"></span><strong>Fonctionnel sous réserve</strong></td>
+            <td>Toutes les conditions nécessaires sont remplies, des conditions secondaires ne sont pas mesurées</td>
+            <td>Le pilotage est possible, la mesure reste à compléter</td></tr>
+          <tr><td class="l"><span class="fn-pt" style="background:${FONC_COUL.ko}"></span><strong>Non fonctionnel</strong></td>
+            <td>Une condition nécessaire est mesurée et non remplie</td>
+            <td>Agir sur cette condition avant toute cible de résultat</td></tr>
+          <tr><td class="l"><span class="fn-pt" style="background:${FONC_COUL.nd}"></span><strong>Non établi</strong></td>
+            <td>Une condition nécessaire n'est pas mesurée, ou porte une valeur hors bornes</td>
+            <td>Ni échec ni satisfecit : ouvrir ou reprendre la mesure de cette condition</td></tr>
+        </tbody></table>`,
+        "Une couverture au-dessus de cent pour cent est traitée comme hors bornes et ne vaut pas remplissage : valider une condition sur une valeur invraisemblable ferait passer un défaut de dénominateur pour une performance. Une condition nécessaire non mesurée n'est pas davantage comptée pour zéro ni ignorée : elle suspend le verdict. C'est la seule lecture qui ne fasse pas passer un défaut de mesure pour une performance, ni une absence d'information pour une défaillance.")}
+    </div>` };
+};
+
+/* ==============================================================
+   FONCTIONNALITE · ANALYSE APPROFONDIE
+   La vue par programme dit ou chacun bute. Celle-ci lit le
+   referentiel en travers : quel pilier fait defaut partout, quelle
+   source debloquerait le plus de conditions, et ce que la mesure
+   actuelle permet reellement de conclure.
+============================================================== */
+VIEWS["fonc-dd"] = () => {
+  const crumbs = ["Fonctionnalité des programmes", "Analyse approfondie"];
+  const R = foncReferentiel().map(p => Object.assign({}, p, { v: foncVerdict(p) }));
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const toutes = [];
+  R.forEach(p => p.v.e.forEach(x => toutes.push({ prog: p.prog, lib: p.lib, dir: p.dir, x: x })));
+  const nd = toutes.filter(t => t.x.etat === "nd");
+  const hb = toutes.filter(t => t.x.etat === "hb");
+
+  /* --- 1. Par pilier : ou la mesure manque, tous programmes confondus --- */
+  const pil = Object.keys(FONC_PILIERS).map(k => {
+    const l = toutes.filter(t => t.x.c.p === k);
+    const m = l.filter(t => t.x.etat !== "nd" && t.x.etat !== "hb");
+    const n = l.filter(t => t.x.c.nec);
+    return { k: k, n: l.length, mes: m.length, nec: n.length,
+      necNd: n.filter(t => t.x.etat === "nd" || t.x.etat === "hb").length };
+  }).sort((a, b) => (a.mes / a.n) - (b.mes / b.n));
+  const pilPire = pil[0];
+
+  /* --- 2. Par source : quelle transmission debloquerait le plus --- */
+  const parSrc = {};
+  nd.forEach(t => { (parSrc[t.x.c.src] = parSrc[t.x.c.src] || []).push(t); });
+  const srcTri = Object.keys(parSrc).sort((a, b) => {
+    const na = parSrc[a].filter(t => t.x.c.nec).length, nbb = parSrc[b].filter(t => t.x.c.nec).length;
+    return nbb - na || parSrc[b].length - parSrc[a].length;
+  });
+  /* Une source debloque un programme si elle est la derniere condition
+     necessaire non exploitable de ce programme. */
+  const debloque = (src) => R.filter(p => {
+    const bloq = p.v.e.filter(x => x.c.nec && (x.etat === "nd" || x.etat === "hb"));
+    return bloq.length > 0 && bloq.every(x => x.c.src === src);
+  }).map(p => p.prog);
+
+  /* --- 3. Ce que la mesure actuelle permet de conclure --- */
+  const nEtabli = R.filter(p => p.v.statut === "ok" || p.v.statut === "reserve").length;
+  const nKo = R.filter(p => p.v.statut === "ko").length;
+  const nNd = R.filter(p => p.v.statut === "nd").length;
+  const totC = toutes.length, mesC = toutes.filter(t => t.x.etat !== "nd" && t.x.etat !== "hb").length;
+  const necTot = toutes.filter(t => t.x.c.nec).length;
+  const necMes = toutes.filter(t => t.x.c.nec && t.x.etat !== "nd" && t.x.etat !== "hb").length;
+
+  return { crumbs, html: `
+    <div class="ph"><div class="ph-tag">Analyse approfondie · Fonctionnalité</div>
+      <div class="ph-title">Ce qui manque, et à qui le demander</div>
+      <div class="ph-sub">La vue par programme dit où chacun bute. Celle-ci lit le référentiel en travers :
+        ${mesC} des ${totC} conditions sont exploitables, ${necMes} des ${necTot} conditions nécessaires le sont.
+        Tant que ce second rapport n'approche pas de un, la fonctionnalité reste une question ouverte plutôt
+        qu'un constat.</div></div>
+    <div class="content">
+      ${card("Quel pilier fait défaut", "Conditions exploitables par pilier, tous programmes confondus", `
+        <table class="dt"><thead><tr><th>Pilier</th><th>Ce qu'il recouvre</th><th style="text-align:right">Conditions</th>
+          <th style="text-align:right">Exploitables</th><th style="text-align:right">Nécessaires bloquées</th></tr></thead>
+        <tbody>${pil.map(x => `<tr><td class="l"><strong>${FONC_PILIERS[x.k].lib}</strong></td>
+          <td>${FONC_PILIERS[x.k].det}</td><td class="num">${x.n}</td>
+          <td class="num"><span class="pill ${x.mes / x.n >= 0.7 ? "green" : x.mes / x.n >= 0.4 ? "orange" : "red"}">${x.mes} / ${x.n}</span></td>
+          <td class="num">${x.necNd || "—"}</td></tr>`).join("")}</tbody></table>`,
+        `Le pilier ${FONC_PILIERS[pilPire.k].lib.toLowerCase()} est le moins couvert, avec ${pilPire.mes} condition${pilPire.mes > 1 ? "s" : ""} exploitable${pilPire.mes > 1 ? "s" : ""}
+         sur ${pilPire.n}. Le système d'information mesure ce que les programmes produisent et non ce qui leur permet de produire :
+         la prestation est suivie, les conditions qui la rendent possible ne le sont pas. C'est ce déséquilibre qui fait
+         qu'une couverture peut être publiée sans qu'on sache si la chaîne du froid tenait.`)}
+
+      ${card("Quelle transmission débloquerait le plus", "Conditions en attente, rangées par source à saisir", `
+        <table class="dt"><thead><tr><th>Source</th><th style="text-align:right">Conditions</th>
+          <th style="text-align:right">Dont nécessaires</th><th>Programmes concernés</th><th>Effet</th></tr></thead>
+        <tbody>${srcTri.map(sc => {
+          const l = parSrc[sc], necN = l.filter(t => t.x.c.nec).length;
+          const db = debloque(sc);
+          return `<tr><td class="l"><strong>${sc}</strong></td>
+            <td class="num">${l.length}</td><td class="num">${necN || "—"}</td>
+            <td>${[...new Set(l.map(t => t.prog))].join(", ")}</td>
+            <td>${db.length ? `<span class="pill green">lève le blocage de ${db.join(", ")}</span>` : "réduit l'incertitude"}</td></tr>`;
+        }).join("")}</tbody></table>`,
+        `Une source lève le blocage d'un programme lorsqu'elle porte toutes ses conditions nécessaires encore
+         inexploitables. Les autres réduisent l'incertitude sans permettre de conclure : les demander isolément
+         ne changera pas le verdict. L'ordre du tableau est celui de l'effet sur la capacité à conclure, non celui
+         du volume de données.`)}
+
+      ${card("Ce que la mesure actuelle permet de dire", "Verdict par programme et sa portée", `
+        <div class="ddx-stats">
+          ${[["Programmes dont la fonctionnalité est établie", nEtabli, nEtabli ? "pilotables sur leurs résultats" : "aucun à ce jour"],
+             ["Programmes non fonctionnels", nKo, "une condition nécessaire mesurée et non remplie"],
+             ["Programmes non établis", nNd, "une condition nécessaire non exploitable"],
+             ["Conditions hors bornes", hb.length, hb.length ? "valeur invraisemblable, dénominateur à reprendre" : "aucune"]
+            ].map(([l, v, d]) => `<div class="ddx-st"><div class="ddx-st-l">${l}</div><div class="ddx-st-v">${v}</div><div class="ddx-st-d">${d}</div></div>`).join("")}
+        </div>
+        <table class="dt"><thead><tr><th>Programme</th><th>Verdict</th><th style="text-align:right">Conditions exploitables</th>
+          <th>Ce qui manque pour conclure</th></tr></thead>
+        <tbody>${R.map(p => {
+          const bloq = p.v.e.filter(x => x.c.nec && (x.etat === "nd" || x.etat === "hb"));
+          const ko = p.v.e.filter(x => x.c.nec && x.etat === "ko");
+          return `<tr><td class="l"><strong>${p.lib}</strong><div class="dsr-o">${p.dir}</div></td>
+            <td><span class="fn-pt" style="background:${FONC_COUL[p.v.statut]}"></span>${p.v.lib}</td>
+            <td class="num">${p.v.nMes} / ${p.v.nTot}</td>
+            <td>${ko.length ? `<strong>${ko.map(x => x.c.l).join(", ")}</strong> : condition non remplie, à traiter avant toute cible.`
+              : bloq.length ? bloq.map(x => x.c.l).join(", ") + "." : "rien, le verdict est complet."}</td></tr>`;
+        }).join("")}</tbody></table>`,
+        `${nEtabli === 0
+          ? "Aucun programme ne peut aujourd'hui être déclaré fonctionnel, ce qui ne signifie pas qu'aucun ne l'est : cela signifie que le système d'information ne permet pas de l'établir. La distinction compte, parce qu'elle désigne une action sur la mesure et non sur les programmes."
+          : nEtabli + " programme" + (nEtabli > 1 ? "s peuvent" : " peut") + " être piloté" + (nEtabli > 1 ? "s" : "") + " sur ses résultats, les autres appellent d'abord une action sur leurs conditions."}
+         ${nKo ? `Les ${nKo} programmes non fonctionnels le sont sur une condition mesurée : celle-là ne demande pas une donnée supplémentaire mais une décision.` : ""}`)}
+    </div>` };
+};
 
 /* ==============================================================
    OUTILS · CADRE D'INDICATEURS
