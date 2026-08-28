@@ -3232,6 +3232,13 @@
   .cad-frac .cad-num { display:block; padding-bottom:3px; }
   .cad-frac .cad-den { display:block; padding-top:3px; border-top:1px solid var(--border-2); color:var(--muted); }
   .cad-def { font-size:11px; line-height:1.5; color:var(--muted); font-style:italic; }
+  .inf-casc { display:flex; flex-direction:column; gap:15px; }
+  .inf-c-h { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:5px; }
+  .inf-c-l { font-family:var(--font-h); font-size:14px; font-weight:700; color:var(--ink); }
+  .inf-c-v { font-size:12px; font-weight:600; color:var(--body); white-space:nowrap; }
+  .inf-c-b { background:var(--surface-2); border:1px solid var(--border); border-radius:4px; height:20px; overflow:hidden; }
+  .inf-c-b span { display:block; height:100%; }
+  .inf-c-d { font-size:11.5px; color:var(--muted); margin-top:4px; }
   .ddx-etat { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
   .ddx-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:16px; }
   .ddx-st { background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
@@ -4344,6 +4351,15 @@ const PROGRAMS = [
   },
   // ===== FONCTIONS D'APPUI =====
   {
+    id:"diem", c:"min", icon:"INF", label:"Infrastructures sanitaires",
+    dir:"DIEM", groupe:"Fonctions d'appui",
+    sub:[
+      { id:"diem-apercu", label:"État du parc",         status:"orange" },
+      { id:"diem-prov",   label:"Lecture provinciale",  status:"orange" },
+      { id:"diem-dd",     label:"Analyse approfondie",  status:"green" },
+    ]
+  },
+  {
     id:"dpml", c:"dpml", icon:"LOG", label:"Logistique · Intrants",
     dir:"DGPML", groupe:"Fonctions d'appui",
     sub:[
@@ -5204,6 +5220,7 @@ const state = {
   mapMode: "performance",
   cholCarte: "cas",
   cadreDir: null,
+  infraNiv: "cs",
   minSection: "A",
   lang: "fr",                  // 'fr' | 'en' | 'ar'
   // Map view controls (zoom/pan/size)
@@ -12240,6 +12257,335 @@ VIEWS["simu-dd"] = () => {
          d'un dixième de la variance. Une cible fixée sur ces séries engage sur un chiffre que la donnée ne
          permet pas de suivre. La condition première d'un pilotage par cible n'est pas l'ambition, c'est une
          série qui mesure ce qu'elle prétend mesurer.`)}
+    </div>` };
+};
+
+/* ==============================================================
+   INFRASTRUCTURES SANITAIRES · DIEM
+   Etat du parc bati aux trois echelons de l'offre : hopitaux de
+   province, hopitaux de district, centres de sante. Les valeurs
+   sont celles du releve de la direction, sans redressement.
+============================================================== */
+let INFRA = null;
+fetch("infra_sante.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { INFRA = j; if (String(state.sub).indexOf("diem") === 0) renderMain(); }).catch(() => {});
+
+const INFRA_PAL = ["#B3372F", "#D97B29", "#C9A227", "#7FA83C", "#2E7D32"];
+/* Un parc dont moins d'un tiers est en bon etat n'est pas au meme regime
+   qu'un parc a deux tiers : les paliers suivent cette lecture. */
+function infraCoul(p) {
+  if (p == null) return "#CEC8BA";
+  return p >= 70 ? INFRA_PAL[4] : p >= 55 ? INFRA_PAL[3] : p >= 40 ? INFRA_PAL[2]
+       : p >= 25 ? INFRA_PAL[1] : INFRA_PAL[0];
+}
+function infraRag(p) {
+  if (p == null) return "na";
+  return p >= 70 ? "green" : p >= 55 ? "yellow" : p >= 40 ? "orange" : "red";
+}
+const INFRA_NIV = {
+  cs: { lib: "Centres de santé", court: "CS", k: "cs" },
+  hd: { lib: "Hôpitaux de district", court: "HD", k: "hd" },
+  hp: { lib: "Hôpitaux de province", court: "HP", k: "hp" }
+};
+function infraPart(p, niv) {
+  const t = p[niv + "_total"];
+  return t ? p[niv + "_bon"] / t * 100 : null;
+}
+function setInfraNiv(v) { state.infraNiv = v; renderMain(); }
+
+/* Carte provinciale autonome : la carte generique du tableau de bord est
+   adossee au generateur d'indicateurs, celle-ci lit le releve de la DIEM. */
+function infraCarte(niv) {
+  const idx = {};
+  INFRA.provinces.forEach(p => { idx[p.id] = p; });
+  const paths = PROVINCES.map(pv => {
+    const geo = PROVINCE_PATHS[pv.id], d = idx[pv.id];
+    if (!geo) return "";
+    let val = null, tip = pv.name + " · ND";
+    if (niv === "hp") {
+      const bon = d && d.hp_etat === "bon";
+      val = d ? (bon ? 100 : 0) : null;
+      tip = `${pv.name} · ${d ? d.hp_nom : ""} · ${bon ? "bon état" : "partiellement endommagé"}`;
+    } else if (d) {
+      val = infraPart(d, niv);
+      tip = `${pv.name} · ${d[niv + "_bon"]} sur ${d[niv + "_total"]} ${INFRA_NIV[niv].court} en bon état · ${String(Math.round(val * 10) / 10).replace(".", ",")}%`;
+    }
+    return `<path d="${geo.d}" fill="${infraCoul(val)}" stroke="#fff" stroke-width="1.1"><title>${tip}</title></path>`;
+  }).join("");
+  const lab = PROVINCES.map(pv => {
+    const geo = PROVINCE_PATHS[pv.id], d = idx[pv.id];
+    if (!geo || !d) return "";
+    const v = niv === "hp" ? (d.hp_etat === "bon" ? "bon" : "partiel") : Math.round(infraPart(d, niv)) + "%";
+    return `<text x="${geo.cx}" y="${geo.cy}" text-anchor="middle" font-size="10.5" font-weight="700"
+      fill="#fff" style="paint-order:stroke;stroke:rgba(0,0,0,.28);stroke-width:2.4px">${v}</text>`;
+  }).join("");
+  return `<svg viewBox="${MAP_VIEWBOX}" style="width:100%;max-height:540px">${paths}${lab}</svg>`;
+}
+function infraLegende(niv) {
+  if (niv === "hp") return `<div class="chol-st-legende">
+    <span class="chol-st-lib"><span class="chol-st-pastille" style="background:${INFRA_PAL[4]}"></span>Bon état</span>
+    <span class="chol-st-lib"><span class="chol-st-pastille" style="background:${INFRA_PAL[0]}"></span>Partiellement endommagé</span></div>`;
+  return `<div class="chol-st-legende">
+    ${[["moins de 25%", 0], ["25 à 40%", 1], ["40 à 55%", 2], ["55 à 70%", 3], ["70% et plus", 4]]
+      .map(([l, i]) => `<span class="chol-st-lib"><span class="chol-st-pastille" style="background:${INFRA_PAL[i]}"></span>${l}</span>`).join("")}
+  </div>`;
+}
+
+VIEWS["diem-apercu"] = () => {
+  const crumbs = ["Infrastructures sanitaires", "État du parc"];
+  const et = `<div class="ph"><div class="ph-tag">Direction des Infrastructures, des Équipements et de la Maintenance · DIEM</div>
+    <div class="ph-title">État du parc sanitaire</div>`;
+  if (!INFRA) return { crumbs, html: et + `<div class="ph-sub">Relevé en cours de chargement.</div></div>` };
+  const M = INFRA.meta;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const pCs = M.cs.bon / M.cs.total * 100, pHd = M.hd.bon / M.hd.total * 100;
+
+  /* Le parc se lit du sommet vers la base : un hopital de province degrade
+     prive une province entiere de son recours, un centre de sante degrade
+     prive une aire. Les volumes vont dans l'autre sens. */
+  const cascade = [
+    { l: "Hôpitaux de province", bon: M.hp.bon, tot: M.hp.total, p: M.hp.bon / M.hp.total * 100,
+      d: M.hp.partiel + " partiellement endommagés" },
+    { l: "Hôpitaux de district", bon: M.hd.bon, tot: M.hd.total, p: pHd,
+      d: M.hd.mauvais + " en mauvais état" },
+    { l: "Centres de santé", bon: M.cs.bon, tot: M.cs.total, p: pCs,
+      d: nb(M.cs.mauvais) + " en mauvais état" }
+  ];
+  const casc = cascade.map(x => `
+    <div class="inf-c">
+      <div class="inf-c-h"><span class="inf-c-l">${x.l}</span>
+        <span class="inf-c-v">${nb(x.bon)} sur ${nb(x.tot)} en bon état</span></div>
+      <div class="inf-c-b"><span style="width:${x.p.toFixed(1)}%;background:${infraCoul(x.p)}"></span></div>
+      <div class="inf-c-d">${d1(x.p)} % du parc · ${x.d}</div>
+    </div>`).join("");
+
+  const prov = INFRA.provinces.slice().sort((a, b) => infraPart(a, "cs") - infraPart(b, "cs"));
+  const bas = prov.slice(0, 6), haut = prov.slice(-4).reverse();
+
+  return { crumbs, html: et + `<div class="ph-sub">Relevé ${M.annee} de la ${M.source.split(" (")[0].toLowerCase()}.
+      ${nb(M.cs.total + M.hd.total + M.hp.total)} structures recensées aux trois échelons de l'offre.
+      Les valeurs sont celles du relevé, aucune n'est redressée.</div></div>
+    <div class="content">
+      <div class="kpi-grid">
+        ${kpi("Centres de santé en bon état", d1(pCs), " %", nb(M.cs.bon) + " sur " + nb(M.cs.total) + " recensés",
+          nb(M.cs.mauvais) + " à réhabiliter", "flat", infraRag(pCs), true)}
+        ${kpi("Hôpitaux de district en bon état", d1(pHd), " %", M.hd.bon + " sur " + M.hd.total,
+          M.hd.mauvais + " en mauvais état", "flat", infraRag(pHd), true)}
+        ${kpi("Hôpitaux de province en bon état", M.hp.bon, " /" + M.hp.total, "Un par province",
+          M.hp.partiel + " partiellement endommagés", "flat", infraRag(M.hp.bon / M.hp.total * 100), true)}
+        ${kpi("Structures à réhabiliter", nb(M.cs.mauvais + M.hd.mauvais + M.hp.partiel), "", "Tous échelons confondus",
+          "—", "flat", "red", true)}
+      </div>
+      ${card("Le parc, du recours de dernier ressort au premier contact", "Part en bon état à chaque échelon de l'offre",
+        `<div class="inf-casc">${casc}</div>`,
+        (() => {
+          /* Le commentaire est deduit des valeurs plutot qu'ecrit d'avance :
+             l'ordre des echelons n'a rien de monotone et depend du releve. */
+          const tri = cascade.slice().sort((a, b) => a.p - b.p);
+          const bas = tri[0], haut = tri[tri.length - 1];
+          const monotone = cascade[0].p >= cascade[1].p && cascade[1].p >= cascade[2].p;
+          const roleBas = { "Hôpitaux de province": "le recours de dernier ressort d'une province entière",
+            "Hôpitaux de district": "le pivot du système de référence, là où sont pratiqués la chirurgie d'urgence et les accouchements compliqués",
+            "Centres de santé": "le premier contact et le seul échelon qui couvre le territoire" }[bas.l];
+          return `${d1(cascade[0].p)} % des hôpitaux de province sont en bon état, ${d1(cascade[1].p)} % des hôpitaux de
+            district, ${d1(cascade[2].p)} % des centres de santé.
+            ${monotone
+              ? "La dégradation s'aggrave à mesure qu'on descend vers l'échelon le plus proche des populations."
+              : "L'état ne se dégrade pas régulièrement du sommet vers la base : c'est l'échelon des " +
+                bas.l.toLowerCase() + " qui est le plus atteint, entre deux échelons mieux tenus."}
+            L'échelon le plus dégradé est ${roleBas}. Un patient qui y est référé depuis un centre de santé en bon
+            état arrive dans une structure qui l'est moins : la chaîne de soins ne vaut que par son maillon le plus
+            faible, et ${d1(haut.p - bas.p)} points séparent ici le mieux tenu du plus dégradé.`;
+        })())}
+      ${card("Provinces les plus éloignées d'un parc utilisable", "Part de centres de santé en bon état, six provinces les plus basses", `
+        <table class="dt"><thead><tr><th>Province</th><th style="text-align:right">CS en bon état</th>
+          <th style="text-align:right">Part</th><th style="text-align:right">CS à réhabiliter</th><th>Hôpital de province</th></tr></thead>
+        <tbody>${bas.map(p => `<tr><td class="l"><strong>${p.nom}</strong></td>
+          <td class="num">${p.cs_bon} / ${p.cs_total}</td>
+          <td class="num"><span class="pill ${infraRag(infraPart(p, "cs"))}">${d1(infraPart(p, "cs"))} %</span></td>
+          <td class="num">${p.cs_mauvais}</td>
+          <td>${p.hp_nom} · ${p.hp_etat === "bon" ? "bon état" : "partiellement endommagé"}</td></tr>`).join("")}</tbody></table>`,
+        `À l'autre extrémité, ${haut.map(p => p.nom + " (" + d1(infraPart(p, "cs")) + " %)").join(", ")}.
+         L'écart entre la province la mieux dotée et la moins bien dotée est de
+         ${d1(infraPart(prov[prov.length - 1], "cs") - infraPart(prov[0], "cs"))} points.`)}
+    </div>` };
+};
+
+/* ==============================================================
+   INFRASTRUCTURES · ANALYSE APPROFONDIE
+   Le releve dit l'etat du parc. Cette vue confronte cet etat a ce
+   qu'il commande : la coherence entre echelons dans une meme
+   province, la concentration du besoin, et le rapport entre l'etat
+   du bati et l'activite qui s'y tient.
+============================================================== */
+VIEWS["diem-dd"] = () => {
+  const crumbs = ["Infrastructures sanitaires", "Analyse approfondie"];
+  const et = `<div class="ph"><div class="ph-tag">Analyse approfondie · Infrastructures</div>
+    <div class="ph-title">Ce que l'état du parc commande</div>`;
+  if (!INFRA) return { crumbs, html: et + `<div class="ph-sub">Relevé en cours de chargement.</div></div>` };
+  const M = INFRA.meta, PR = INFRA.provinces;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+
+  /* --- 1. Coherence entre echelons d'une meme province --- */
+  const coh = PR.map(p => ({ p, cs: infraPart(p, "cs"), hd: infraPart(p, "hd"), hp: p.hp_etat }))
+    .map(x => Object.assign(x, { ecart: x.cs - x.hd }));
+  const divergent = coh.slice().sort((a, b) => Math.abs(b.ecart) - Math.abs(a.ecart)).slice(0, 6);
+  const cohMoy = coh.reduce((a, x) => a + Math.abs(x.ecart), 0) / coh.length;
+  /* Correlation de rang entre l'etat des centres de sante et celui des
+     hopitaux de district : une province degradee l'est-elle a tous les
+     echelons, ou la degradation frappe-t-elle un echelon a la fois ? */
+  const rg = (arr, cle) => { const t = arr.slice().sort((a, b) => a[cle] - b[cle]);
+    const m = {}; t.forEach((x, i) => { m[x.p.id] = i + 1; }); return m; };
+  const rCs = rg(coh, "cs"), rHd = rg(coh, "hd");
+  const n = coh.length;
+  const sd2 = coh.reduce((a, x) => a + Math.pow(rCs[x.p.id] - rHd[x.p.id], 2), 0);
+  const rho = 1 - 6 * sd2 / (n * (n * n - 1));
+
+  /* --- 2. Concentration du besoin de rehabilitation --- */
+  const bes = PR.map(p => ({ p, n: p.cs_mauvais + p.hd_mauvais + (p.hp_etat === "bon" ? 0 : 1) }))
+    .sort((a, b) => b.n - a.n);
+  const totBes = bes.reduce((a, x) => a + x.n, 0);
+  let cum = 0, n80 = 0;
+  for (const x of bes) { cum += x.n; n80++; if (cum >= 0.8 * totBes) break; }
+  const part5 = bes.slice(0, 5).reduce((a, x) => a + x.n, 0) / totBes * 100;
+
+  /* --- 3. Etat du bati et charge d'activite --- */
+  const dens = PR.map(p => ({ p, cs: p.cs_total, part: infraPart(p, "cs") }))
+    .sort((a, b) => b.cs - a.cs);
+  const gros = dens.slice(0, 8);
+  const partGros = gros.reduce((a, x) => a + x.p.cs_bon, 0) / gros.reduce((a, x) => a + x.p.cs_total, 0) * 100;
+  const petits = dens.slice(-8);
+  const partPetits = petits.reduce((a, x) => a + x.p.cs_bon, 0) / petits.reduce((a, x) => a + x.p.cs_total, 0) * 100;
+
+  /* --- 4. Ecarts de perimetre entre les deux releves --- */
+  const nDsCs = M.n_districts_liste, nDsHd = M.hd.total;
+
+  const tblCoh = divergent.map(x => `
+    <tr><td class="l"><strong>${x.p.nom}</strong></td>
+      <td class="num">${d1(x.cs)} %</td><td class="num">${d1(x.hd)} %</td>
+      <td class="num" style="color:${Math.abs(x.ecart) > 25 ? "#B3372F" : "var(--body)"}">${x.ecart > 0 ? "+" : ""}${d1(x.ecart)}</td>
+      <td>${x.hp === "bon" ? "bon état" : "partiellement endommagé"}</td>
+      <td class="l">${x.ecart > 0 ? "Hôpitaux de district plus dégradés que le réseau de proximité"
+        : "Réseau de proximité plus dégradé que les hôpitaux de district"}</td></tr>`).join("");
+
+  const tblBes = bes.slice(0, 10).map(x => `
+    <tr><td class="l"><strong>${x.p.nom}</strong></td>
+      <td class="num">${x.p.cs_mauvais}</td><td class="num">${x.p.hd_mauvais}</td>
+      <td class="num">${x.p.hp_etat === "bon" ? "—" : "1"}</td>
+      <td class="num"><strong>${x.n}</strong></td>
+      <td class="num">${d1(x.n / totBes * 100)} %</td></tr>`).join("");
+
+  return { crumbs, html: et + `<div class="ph-sub">Le relevé dit l'état du parc. Ce qu'il commande se lit ailleurs :
+      dans la cohérence entre échelons d'une même province, dans la concentration du besoin, et dans le rapport
+      entre l'état du bâti et la taille du réseau qui s'y appuie.</div></div>
+    <div class="content">
+      ${card("La dégradation frappe-t-elle une province ou un échelon", "Part en bon état des centres de santé et des hôpitaux de district, six provinces les plus divergentes", `
+        <table class="dt"><thead><tr><th>Province</th><th style="text-align:right">Centres de santé</th>
+          <th style="text-align:right">Hôpitaux de district</th><th style="text-align:right">Écart</th>
+          <th>Hôpital de province</th><th>Lecture</th></tr></thead>
+        <tbody>${tblCoh}</tbody></table>`,
+        `La corrélation de rang entre les deux échelons est de ${d1(rho)} sur les vingt-trois provinces, pour un écart
+         absolu moyen de ${d1(cohMoy)} points.
+         ${rho > 0.5 ? "Les deux échelons se dégradent ensemble : le problème est provincial, il tient à la maintenance et au financement du parc dans son ensemble, et un plan par échelon manquerait sa cible."
+           : rho > 0.2 ? "Le lien entre les deux échelons est faible : une province peut avoir un réseau de proximité correct et des hôpitaux de district dégradés, ou l'inverse. Le ciblage doit se faire par échelon et par province, pas par province seule."
+           : "Les deux échelons sont indépendants : l'état d'un réseau de proximité ne dit rien de celui des hôpitaux de district de la même province. Chaque échelon appelle son propre diagnostic."}
+         Les provinces listées ici sont celles où un plan calé sur un seul échelon manquerait l'essentiel du besoin.`)}
+
+      ${card("Où le besoin de réhabilitation se concentre", "Structures à réhabiliter, tous échelons confondus, dix provinces les plus concernées", `
+        <table class="dt"><thead><tr><th>Province</th><th style="text-align:right">CS</th><th style="text-align:right">HD</th>
+          <th style="text-align:right">HP</th><th style="text-align:right">Total</th><th style="text-align:right">Part du besoin</th></tr></thead>
+        <tbody>${tblBes}</tbody></table>`,
+        `${nb(totBes)} structures à réhabiliter sur l'ensemble du pays. ${n80} provinces sur vingt-trois en portent
+         quatre cinquièmes, les cinq premières en portent ${d1(part5)} %.
+         ${n80 <= 8 ? "La concentration est forte : un programme adressé à ces provinces couvrirait l'essentiel du besoin national."
+           : "La concentration est modérée : le besoin est réparti, un programme géographiquement ciblé n'en couvrirait qu'une part."}
+         Le classement mêle des structures de coût très différent, un hôpital de district et un centre de santé ne se
+         réhabilitant pas au même prix : il donne un ordre de grandeur du besoin, pas une enveloppe.`)}
+
+      ${card("Les grands réseaux sont-ils mieux entretenus", "État du parc rapporté à la taille du réseau provincial", `
+        <div class="ddx-stats">
+          ${[["Huit provinces au réseau le plus dense", nb(gros.reduce((a, x) => a + x.cs, 0)) + " CS", d1(partGros) + " % en bon état"],
+             ["Huit provinces au réseau le plus restreint", nb(petits.reduce((a, x) => a + x.cs, 0)) + " CS", d1(partPetits) + " % en bon état"],
+             ["Écart entre les deux groupes", d1(Math.abs(partGros - partPetits)) + " points", partGros >= partPetits ? "à l'avantage des grands réseaux" : "à l'avantage des petits réseaux"]
+            ].map(([l, v, d]) => `<div class="ddx-st"><div class="ddx-st-l">${l}</div><div class="ddx-st-v">${v}</div><div class="ddx-st-d">${d}</div></div>`).join("")}
+        </div>
+        <div class="ddx-barres">
+          ${dens.map(x => `<div class="ddx-l"><div class="ddx-l-n">${x.p.nom}</div>
+            <div class="ddx-l-b"><span style="width:${Math.max(2, Math.round(x.cs / dens[0].cs * 100))}%;background:${infraCoul(x.part)}"></span></div>
+            <div class="ddx-l-v">${x.cs}</div></div>`).join("")}
+        </div>`,
+        `La longueur de la barre donne la taille du réseau, sa couleur l'état du parc.
+         ${Math.abs(partGros - partPetits) < 5
+           ? "Les deux groupes se tiennent : la taille du réseau n'explique pas son état, l'entretien ne suit ni la densité ni la dispersion."
+           : partGros > partPetits
+             ? "Les grands réseaux sont mieux entretenus que les petits, ce qui laisse les provinces les moins dotées avec un parc à la fois restreint et dégradé : le déficit s'y cumule."
+             : "Les petits réseaux sont mieux entretenus, la charge d'entretien croissant plus vite que la capacité à la porter dans les provinces au réseau dense."}`)}
+
+      ${card("Ce que les deux relevés ne recouvrent pas", "Périmètre et limites du relevé DIEM", `
+        <div class="ddx-stats">
+          ${[["Districts dans la liste des centres de santé", nDsCs, "relevé par district"],
+             ["Districts dans le relevé des hôpitaux", nDsHd, "un hôpital par district"],
+             ["Échelon du relevé hospitalier", "provincial", "aucune ventilation par district"],
+             ["États relevés", "deux", "bon état ou mauvais état, sans degré"]
+            ].map(([l, v, d]) => `<div class="ddx-st"><div class="ddx-st-l">${l}</div><div class="ddx-st-v">${v}</div><div class="ddx-st-d">${d}</div></div>`).join("")}
+        </div>`,
+        `${nDsCs !== nDsHd ? `Les deux relevés ne comptent pas le même nombre de districts : ${nDsCs} dans la liste des
+          centres de santé, ${nDsHd} dans celle des hôpitaux. L'écart d'une unité est à trancher avec la direction avant
+          tout croisement district par district. ` : ""}L'état est relevé en deux modalités sans degré de gravité ni
+         estimation de coût : le relevé permet de dire combien de structures sont à reprendre, non ce que la reprise
+         coûterait ni par quoi commencer. Les hôpitaux de province sont classés en bon état ou partiellement
+         endommagés, les autres échelons en bon ou mauvais état : les deux échelles ne se superposent pas et sont
+         tenues séparées ici plutôt que fondues en une seule.`)}
+    </div>` };
+};
+
+VIEWS["diem-prov"] = () => {
+  const crumbs = ["Infrastructures sanitaires", "Lecture provinciale"];
+  const et = `<div class="ph"><div class="ph-tag">Infrastructures sanitaires · DIEM</div>
+    <div class="ph-title">État du parc par province</div>`;
+  if (!INFRA) return { crumbs, html: et + `<div class="ph-sub">Relevé en cours de chargement.</div></div>` };
+  const niv = state.infraNiv || "cs";
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const onglets = `<div class="chc-tabs">${Object.keys(INFRA_NIV).map(k =>
+    `<button class="chc-tab ${niv === k ? "on" : ""}" onclick="setInfraNiv('${k}')">${INFRA_NIV[k].lib}</button>`).join("")}</div>`;
+
+  const tri = INFRA.provinces.slice().sort((a, b) =>
+    niv === "hp" ? (a.hp_etat === b.hp_etat ? a.nom.localeCompare(b.nom) : a.hp_etat === "bon" ? 1 : -1)
+                 : infraPart(a, niv) - infraPart(b, niv));
+  const lignes = tri.map(p => niv === "hp"
+    ? `<tr><td class="l"><strong>${p.nom}</strong></td><td>${p.hp_nom}</td>
+        <td><span class="pill ${p.hp_etat === "bon" ? "green" : "red"}">${p.hp_etat === "bon" ? "bon état" : "partiellement endommagé"}</span></td></tr>`
+    : `<tr><td class="l"><strong>${p.nom}</strong></td>
+        <td class="num">${p[niv + "_bon"]}</td><td class="num">${p[niv + "_mauvais"]}</td><td class="num">${p[niv + "_total"]}</td>
+        <td class="num"><span class="pill ${infraRag(infraPart(p, niv))}">${d1(infraPart(p, niv))} %</span></td></tr>`).join("");
+  const entete = niv === "hp"
+    ? `<tr><th>Province</th><th>Hôpital</th><th>État</th></tr>`
+    : `<tr><th>Province</th><th style="text-align:right">Bon état</th><th style="text-align:right">Mauvais état</th>
+       <th style="text-align:right">Total</th><th style="text-align:right">Part en bon état</th></tr>`;
+
+  /* Districts, disponibles pour le seul echelon des centres de sante. */
+  const ds = INFRA.districts.slice().sort((a, b) => (a.t ? a.b / a.t : 9) - (b.t ? b.b / b.t : 9)).slice(0, 12);
+  const nomP = {}; INFRA.provinces.forEach(p => { nomP[p.id] = p.nom; });
+
+  return { crumbs, html: et + `<div class="ph-sub">Le parc à chaque échelon, province par province.
+      Les hôpitaux de province sont relevés en état, les deux autres échelons en effectifs.</div></div>
+    <div class="content">
+      ${onglets}
+      <div class="g-2-1">
+        ${card("Carte du parc · " + INFRA_NIV[niv].lib, niv === "hp" ? "Un hôpital par province" : "Part des structures en bon état",
+          infraCarte(niv) + infraLegende(niv), "Source : relevé DIEM " + INFRA.meta.annee + ".")}
+        ${card("Classement · " + INFRA_NIV[niv].lib, "De la province la plus dégradée à la mieux dotée",
+          `<div class="cid-table-defile"><table class="dt"><thead>${entete}</thead><tbody>${lignes}</tbody></table></div>`, "")}
+      </div>
+      ${niv === "cs" ? card("Districts les plus dégradés", "Douze districts dont la part de centres de santé en bon état est la plus basse", `
+        <table class="dt"><thead><tr><th>District</th><th>Province</th><th style="text-align:right">Bon état</th>
+          <th style="text-align:right">Total</th><th style="text-align:right">Part</th></tr></thead>
+        <tbody>${ds.map(x => `<tr><td class="l"><strong>${x.d}</strong></td><td>${nomP[x.p]}</td>
+          <td class="num">${x.b}</td><td class="num">${x.t}</td>
+          <td class="num"><span class="pill ${infraRag(x.t ? x.b / x.t * 100 : null)}">${d1(x.t ? x.b / x.t * 100 : null)} %</span></td></tr>`).join("")}</tbody></table>`,
+        "Le relevé descend au district pour les centres de santé, ce qui permet un ciblage à cette maille. Les deux autres échelons ne sont tenus qu'au niveau provincial.") : ""}
     </div>` };
 };
 
