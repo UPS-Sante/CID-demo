@@ -9498,7 +9498,12 @@ function cidCat() { if (!window.__cidCat) window.__cidCat = cidCatalogue(); retu
 ============================================================== */
 function cidAlertes() {
   const A = [];
-  const pousse = (niv, dom, txt, det, prog, sub, periode) => A.push({ niv, dom, txt, det, prog, sub, periode });
+  /* Chaque regle declare la nature de ce qu'elle mesure et le niveau ou
+     la reponse se decide. Deduire ces deux champs du libelle apres coup
+     conduisait a classer en defaut de donnee toute alerte dont le detail
+     mentionnait un releve, c'est-a-dire presque toutes. */
+  const pousse = (niv, dom, txt, det, prog, sub, periode, nature, reponse) =>
+    A.push({ niv, dom, txt, det, prog, sub, periode, nature, reponse });
 
   /* vaccination : provinces sous la cible Penta3, cumul RIM */
   if (typeof pevDispo === "function" && pevDispo()) {
@@ -9508,7 +9513,7 @@ function cidAlertes() {
       pousse(sc.prov >= 8 ? "rouge" : "orange", "Vaccination",
         sc.prov + " provinces sous la cible Penta3",
         "Cible " + PEV.meta.cible_couverture + "% en cumul" + (bas ? ", plancher à " + bas.val + "% (" + bas.nom.charAt(0) + bas.nom.slice(1).toLowerCase() + ")" : "") + ".",
-        "vacc", "vacc-couv", PEV.meta.mois_max);
+        "vacc", "vacc-couv", PEV.meta.mois_max, "performance", "province");
     }
   }
   /* cholera : letalite au dessus du seuil OMS */
@@ -9517,14 +9522,14 @@ function cidAlertes() {
     if (g.letalite != null && g.letalite > 1) {
       pousse("rouge", "Choléra", "Létalité à " + g.letalite + "%, seuil de 1% dépassé",
         g.cas + " cas et " + g.deces + " décès cumulés, foyers Hadjer Lamis et N'Djamena.",
-        "cousp", "cousp-sitrep", (CHOL_P.meta && CHOL_P.meta.fin) || null);
+        "cousp", "cousp-sitrep", (CHOL_P.meta && CHOL_P.meta.fin) || null, "performance", "cabinet");
     }
   }
   /* DSR national : niveau et decrochage mensuel */
   if (DSRN) {
     const cp = cidDerniere(DSRN.indicateurs.cpn1.serie, DSRN.meta.mois_max);
     if (cp.v != null && cp.v < 80)
-      pousse("orange", "Santé maternelle", "Couverture CPN1 à " + Math.round(cp.v) + "%", "Relevé national de " + cidMois(cp.p) + ", cible 95%.", "dsr", "dsr-overview", cp.p);
+      pousse("orange", "Santé maternelle", "Couverture CPN1 à " + Math.round(cp.v) + "%", "Relevé national de " + cidMois(cp.p) + ", cible 95%.", "dsr", "dsr-overview", cp.p, "performance", "direction");
     let chutes = 0, exemple = null;
     Object.keys(DSRN.indicateurs).forEach(k => {
       const ind = DSRN.indicateurs[k];
@@ -9535,7 +9540,7 @@ function cidAlertes() {
     });
     if (chutes >= 3)
       pousse("orange", "Santé maternelle", chutes + " indicateurs DSR en repli de 15 points ou plus sur un mois",
-        "Dont " + exemple + ". Un décrochage simultané oriente vers un défaut de rapportage à vérifier avec la DSR.", "dsr", "dsr-overview", DSRN.meta.mois_max);
+        "Dont " + exemple + ". Un décrochage simultané oriente vers un défaut de rapportage à vérifier avec la DSR.", "dsr", "dsr-overview", DSRN.meta.mois_max, "qualite", "direction");
   }
   /* DSR provincial : mortalite maternelle hospitaliere elevee */
   if (DSRP) {
@@ -9550,7 +9555,7 @@ function cidAlertes() {
       pousse(eleves[0].v >= 1500 ? "rouge" : "orange", "Santé maternelle",
         eleves.length + " province" + (eleves.length > 1 ? "s" : "") + " au dessus de 700 décès maternels pour 100 000 en milieu hospitalier",
         "Maximum " + cidFmtNb(eleves[0].v) + " (" + cidProvNom(eleves[0].id) + ", " + cidMois(eleves[0].p) + ").",
-        "dsr", "dsr-mat", eleves[0].p);
+        "dsr", "dsr-mat", eleves[0].p, "performance", "province");
     }
   }
   /* DPSIS : completude et promptitude nationales */
@@ -9560,16 +9565,16 @@ function cidAlertes() {
     const comp = nat.rma_global ? nat.rma_global.comp : null;
     const promp = nat.rma_global ? nat.rma_global.promp : null;
     if (comp != null && comp < 90)
-      pousse("orange", "Rapportage", "Complétude RMA nationale à " + Math.round(comp) + "%", "Relevé de " + cidMois(derP) + ", cible 95%.", "dpsis", "dpsis-comp", derP);
+      pousse("orange", "Rapportage", "Complétude RMA nationale à " + Math.round(comp) + "%", "Relevé de " + cidMois(derP) + ", cible 95%.", "dpsis", "dpsis-comp", derP, "qualite", "direction");
     if (promp != null && promp < 80)
-      pousse("orange", "Rapportage", "Promptitude RMA nationale à " + Math.round(promp) + "%", "Relevé de " + cidMois(derP) + ", cible 90%.", "dpsis", "dpsis-comp", derP);
+      pousse("orange", "Rapportage", "Promptitude RMA nationale à " + Math.round(promp) + "%", "Relevé de " + cidMois(derP) + ", cible 90%.", "dpsis", "dpsis-comp", derP, "qualite", "direction");
     const faibles = Object.keys(PROV_CANON).filter(id => {
       const u = (DPSISQ.valeurs[derP] || {})[PROV_CANON[id]];
       return u && u.rma_global && u.rma_global.comp != null && u.rma_global.comp < 80;
     });
     if (faibles.length)
       pousse("jaune", "Rapportage", faibles.length + " province" + (faibles.length > 1 ? "s" : "") + " sous 80% de complétude RMA",
-        faibles.map(cidProvNom).slice(0, 4).join(", ") + (faibles.length > 4 ? "…" : "") + " · " + cidMois(derP) + ".", "dpsis", "dpsis-comp", derP);
+        faibles.map(cidProvNom).slice(0, 4).join(", ") + (faibles.length > 4 ? "…" : "") + " · " + cidMois(derP) + ".", "dpsis", "dpsis-comp", derP, "qualite", "province");
   }
   /* surveillance MEV : letalite non nulle sur maladies a potentiel epidemique */
   if (SURV) {
@@ -9579,23 +9584,23 @@ function cidAlertes() {
       if (!m) return;
       const nat = ((SURV.valeurs[derS] || {})["National"] || {})[code];
       if (nat && nat.let != null && nat.let > 0)
-        pousse("orange", "Surveillance", "Létalité " + m.libelle + " à " + nat.let + "%", "Relevé national de " + cidMois(derS) + ".", "vacc", "vacc-surv", derS);
+        pousse("orange", "Surveillance", "Létalité " + m.libelle + " à " + nat.let + "%", "Relevé national de " + cidMois(derS) + ".", "vacc", "vacc-surv", derS, "performance", "direction");
     });
   }
   /* logistique : indicateur de rupture eteint et stocks negatifs */
   if (DPML) {
     if (DPML.meta.ruptures_mois_max && DPML.meta.ruptures_mois_max < DPML.meta.stocks_mois_max)
       pousse("jaune", "Logistique", "Indicateur de rupture par FOSA sans relevé en 2026",
-        "Dernier relevé " + cidMois(DPML.meta.ruptures_mois_max) + ". La saisie DHIS2 est à réactiver avec la DGPML.", "dpml", "dpml-rupt", DPML.meta.ruptures_mois_max);
+        "Dernier relevé " + cidMois(DPML.meta.ruptures_mois_max) + ". La saisie DHIS2 est à réactiver avec la DGPML.", "dpml", "dpml-rupt", DPML.meta.ruptures_mois_max, "qualite", "direction");
     if (DPML.anomalies && DPML.anomalies.length)
       pousse("jaune", "Logistique", DPML.anomalies.length + " stocks de fin de mois négatifs en 2026",
-        "Valeurs affichées telles que transmises, correction attendue à la source.", "dpsis", "dpsis-qual", DPML.meta.stocks_mois_max);
+        "Valeurs affichées telles que transmises, correction attendue à la source.", "dpsis", "dpsis-qual", DPML.meta.stocks_mois_max, "qualite", "direction");
     const amox = (DPML.stocks.trac_amox_ad || {})["National"];
     const d = cidDerniere(amox, DPML.meta.stocks_mois_max);
     const prec = d.p ? amox[cidPrec(d.p)] : null;
     if (d.v != null && prec != null && prec > 0 && (prec - d.v) / prec >= 0.2)
       pousse("orange", "Logistique", "Stock national d'amoxicilline adulte en repli de " + Math.round((prec - d.v) / prec * 100) + "% sur un mois",
-        cidFmtNb(d.v) + " unités en " + cidMois(d.p) + " contre " + cidFmtNb(prec) + " le mois précédent.", "dpml", "dpml-dispo", d.p);
+        cidFmtNb(d.v) + " unités en " + cidMois(d.p) + " contre " + cidFmtNb(prec) + " le mois précédent.", "dpml", "dpml-dispo", d.p, "performance", "direction");
   }
   const poids = { rouge: 0, orange: 1, jaune: 2 };
   A.sort((a, b) => poids[a.niv] - poids[b.niv]);
@@ -9610,23 +9615,21 @@ function cidAlertes() {
    donnees le jugement repose.
 ============================================================== */
 
-/* Nature de l'alerte. Un ecart a une cible se traite par une decision
-   de programme ; un defaut de rapportage ou une valeur aberrante se
-   traite avec la source. Confondre les deux revient a demander a une
-   direction de corriger une performance que personne ne mesure. */
-const CID_AL_QUALITE = /rapportage|complétude|promptitude|relevé|saisie|négatif|aberrant|sans relevé|décrochage|repli de 15/i;
+/* Nature de l'alerte, telle que la regle qui l'a produite la declare.
+   Un ecart a une cible se traite par une decision de programme ; un
+   defaut de rapportage ou une valeur aberrante se reprend avec la
+   source. Confondre les deux revient a demander a une direction de
+   corriger une performance que personne ne mesure. */
 function cidAlNature(a) {
-  if (a.dom === "Rapportage") return "qualite";
-  if (CID_AL_QUALITE.test(a.txt + " " + a.det)) return "qualite";
-  return "performance";
+  if (a.nature) return a.nature;
+  return a.dom === "Rapportage" ? "qualite" : "performance";
 }
-/* Niveau ou la reponse se decide. Une alerte nationale sur un stock
-   central ne se traite pas dans une province, et l'inverse est vrai. */
+/* Niveau ou la reponse se decide, declare par la regle. Une alerte
+   nationale sur un stock central ne se traite pas dans une province,
+   et l'inverse est vrai. */
 function cidAlNiveauReponse(a) {
-  if (/province/i.test(a.txt)) return "province";
-  if (a.dom === "Logistique" || a.dom === "Rapportage") return "direction";
-  if (a.niv === "rouge") return "cabinet";
-  return "direction";
+  if (a.reponse) return a.reponse;
+  return a.niv === "rouge" ? "cabinet" : "direction";
 }
 /* Age de la donnee sur laquelle repose l'alerte, en mois pleins. Une
    alerte fondee sur un releve de plus de trois mois informe sur le
@@ -11341,7 +11344,6 @@ VIEWS["explor-dd"] = () => {
 
       ${card("Sur quels domaines", "Alertes par domaine, empilées par niveau de gravité", `
         <div class="ddx-doms">${barreDom}</div>
-        ${cholLegendeStatut ? "" : ""}
         <div class="chol-st-legende">
           <span class="chol-st-lib"><span class="chol-st-pastille" style="background:#B3372F"></span>Seuil critique franchi</span>
           <span class="chol-st-lib"><span class="chol-st-pastille" style="background:#D97B29"></span>Écart marqué à la cible</span>
