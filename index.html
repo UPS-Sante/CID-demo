@@ -3287,6 +3287,19 @@
   .fn-mx td { padding:5px 6px; border-bottom:1px solid var(--border); }
   .fn-mx th.c, .fn-mx td.c { text-align:center; }
   .fn-mx .pt { width:11px; height:11px; border-radius:50%; display:inline-block; }
+  /* --- fil des quatre lectures --- */
+  .fn-fil { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-bottom:16px; }
+  .fn-fil-e { display:flex; align-items:flex-start; gap:10px; text-align:left; cursor:pointer;
+              background:var(--surface); border:1px solid var(--border); border-top:3px solid var(--border-2);
+              border-radius:4px; padding:11px 13px; font:inherit; transition:border-color .15s, background .15s; }
+  .fn-fil-e:hover { border-color:var(--royal-pale); border-top-color:var(--royal-l); }
+  .fn-fil-e.on { border-top-color:var(--royal); background:var(--royal-tint); border-color:var(--royal-pale); }
+  .fn-fil-n { font:700 11px/1.1 var(--font-m,inherit); color:var(--muted); letter-spacing:.5px; padding-top:2px; }
+  .fn-fil-e.on .fn-fil-n { color:var(--royal); }
+  .fn-fil-x { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .fn-fil-t { font-family:var(--font-h); font-size:13px; font-weight:700; color:var(--ink); line-height:1.25; }
+  .fn-fil-q { font-size:10.5px; color:var(--muted); line-height:1.35; }
+  @media (max-width:640px){ .fn-fil { grid-template-columns:1fr; } }
   .ddx-etat { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
   .ddx-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:16px; }
   .ddx-st { background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
@@ -4544,8 +4557,8 @@ const PROGRAMS = [
     dir:"UPS-SANTÉ", groupe:"Outils transversaux",
     sub:[
       { id:"fonc-vue",   label:"État de fonctionnalité", status:"orange" },
-      { id:"fonc-carte", label:"Carte et filtres",       status:"orange" },
-      { id:"fonc-suivi", label:"Suivi dans le temps",    status:"orange" },
+      { id:"fonc-carte", label:"Lecture provinciale",    status:"orange" },
+      { id:"fonc-suivi", label:"Suivi mensuel",          status:"orange" },
       { id:"fonc-dd",    label:"Analyse approfondie",    status:"green" },
     ]
   },
@@ -14484,8 +14497,15 @@ function foncReferentiel() {
    invraisemblable reviendrait a faire passer un defaut de mesure pour une
    performance. Elle suspend le verdict au meme titre qu'une absence. */
 function foncEtat(c) {
-  const v = c.f();
-  if (v == null) return { etat: "nd", v: null };
+  /* Source unique : quand la condition figure dans FONC_FX, la lecture
+     nationale passe par le meme lecteur que la carte et le suivi, a la
+     periode courante du tableau de bord. Sans cela, la meme condition
+     pourrait porter deux valeurs selon la page ou on la regarde, et le
+     rapprochement des trois lectures perdrait tout sens. */
+  let v = null;
+  if (c.k && FONC_FX[c.k]) { try { v = FONC_FX[c.k](null, foncPer()); } catch (e) { v = null; } }
+  else { v = c.f(); }
+  if (v == null || Number.isNaN(v)) return { etat: "nd", v: null };
   if (c.cible == null) return { etat: "mesure", v: v };
   /* Cent pour cent est la borne logique d'un taux de couverture : au-dela,
      le numerateur excede son propre denominateur. Le meme seuil vaut ici et
@@ -14518,16 +14538,54 @@ function foncStatut(e) {
 /* Le verdict d'un programme au niveau national. La regle est isolee dans
    foncStatut pour que la lecture provinciale et le suivi mensuel appliquent
    exactement la meme, sans qu'une version puisse deriver de l'autre. */
-function foncVerdict(p) {
-  const e = p.conditions.map(c => Object.assign({ c: c }, foncEtat(c)));
+function foncVerdict(p, pilier) {
+  const conds = pilier ? p.conditions.filter(c => c.p === pilier) : p.conditions;
+  const e = conds.map(c => Object.assign({ c: c }, foncEtat(c)));
   return Object.assign({ e: e }, foncStatut(e));
 }
 const FONC_COUL = { ok: "#2E7D32", reserve: "#7FA83C", ko: "#B3372F", nd: "#75706B" };
+
+/* Les quatre lectures de la section repondent a quatre questions qui se
+   suivent. Le fil les rend visibles a chaque page : la regle, puis le lieu,
+   puis la duree, puis ce qui manque pour conclure. */
+const FONC_ETAPES = [
+  { id: "fonc-vue",   n: "01", t: "État de fonctionnalité", q: "Quelles conditions sont remplies" },
+  { id: "fonc-carte", n: "02", t: "Lecture provinciale",    q: "Où la question peut être instruite" },
+  { id: "fonc-suivi", n: "03", t: "Suivi mensuel",          q: "Depuis quand elle l'est" },
+  { id: "fonc-dd",    n: "04", t: "Analyse approfondie",    q: "Ce qui manque et à qui le demander" }
+];
+function foncFil(actif) {
+  return '<div class="fn-fil">' + FONC_ETAPES.map(function (e) {
+    return '<button class="fn-fil-e' + (e.id === actif ? " on" : "") + '" onclick="selectSub(\'fonc\',\'' + e.id + '\')">'
+      + '<span class="fn-fil-n">' + e.n + '</span>'
+      + '<span class="fn-fil-x"><span class="fn-fil-t">' + e.t + '</span>'
+      + '<span class="fn-fil-q">' + e.q + '</span></span></button>';
+  }).join("") + '</div>';
+}
+/* Cle des verdicts, reprise partout ou la couleur apparait : la carte, la
+   frise et les tableaux emploient le meme codage, il n'a pas a etre reappris
+   d'une page a l'autre. */
+function foncLegendeVerdict() {
+  return '<div class="fn-lg">'
+    + [["Fonctionnel", FONC_COUL.ok], ["Fonctionnel sous réserve", FONC_COUL.reserve],
+       ["Non fonctionnel", FONC_COUL.ko], ["Non établi", FONC_COUL.nd]]
+      .map(function (x) { return '<span><i style="background:' + x[1] + '"></i>' + x[0] + '</span>'; }).join("")
+    + '</div>';
+}
+/* Rappel de la regle, formule une seule fois et cite tel quel par les pages
+   qui en ont besoin. */
+function foncRegle() {
+  return "Un programme n'est pas fonctionnel à hauteur d'une moyenne : il l'est si chacune de ses conditions de "
+    + "fonctionnement est remplie. On ne vaccine pas sans chaîne du froid, quelle que soit la couverture affichée. "
+    + "La fonctionnalité se lit comme une conjonction, et une condition non mesurée interdit de conclure plutôt "
+    + "que de compter pour zéro.";
+}
 const FONC_ETC = { ok: "#2E7D32", mesure: "#3E6E78", ko: "#B3372F", hb: "#D97B29", nd: "#CEC8BA" };
 
 VIEWS["fonc-vue"] = () => {
-  const crumbs = ["Outils transversaux", "Fonctionnalité des programmes"];
-  const R = foncReferentiel().map(p => Object.assign({}, p, { v: foncVerdict(p) }));
+  const crumbs = ["Fonctionnalité des programmes", "État de fonctionnalité"];
+  const S = foncSel();
+  const R = S.R.map(p => Object.assign({}, p, { v: foncVerdict(p, S.pil) }));
   const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
   const nTotC = R.reduce((a, p) => a + p.v.nTot, 0);
   const nMesC = R.reduce((a, p) => a + p.v.nMes, 0);
@@ -14561,22 +14619,21 @@ VIEWS["fonc-vue"] = () => {
   return { crumbs, html: `
     <div class="ph"><div class="ph-tag">Fonctionnalité · UPS-Santé</div>
       <div class="ph-title">Ce qui fait qu'un programme fonctionne</div>
-      <div class="ph-sub">Un programme n'est pas fonctionnel à hauteur d'une moyenne : il l'est si chacune de ses
-        conditions de fonctionnement est remplie. On ne vaccine pas sans chaîne du froid, quelle que soit la
-        couverture affichée. La fonctionnalité se lit donc comme une conjonction, et une condition non mesurée
-        interdit de conclure plutôt que de compter pour zéro.</div></div>
+      <div class="ph-sub">${foncRegle()} ${cidMois(foncPer())} · ${foncPortee(S)}.</div></div>
     <div class="content">
+      ${foncFil("fonc-vue")}
+      ${foncBarre(S, {})}
       <div class="kpi-grid">
         ${kpi("Programmes examinés", R.length, "", "Conditions de fonctionnement recensées", "—", "flat", "", true)}
-        ${kpi("Conditions mesurées", nMesC, " /" + nTotC, d1(nMesC / nTotC * 100) + " % du référentiel",
+        ${kpi("Conditions exploitables", nMesC, " /" + nTotC, d1(nMesC / nTotC * 100) + " % du référentiel",
           nTotC - nMesC + " en attente de source", "flat", nMesC / nTotC >= 0.7 ? "green" : nMesC / nTotC >= 0.4 ? "orange" : "red", true)}
         ${kpi("Programmes dont la fonctionnalité est établie", nEtabli, " /" + R.length,
           "Toutes conditions nécessaires mesurées et remplies", "—", "flat", nEtabli ? "orange" : "red", true)}
-        ${kpi("Conditions nécessaires non mesurées", R.reduce((a, p) => a + p.v.nNecNd, 0), "",
+        ${kpi("Conditions nécessaires non exploitables", R.reduce((a, p) => a + p.v.nNecNd, 0), "",
           "Chacune interdit de conclure sur son programme", "—", "flat", "red", true)}
       </div>
       <div class="fn-grille">${R.map(carte).join("")}</div>
-      ${card("Comment ce verdict est établi", "Règle de lecture, identique pour tous les programmes", `
+      ${card("Comment ce verdict est établi", "Règle de lecture, identique à tous les programmes, à toutes les provinces et à tous les mois", `
         <table class="dt"><thead><tr><th>Verdict</th><th>Condition d'attribution</th><th>Ce qu'il autorise</th></tr></thead><tbody>
           <tr><td class="l"><span class="fn-pt" style="background:${FONC_COUL.ok}"></span><strong>Fonctionnel</strong></td>
             <td>Toutes les conditions sont mesurées et remplies</td><td>Le programme peut être piloté sur ses résultats</td></tr>
@@ -14590,7 +14647,7 @@ VIEWS["fonc-vue"] = () => {
             <td>Une condition nécessaire n'est pas mesurée, ou porte une valeur hors bornes</td>
             <td>Ni échec ni satisfecit : ouvrir ou reprendre la mesure de cette condition</td></tr>
         </tbody></table>`,
-        "Une couverture au-dessus de cent pour cent est traitée comme hors bornes et ne vaut pas remplissage : valider une condition sur une valeur invraisemblable ferait passer un défaut de dénominateur pour une performance. Une condition nécessaire non mesurée n'est pas davantage comptée pour zéro ni ignorée : elle suspend le verdict. C'est la seule lecture qui ne fasse pas passer un défaut de mesure pour une performance, ni une absence d'information pour une défaillance.")}
+        "Une couverture au-dessus de cent pour cent est traitée comme hors bornes et ne vaut pas remplissage : valider une condition sur une valeur invraisemblable ferait passer un défaut de dénominateur pour une performance. Une condition nécessaire non mesurée n'est pas davantage comptée pour zéro ni ignorée : elle suspend le verdict. C'est la seule lecture qui ne fasse pas passer un défaut de mesure pour une performance, ni une absence d'information pour une défaillance. Ce tableau vaut pour les trois autres lectures de la section, qui appliquent la même règle à une province ou à un mois plutôt qu'au pays et à la période courante.")}
     </div>` };
 };
 
@@ -14603,7 +14660,8 @@ VIEWS["fonc-vue"] = () => {
 ============================================================== */
 VIEWS["fonc-dd"] = () => {
   const crumbs = ["Fonctionnalité des programmes", "Analyse approfondie"];
-  const R = foncReferentiel().map(p => Object.assign({}, p, { v: foncVerdict(p) }));
+  const S = foncSel();
+  const R = S.R.map(p => Object.assign({}, p, { v: foncVerdict(p, S.pil) }));
   const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
   const toutes = [];
   R.forEach(p => p.v.e.forEach(x => toutes.push({ prog: p.prog, lib: p.lib, dir: p.dir, x: x })));
@@ -14648,8 +14706,10 @@ VIEWS["fonc-dd"] = () => {
       <div class="ph-sub">La vue par programme dit où chacun bute. Celle-ci lit le référentiel en travers :
         ${mesC} des ${totC} conditions sont exploitables, ${necMes} des ${necTot} conditions nécessaires le sont.
         Tant que ce second rapport n'approche pas de un, la fonctionnalité reste une question ouverte plutôt
-        qu'un constat.</div></div>
+        qu'un constat. ${cidMois(foncPer())} · ${foncPortee(S)}.</div></div>
     <div class="content">
+      ${foncFil("fonc-dd")}
+      ${foncBarre(S, {})}
       ${card("Quel pilier fait défaut", "Conditions exploitables par pilier, tous programmes confondus", `
         <table class="dt"><thead><tr><th>Pilier</th><th>Ce qu'il recouvre</th><th style="text-align:right">Conditions</th>
           <th style="text-align:right">Exploitables</th><th style="text-align:right">Nécessaires bloquées</th></tr></thead>
@@ -14942,15 +15002,28 @@ function foncLegende(mode) {
 function foncGroupeFiltre(lib, items, cle, actif) {
   return '<div class="fn-f-g"><div class="fn-f-l">' + lib + '</div>' + cidChips(items, cle, actif) + '</div>';
 }
-function foncFiltres(S, avecMode) {
+/* Une seule barre pour les quatre lectures. Le programme et le pilier
+   retenus valent d'une page a l'autre : passer de la carte au suivi ne remet
+   pas la selection a zero, sans quoi les trois lectures ne se comparent pas.
+   Les commandes propres a une page s'ajoutent a droite. */
+function foncBarre(S, opts) {
+  opts = opts || {};
   const progs = [{ v: "*", l: "Tous les programmes" }].concat(foncProgs().map(function (p) { return { v: p.prog, l: p.prog }; }));
   const pil = [{ v: "*", l: "Tous les piliers" }].concat(Object.keys(FONC_PILIERS).map(function (k) { return { v: k, l: FONC_PILIERS[k].lib }; }));
   const modes = [{ v: "remplies", l: "Conditions remplies" }, { v: "instr", l: "Conditions exploitables" }, { v: "verdict", l: "Verdict" }];
-  return '<div class="fn-f">'
+  let h = '<div class="fn-f">'
     + foncGroupeFiltre("Programme", progs, "__foncProg", S.prog)
-    + foncGroupeFiltre("Pilier", pil, "__foncPil", S.pil || "*")
-    + (avecMode ? foncGroupeFiltre("Lecture de la carte", modes, "__foncMode", S.mode) : "")
-    + '</div>';
+    + foncGroupeFiltre("Pilier", pil, "__foncPil", S.pil || "*");
+  if (opts.mode) h += foncGroupeFiltre("Lecture de la carte", modes, "__foncMode", S.mode);
+  if (opts.prof) h += foncGroupeFiltre("Profondeur", [{ v: "12", l: "12 mois" }, { v: "24", l: "24 mois" }], "__foncProf", String(opts.prof));
+  if (opts.prov) h += foncGroupeFiltre("Échelle", opts.prov.items, "__foncProv", opts.prov.actif);
+  return h + '</div>';
+}
+function foncFiltres(S, avecMode) { return foncBarre(S, { mode: !!avecMode }); }
+/* Ce que la selection courante restreint, dit en clair sous le titre. */
+function foncPortee(S) {
+  const p = S.prog === "*" ? "tous programmes" : (foncProgs().filter(function (x) { return x.prog === S.prog; })[0] || {}).lib;
+  return p + " · " + (S.pil ? FONC_PILIERS[S.pil].lib.toLowerCase() : "tous piliers");
 }
 
 /* ---- graphique de serie ---- */
@@ -15013,7 +15086,7 @@ function foncCouvertureProv(c, per) {
    VUE · CARTE DE LA FONCTIONNALITE
 ============================================================== */
 VIEWS["fonc-carte"] = function () {
-  const crumbs = ["Fonctionnalité des programmes", "Carte et filtres"];
+  const crumbs = ["Fonctionnalité des programmes", "Lecture provinciale"];
   const S = foncSel(), per = foncPer();
   const d1 = function (x) { return x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ","); };
   const ids = Object.keys(PROVINCE_PATHS);
@@ -15071,7 +15144,6 @@ VIEWS["fonc-carte"] = function () {
     + '</tbody></table>';
 
   const nomP = S.prog === "*" ? "tous programmes" : (foncProgs().filter(function (p) { return p.prog === S.prog; })[0] || {}).lib;
-  const nomPil = S.pil ? FONC_PILIERS[S.pil].lib.toLowerCase() : "tous piliers";
 
   const notes = {
     verdict: "Le verdict cartographié est celui du programme le plus en défaut du périmètre retenu : un programme en ordre ne compense pas un programme en défaut, et l'agrégation retient la situation la moins favorable. Une province en gris n'est pas une province en échec, c'est une province où une condition nécessaire n'est pas mesurée.",
@@ -15084,12 +15156,12 @@ VIEWS["fonc-carte"] = function () {
   return { crumbs: crumbs, html: ''
     + '<div class="ph"><div class="ph-tag">Fonctionnalité · lecture provinciale</div>'
     + '<div class="ph-title">Où la fonctionnalité peut être établie</div>'
-    + '<div class="ph-sub">La règle ne change pas d\'un niveau à l\'autre : un programme est fonctionnel dans une province '
-    + 'si chacune de ses conditions y est remplie, et une condition nécessaire non mesurée y suspend le verdict comme ailleurs. '
-    + 'La carte porte deux informations distinctes qu\'il faut lire séparément, l\'état constaté et la capacité à le constater. '
-    + cidMois(per) + ' · ' + nomP + ' · ' + nomPil + '.</div></div>'
+    + '<div class="ph-sub">La règle ne change pas d\'un niveau à l\'autre : elle est appliquée ici à chaque province '
+    + 'plutôt qu\'au pays. La carte porte deux informations distinctes qu\'il faut lire séparément, l\'état constaté et '
+    + 'la capacité à le constater. ' + cidMois(per) + ' · ' + foncPortee(S) + '.</div></div>'
     + '<div class="content">'
-    + foncFiltres(S, true)
+    + foncFil("fonc-carte")
+    + foncBarre(S, { mode: true })
     + '<div class="kpi-grid">'
     + kpi("Provinces dont le verdict est établi", etabli, " /" + ids.length,
         "Conditions nécessaires mesurées et remplies", "—", "flat", etabli ? "orange" : "red", true)
@@ -15106,7 +15178,7 @@ VIEWS["fonc-carte"] = function () {
         foncCarteSVG(par, S.mode) + foncLegende(S.mode), notes[S.mode])
     + card("Province par province", "Rangées de la moins instruite à la mieux instruite", tblProv,
         "L'ordre du tableau est celui de la demande à porter. Une province où le verdict est suspendu appelle une transmission, une province où une condition nécessaire est mesurée et non remplie appelle une décision. Les deux se ressemblent sur la carte et ne se traitent pas de la même façon.")
-    + card("Croisement province et programme", "Même règle, lue dans les deux sens · " + cidMois(per), matrice,
+    + card("Croisement province et programme", "Même règle, lue dans les deux sens · " + cidMois(per), matrice + foncLegendeVerdict(),
         "Une colonne uniformément grise désigne un programme qu'aucune province ne permet d'instruire : le manque est alors national et tient à la source, non au terrain. Une ligne grise désigne une province absente des remontées, ce qui relève de la chaîne de transmission.")
     + '</div>' };
 };
@@ -15118,7 +15190,7 @@ VIEWS["fonc-carte"] = function () {
    quand elle a cesse de l'etre, et si le verdict s'est deplace.
 ============================================================== */
 VIEWS["fonc-suivi"] = function () {
-  const crumbs = ["Fonctionnalité des programmes", "Suivi dans le temps"];
+  const crumbs = ["Fonctionnalité des programmes", "Suivi mensuel"];
   const S = foncSel();
   const prof = [12, 24].indexOf(Number(window.__foncProf)) >= 0 ? Number(window.__foncProf) : 12;
   const pid = PROV_CANON[window.__foncProv] ? window.__foncProv : null;
@@ -15173,20 +15245,17 @@ VIEWS["fonc-suivi"] = function () {
   const provs = [{ v: "*", l: "National" }].concat(
     Object.keys(PROV_CANON).sort(function (a, b) { return cidProvNom(a).localeCompare(cidProvNom(b)); })
       .map(function (id) { return { v: id, l: cidProvNom(id) }; }));
-  const barre = '<div class="fn-f">'
-    + foncGroupeFiltre("Programme", [{ v: "*", l: "Tous les programmes" }].concat(foncProgs().map(function (p) { return { v: p.prog, l: p.prog }; })), "__foncProg", S.prog)
-    + foncGroupeFiltre("Pilier", [{ v: "*", l: "Tous les piliers" }].concat(Object.keys(FONC_PILIERS).map(function (k) { return { v: k, l: FONC_PILIERS[k].lib }; })), "__foncPil", S.pil || "*")
-    + foncGroupeFiltre("Profondeur", [{ v: "12", l: "12 mois" }, { v: "24", l: "24 mois" }], "__foncProf", String(prof))
-    + foncGroupeFiltre("Échelle", provs, "__foncProv", pid || "*")
-    + '</div>';
+  const barre = foncBarre(S, { prof: prof, prov: { items: provs, actif: pid || "*" } });
 
   return { crumbs: crumbs, html: ''
     + '<div class="ph"><div class="ph-tag">Fonctionnalité · suivi</div>'
     + '<div class="ph-title">Depuis quand la question est instruite</div>'
     + '<div class="ph-sub">Un verdict pris un mois donné ne dit pas s\'il tient. La même règle est rejouée sur ' + prof
     + ' mois : la frise donne l\'état du programme mois après mois, la courbe donne le nombre de conditions que la mesure '
-    + 'permet d\'exploiter. ' + (pid ? cidProvNom(pid) : "National") + ' · ' + cidMois(mois[0]) + ' à ' + cidMois(mois[mois.length - 1]) + '.</div></div>'
+    + 'permet d\'exploiter. ' + (pid ? cidProvNom(pid) : "National") + ' · ' + foncPortee(S) + ' · '
+    + cidMois(mois[0]) + ' à ' + cidMois(mois[mois.length - 1]) + '.</div></div>'
     + '<div class="content">'
+    + foncFil("fonc-suivi")
     + barre
     + '<div class="kpi-grid">'
     + kpi("Conditions exploitables au dernier mois", derMes, " /" + totC,
@@ -15201,7 +15270,7 @@ VIEWS["fonc-suivi"] = function () {
         "Toutes conditions nécessaires mesurées et remplies", "—", "flat", nEtabDer ? "orange" : "red", true)
     + '</div>'
     + card("Frise des verdicts", "Un mois par case, du plus ancien au plus récent",
-        F.map(function (f) { return f.html; }).join(""),
+        F.map(function (f) { return f.html; }).join("") + foncLegendeVerdict(),
         "Une frise d'une seule couleur ne signifie pas que le programme est stable : le plus souvent, la condition qui bloque le verdict n'a jamais été mesurée sur la fenêtre. Le survol donne, pour chaque mois, le nombre de conditions exploitables.")
     + card("Ce que la mesure permet d'exploiter", "Nombre de conditions, mois par mois",
         foncSerieSVG([
