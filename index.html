@@ -3297,6 +3297,15 @@
   .rim-tr-v, .rim-tr-o, .rim-tr-e { text-align:right; font-variant-numeric:tabular-nums; }
   .rim-tr-v span { color:var(--muted); }
   .rim-tr-e { font-weight:700; }
+  /* --- comparaison avant et apres --- */
+  .sup-av { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:22px; }
+  .sup-av-t { font-family:var(--font-h); font-size:13px; font-weight:700; color:var(--ink); margin-bottom:9px; }
+  .sup-av-t span { display:block; font-family:inherit; font-size:10.5px; font-weight:400; color:var(--muted); }
+  .sup-av-l { display:grid; grid-template-columns:100px 1fr 62px; gap:9px; align-items:center; margin-bottom:6px; font-size:11.5px; }
+  .sup-av-l .l1 { color:var(--muted); }
+  .sup-av-g { height:11px; background:#F1EFEA; border-radius:2px; overflow:hidden; }
+  .sup-av-g i { display:block; height:100%; border-radius:2px; }
+  .sup-av-l .v1 { text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); }
   @media (max-width:760px){ .rim-tr { grid-template-columns:1.4fr 1fr .6fr; } .rim-tr-b, .rim-tr-o { display:none; } }
   /* --- fil des quatre lectures --- */
   .fn-fil { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-bottom:16px; }
@@ -4482,6 +4491,7 @@ const PROGRAMS = [
       { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"yellow" },
       { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"yellow" },
       { id:"vacc-super",     label:"Supervision & monitorage", status:"orange" },
+      { id:"vacc-sup-effet", label:"Effet des supervisions",   status:"orange" },
       { id:"vacc-deepdive",  i18n_key:"sub_vacc_deepdive", label:"Analyse approfondie", status:"orange" },
     ]
   },
@@ -14633,8 +14643,185 @@ VIEWS["vacc-super"] = function () {
         + "Ce que le relevé établit est plus modeste et suffit à décider : la supervision n'accompagne pas la rétention, et la perte entre la première et la troisième dose ne se traitera pas par ce levier seul.")
     + card("Provinces", "Rangées de la moins supervisée à la mieux supervisée", tblP,
         "La colonne des districts sans aucune visite compte les districts où le relevé ne porte aucune supervision sur sept mois. Elle ne se déduit pas du taux provincial : une province peut afficher un taux moyen acceptable et laisser deux districts entièrement hors du dispositif.")
+    + card("Ce que le relevé de terrain ajoute", "Base des visites de supervision et synthèse trimestrielle 2023", `
+        <p>Le taux porté sur cette page est administratif : il compte des visites déclarées, sans dire ce qu'elles ont
+        trouvé ni ce qu'elles ont changé. Les relevés de terrain répondent aux deux questions, sur un autre périmètre
+        et sur d'autres années.</p>
+        <div class="mini-liens"><button class="lien-btn" onclick="selectSub('vacc','vacc-sup-effet')">Effet des supervisions sur la routine →</button></div>`,
+        "Les deux lectures ne se remplacent pas. Le taux administratif dit si le geste est posé et couvre les vingt-trois provinces en 2026 ; le relevé de terrain dit ce que le geste produit et couvre douze provinces de 2020 à 2024. Rapprocher les deux demande d'abord de fixer une définition commune, ce que la page de terrain examine.")
     + card("Districts les moins couverts par le dispositif", "Dix-huit premiers du classement", tblD,
         "Le rapprochement avec la couverture et l'abandon se lit district par district et non comme une règle. Un district sans supervision et à couverture élevée existe dans ce tableau : il signale soit un dénominateur trop bas, soit un dispositif qui tient sans visite, et la distinction se fait sur place.")
+    + '</div>' };
+};
+
+/* ==============================================================
+   PEV · CE QUE LA SUPERVISION PRODUIT
+   Les releves de supervision sont collectes pour ameliorer la
+   routine. La question est de savoir s'ils y parviennent, et
+   elle se tranche sur les centres visites plusieurs fois : le
+   meme centre, avant et apres. Le dispositif ne comporte pas de
+   temoin, et cette vue le dit plutot que de conclure a sa place.
+============================================================== */
+let PEVSUP = null;
+fetch("pev_supervision.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { PEVSUP = j; if (String(state.sub).indexOf("vacc") === 0) renderMain(); }).catch(() => {});
+
+function supP(p) {
+  if (p == null) return "ND";
+  return p < 0.0001 ? "moins de 0,0001" : String(Math.round(p * 10000) / 10000).replace(".", ",");
+}
+
+VIEWS["vacc-sup-effet"] = function () {
+  const crumbs = ["Vaccination · PEV", "Effet des supervisions"];
+  const et = '<div class="ph"><div class="ph-tag">Programme Élargi de Vaccination · relevés de terrain</div>'
+    + '<div class="ph-title">La supervision améliore-t-elle la routine</div>';
+  if (!PEVSUP) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevés de supervision en cours de chargement.</div></div>' };
+
+  const S = PEVSUP, M = S.meta, A = S.appariement, R = A.routine;
+  const d1 = function (x) { return x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ","); };
+  const d2 = function (x) { return x == null ? "ND" : String(Math.round(x * 100) / 100).replace(".", ","); };
+
+  /* Grille des exigences, rangee de la moins tenue a la mieux tenue : c'est
+     l'ordre de ce qu'une visite peut corriger. */
+  const gr = S.grille.slice().sort(function (a, b) { return a.taux - b.taux; });
+  const tblG = '<table class="dt"><thead><tr><th>Exigence</th><th>Pilier</th>'
+    + '<th style="text-align:right">Conforme</th><th style="text-align:right">Visites renseignées</th></tr></thead><tbody>'
+    + gr.map(function (g) {
+        const cls = g.taux >= 85 ? "green" : g.taux >= 70 ? "orange" : "red";
+        return '<tr><td class="l"><strong>' + g.lib + '</strong></td><td>' + g.pilier + '</td>'
+          + '<td class="num"><span class="pill ' + cls + '">' + d1(g.taux) + ' %</span></td>'
+          + '<td class="num">' + g.conf + ' / ' + g.n + '</td></tr>';
+      }).join("")
+    + S.conditionnels.map(function (g) {
+        const cls = g.taux >= 85 ? "green" : g.taux >= 70 ? "orange" : "red";
+        return '<tr><td class="l">' + g.lib + '<div class="dsr-o">observé seulement lorsqu\'une séance est en cours</div></td>'
+          + '<td>prestation</td><td class="num"><span class="pill ' + cls + '">' + d1(g.taux) + ' %</span></td>'
+          + '<td class="num">' + g.conf + ' / ' + g.n + '</td></tr>';
+      }).join("")
+    + '</tbody></table>';
+
+  /* Progression appariee : premiere et derniere visite du meme centre. */
+  const barres = '<div class="sup-av">'
+    + [["Score de conformité à la grille", A.sc0, A.sc1, "%", "sur " + A.n_centres + " centres"],
+       ["Penta 3 rapporté à la cible de la zone", R ? R.v0 : null, R ? R.v1 : null, " points de cible", R ? "sur " + R.n + " centres" : ""]]
+      .map(function (x) {
+        const w0 = Math.min(100, (x[1] || 0) / (x[0].indexOf("Score") === 0 ? 100 : 15) * 100);
+        const w1 = Math.min(100, (x[2] || 0) / (x[0].indexOf("Score") === 0 ? 100 : 15) * 100);
+        return '<div class="sup-av-b"><div class="sup-av-t">' + x[0] + '<span>' + x[4] + '</span></div>'
+          + '<div class="sup-av-l"><span class="l1">Première visite</span>'
+          + '<div class="sup-av-g"><i style="width:' + w0 + '%;background:#8FA6C9"></i></div>'
+          + '<span class="v1">' + d2(x[1]) + '</span></div>'
+          + '<div class="sup-av-l"><span class="l1">Dernière visite</span>'
+          + '<div class="sup-av-g"><i style="width:' + w1 + '%;background:#1F3864"></i></div>'
+          + '<span class="v1"><strong>' + d2(x[2]) + '</strong></span></div></div>';
+      }).join("") + '</div>';
+
+  const tblT = '<table class="dt"><thead><tr><th>Groupe selon le score de la première visite</th>'
+    + '<th style="text-align:right">Score initial moyen</th><th style="text-align:right">Gain moyen</th>'
+    + '<th style="text-align:right">Centres</th></tr></thead><tbody>'
+    + A.terciles.map(function (t) {
+        return '<tr><td class="l"><strong>' + t.lib + '</strong></td>'
+          + '<td class="num">' + d1(t.sc0) + '</td>'
+          + '<td class="num" style="color:' + (t.gain > 0 ? "#2E7D32" : "#B3372F") + ';font-weight:700">'
+          + (t.gain >= 0 ? "+" : "") + d2(t.gain) + '</td>'
+          + '<td class="num">' + t.n + '</td></tr>';
+      }).join("") + '</tbody></table>';
+
+  const T = A.trajectoire;
+  const tests = `<div class="ddx-stats">
+    <div class="ddx-st"><div class="ddx-st-l">Écart de conformité, dernière moins première visite</div>
+      <div class="ddx-st-v">+${d2(A.ecart)}</div>
+      <div class="ddx-st-d">intervalle de confiance à 95 % de ${d2(A.ic[0])} à ${d2(A.ic[1])} points</div></div>
+    <div class="ddx-st"><div class="ddx-st-l">Test des signes sur la conformité</div>
+      <div class="ddx-st-v">p = ${supP(A.p)}</div>
+      <div class="ddx-st-d">${A.pos} en hausse, ${A.neg} en baisse, ${A.nul} stables</div></div>
+    <div class="ddx-st"><div class="ddx-st-l">Test des signes sur le Penta 3 local</div>
+      <div class="ddx-st-v">p = ${R ? supP(R.p) : "ND"}</div>
+      <div class="ddx-st-d">${R ? R.pos + " en hausse, " + R.neg + " en baisse" : ""}</div></div>
+    <div class="ddx-st"><div class="ddx-st-l">Corrélation entre score initial et gain</div>
+      <div class="ddx-st-v">${String(A.corr_initial_gain).replace(".", ",")}</div>
+      <div class="ddx-st-d">signature d'un retour vers la moyenne</div></div>
+    <div class="ddx-st"><div class="ddx-st-l">Trajectoire des centres vus au moins trois fois</div>
+      <div class="ddx-st-v">${d1(T.p)} → ${d1(T.m)} → ${d1(T.d)}</div>
+      <div class="ddx-st-d">première, intermédiaire, dernière · ${T.n} centres</div></div>
+    <div class="ddx-st"><div class="ddx-st-l">Lien transversal entre conformité et couverture</div>
+      <div class="ddx-st-v">${String(A.corr_score_couv).replace(".", ",")}</div>
+      <div class="ddx-st-d">toutes visites confondues</div></div>
+  </div>`;
+
+  const F = S.froid, D = S.denominateur;
+  const motifs = Object.keys(F.motifs_non_livraison).map(function (k) {
+    return '<tr><td class="l">' + k + '</td><td class="num">' + F.motifs_non_livraison[k] + '</td></tr>'; }).join("");
+  const tblF = '<table class="dt"><thead><tr><th>Motif porté au relevé quand le vaccin n\'est pas livré</th>'
+    + '<th style="text-align:right">Visites</th></tr></thead><tbody>' + motifs + '</tbody></table>';
+
+  const C = S.croisement;
+  const tblC = '<table class="dt"><thead><tr><th>Province</th>'
+    + '<th style="text-align:right">Zones 2023</th><th style="text-align:right">Zones 2026</th>'
+    + '<th style="text-align:right">Taux trimestriel 2023</th><th style="text-align:right">Au moins une visite au trimestre 2023</th>'
+    + '<th style="text-align:right">Taux administratif 2026</th></tr></thead><tbody>'
+    + C.map(function (x) {
+        const ev = x.zr_2023 && x.zr_2026 ? (x.zr_2026 - x.zr_2023) : null;
+        return '<tr><td class="l"><strong>' + x.nom + '</strong></td>'
+          + '<td class="num">' + (x.zr_2023 || "ND") + '</td>'
+          + '<td class="num">' + (x.zr_2026 || "ND") + (ev ? '<div class="dsr-o">' + (ev > 0 ? "+" : "") + ev + '</div>' : "") + '</td>'
+          + '<td class="num">' + (x.taux_2023_trim == null ? '<span class="dsr-o">ND</span>' : d1(x.taux_2023_trim) + " %") + '</td>'
+          + '<td class="num">' + (x.taux_2023_aumoins1 == null ? '<span class="dsr-o">ND</span>' : d1(x.taux_2023_aumoins1) + " %") + '</td>'
+          + '<td class="num">' + (x.taux_2026 == null ? '<span class="dsr-o">ND</span>' : d1(x.taux_2026) + " %") + '</td></tr>';
+      }).join("") + '</tbody></table>';
+
+  const zrPlus = C.filter(function (x) { return x.zr_2023 && x.zr_2026 && x.zr_2026 > x.zr_2023; }).length;
+  const CN = S.croisement_national || {};
+
+  return { crumbs: crumbs, html: et
+    + '<div class="ph-sub">Les relevés de supervision existent pour redresser la routine, et le seul moyen de savoir '
+    + 's\'ils y parviennent est de suivre le même centre d\'une visite à l\'autre. ' + M.n_visites + ' visites de '
+    + M.annee_min + ' à ' + M.annee_max + ' dans ' + M.n_centres + ' centres de ' + M.n_provinces + ' provinces, '
+    + 'dont ' + A.n_centres + ' centres vus au moins deux fois. La réponse est affirmative sur ce que la visite mesure, '
+    + 'et le dispositif ne permet pas de l\'attribuer à la visite seule.</div></div>'
+    + '<div class="content">'
+    + '<div class="kpi-grid">'
+    + kpi("Conformité à la grille", d1(S.score.med), " %", "Médiane des " + M.n_visites + " visites · onze exigences",
+        "—", "flat", S.score.med >= 85 ? "green" : S.score.med >= 70 ? "orange" : "red", true)
+    + kpi("Gain entre première et dernière visite", "+" + d2(A.ecart), " points", A.pos + " centres en hausse contre " + A.neg + " en baisse",
+        "—", "flat", "green", true)
+    + kpi("Penta 3 local, même comparaison", R ? "+" + d2(R.ecart) : "ND", " points de cible",
+        R ? R.pos + " en hausse contre " + R.neg + " en baisse" : "", "—", "flat", "green", true)
+    + kpi("Intervalle médian entre deux visites", A.jours_med, " jours", "Un même centre est revu deux fois par an environ",
+        "—", "flat", "", true)
+    + '</div>'
+    + card("Ce que la visite trouve", "Onze exigences posées à chaque visite, rangées de la moins tenue à la mieux tenue", tblG,
+        "La formation au PEV est l'exigence la moins tenue et la seule qui ne se corrige pas sur place : une visite peut faire afficher une courbe ou rouvrir un échéancier dans la journée, elle ne forme pas un agent. Les six dernières lignes ne sont observées que lorsqu'une séance est en cours, soit une visite sur deux : leurs taux portent sur un autre dénominateur et ne se comparent pas aux onze premières.")
+    + card("Le même centre, avant et après", "Première et dernière visite des " + A.n_centres + " centres revus", barres,
+        "La comparaison porte sur le même centre, ce qui écarte l'effet de composition : ce n'est pas parce que les centres visités seraient différents des autres que les deux moyennes diffèrent. Le Penta 3 est rapporté à la cible annuelle de la zone telle que le relevé la porte, et se lit en points de cette cible atteints au moment de la visite, non en couverture annuelle.")
+    + card("Ce que les tests établissent", "Et ce qu'ils n'établissent pas", tests,
+        "La conformité progresse de " + d2(A.ecart) + " points et l'indicateur de routine du même centre progresse aussi : deux tests des signes concordants, sur des mesures indépendantes l'une de l'autre. "
+        + "La corrélation de " + String(A.corr_initial_gain).replace(".", ",") + " entre le score de départ et le gain est cependant la signature classique d'un retour vers la moyenne : un centre mesuré bas une fois remonte en partie à la mesure suivante, visite ou pas. "
+        + "La trajectoire des centres vus trois fois joue en sens inverse, puisqu'elle continue de monter après le deuxième passage là où un simple retour vers la moyenne se serait arrêté. "
+        + "Enfin le lien transversal entre conformité et couverture est faible : c'est le mouvement qui va de pair, pas le niveau.")
+    + card("Selon le point de départ", "Centres répartis en trois groupes selon leur première visite", tblT,
+        "Tout le gain se concentre sur le tiers parti le plus bas, et le tiers le mieux tenu ne bouge pas. Deux lectures restent ouvertes et le relevé ne permet pas de choisir entre elles : la visite corrige ce qui est corrigeable et n'a rien à corriger ailleurs, ou la mesure basse du premier passage était en partie fortuite. "
+        + "Trancher demanderait des centres témoins non visités, mesurés aux mêmes dates. Le dispositif actuel n'en produit pas, et c'est la seule chose qui manque pour conclure.")
+    + card("Ce que le relevé dit de la chaîne du froid", "Réponses portées aux " + F.visites + " visites", tblF,
+        "Aucune des " + F.visites + " visites ne relève de réfrigérateur au centre de santé, et l'absence de réfrigérateur fonctionnel est le motif porté à "
+        + F.motifs_non_livraison["Pas de réfrigérateur fonctionnel dans le centre de santé"] + " des " + (F.livraison["Non"] || 0) + " non-livraisons. "
+        + "La condition de chaîne du froid au point de vaccination, portée comme non mesurée au référentiel de fonctionnalité, est donc mesurée sur cet échantillon et n'y est pas remplie. L'échantillon ne couvre pas le pays et suffit à ouvrir la question auprès de la DLMVSE.")
+    + card("Contrôle des dénominateurs", "Cible annuelle rapportée à la population de la zone, " + D.n + " zones",
+        `<div class="ddx-stats">
+          <div class="ddx-st"><div class="ddx-st-l">Rapport médian</div><div class="ddx-st-v">${d2(D.med)} %</div>
+            <div class="ddx-st-d">convention nationale ${d2(D.convention)} %</div></div>
+          <div class="ddx-st"><div class="ddx-st-l">Premier décile</div><div class="ddx-st-v">${d2(D.p10)} %</div><div class="ddx-st-d">—</div></div>
+          <div class="ddx-st"><div class="ddx-st-l">Dernier décile</div><div class="ddx-st-v">${d2(D.p90)} %</div><div class="ddx-st-d">—</div></div>
+          <div class="ddx-st"><div class="ddx-st-l">Zones hors de la fourchette de 3 à 6 %</div>
+            <div class="ddx-st-v">${D.hors_convention}</div><div class="ddx-st-d">sur ${D.n} zones</div></div>
+        </div>`,
+        "Le rapport entre la cible des zéro à onze mois et la population de la zone vaut " + d2(D.med) + " pour cent du premier au dernier décile : la convention est appliquée telle quelle sur le terrain. "
+        + "Les couvertures au-dessus de cent pour cent relevées dans le rapport intégré ne viennent donc pas de ce rapport, mais de la population de base retenue ou du numérateur. C'est une piste que le contrôle ferme, ce qui vaut mieux que de la laisser ouverte.")
+    + card("Croisement des deux sources", "Relevé opérationnel 2023 et rapport administratif 2026", tblC,
+        "Les deux sources ne se recouvrent pas dans le temps, et le relevé 2023 ne porte que sur " + CN.n_provinces + " provinces. Leur rapprochement tient donc aux définitions et à la géographie, non aux mêmes mois : le total 2026 est ramené aux mêmes provinces pour que la comparaison ait un sens. "
+        + "Trois mesures nommées de la même façon y donnent trois résultats : " + d1(CN.trim_2023) + " pour cent au taux trimestriel 2023, " + d1(CN.aumoins1_2023) + " pour cent pour les zones vues au moins une fois dans le trimestre, " + d1(CN.taux_2026) + " pour cent au taux mensuel cumulé de 2026. "
+        + "Entre la première et la deuxième, l'écart est de " + d1(CN.aumoins1_2023 - CN.trim_2023) + " points sans qu'une seule visite change. Le choix de la définition pèse donc autant que le dispositif lui-même, et il doit être arrêté avant d'être suivi. "
+        + "Le nombre de zones de responsabilité augmente par ailleurs dans " + zrPlus + " des " + C.length + " provinces communes, de " + CN.zr_2023 + " à " + CN.zr_2026 + " au total, jusqu'à cinquante-cinq zones pour le seul Ouaddaï : un taux qui monte peut traduire un dénominateur qui bouge autant qu'un dispositif qui s'étend, et la comparaison d'une année sur l'autre demande de fixer d'abord la carte sanitaire de référence.")
     + '</div>' };
 };
 
