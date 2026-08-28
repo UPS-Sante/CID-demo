@@ -3927,9 +3927,88 @@
   .chol-choix { display:flex; flex-direction:column; gap:10px; }
   .chc-tabs { display:flex; gap:8px; flex-wrap:wrap; }
   .chc-ech { margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border); }
-  .chol-nat { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:20px; align-items:start; }
-  .chol-nat-tbl .dt { font-size:12px; }
-  @media (max-width:900px){ .chol-nat { grid-template-columns:1fr; } }
+  /* Cadre calibre au format seize neuvieme : une capture de ce bloc tient
+     telle quelle dans une diapositive, sans recadrage ni remontage.
+     Les tailles sont exprimees en pourcentage de la largeur du cadre, de
+     sorte que la composition reste identique quelle que soit la resolution
+     d'ecran : la capture faite sur un portable et celle faite sur un grand
+     ecran donnent la meme image. */
+  .chol-nat-cadre { aspect-ratio:16/9; width:100%; display:flex; flex-direction:column;
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:1.3cqw 1.45cqw; gap:0.95cqw; overflow:hidden; container-type:inline-size; }
+  .cn-tete { flex:0 0 auto; }
+  .cn-titre { font-family:var(--font-h); font-size:1.38cqw; font-weight:700; color:var(--ink);
+    display:flex; justify-content:space-between; align-items:baseline; gap:1cqw; margin-bottom:0.8cqw; }
+  .cn-titre span { font-family:var(--font); font-size:0.92cqw; font-weight:600; color:var(--muted); }
+  .cn-kpis { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:0.8cqw; }
+  .cn-k { background:var(--surface-2); border:1px solid var(--border); border-radius:0.55cqw; padding:0.55cqw 0.72cqw; }
+  .cn-k-l { font-size:0.76cqw; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--muted); line-height:1.25; }
+  .cn-k-v { font-family:var(--font-h); font-size:1.78cqw; font-weight:700; color:var(--ink); line-height:1.15; margin:0.1cqw 0; }
+  .cn-k-d { font-size:0.8cqw; color:var(--muted); line-height:1.3; }
+  .cn-corps { flex:1 1 auto; display:grid; grid-template-columns:minmax(0,0.82fr) minmax(0,1.18fr);
+    gap:1.25cqw; min-height:0; }
+  .cn-carte { min-height:0; display:flex; align-items:center; justify-content:center; }
+  .cn-carte svg { width:100%; height:100%; max-height:100%; display:block; }
+  .cn-droite { min-height:0; display:flex; flex-direction:column; gap:0.85cqw; }
+  .cn-bloc { background:var(--surface-2); border:1px solid var(--border); border-radius:0.62cqw; padding:0.7cqw 0.88cqw; }
+  .cn-bloc-ins { flex:1 1 auto; overflow:hidden; }
+  .cn-bloc-t { font-family:var(--font-h); font-size:1cqw; font-weight:700; color:var(--ink); margin-bottom:0.48cqw;
+    display:flex; justify-content:space-between; align-items:baseline; gap:0.8cqw; }
+  .cn-bloc-s { font-family:var(--font); font-size:0.8cqw; font-weight:600; color:var(--muted); white-space:nowrap; }
+  .cn-tbl { width:100%; border-collapse:collapse; font-size:0.92cqw; }
+  .cn-tbl th { text-align:right; font-size:0.72cqw; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    color:var(--muted); padding:0 0 0.32cqw; border-bottom:1px solid var(--border); }
+  .cn-tbl th:first-child { text-align:left; }
+  .cn-tbl td { padding:0.4cqw 0; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .cn-tbl td.l { text-align:left; }
+  .cn-tbl td.num { text-align:right; }
+  .cn-tbl tr:last-child td { border-bottom:none; }
+  .cn-tbl .pill { font-size:0.8cqw; padding:0.12cqw 0.42cqw; }
+  .cn-tbl .chol-st-pastille { width:0.78cqw; height:0.78cqw; margin-right:0.42cqw; }
+  .cn-b { text-align:right; white-space:nowrap; }
+  .cn-b .cn-bar { display:inline-block; width:3.5cqw; height:0.64cqw; background:var(--surface);
+    border:1px solid var(--border); border-radius:0.16cqw; vertical-align:middle; margin-right:0.4cqw; overflow:hidden; }
+  .cn-b .cn-bar span { display:block; height:100%; }
+  .cn-b > span { font-weight:700; font-size:0.92cqw; color:var(--ink); }
+  .cn-ins { border-left:0.24cqw solid var(--border); padding:0 0 0 0.72cqw; margin-bottom:0.58cqw; }
+  .cn-ins:last-child { margin-bottom:0; }
+  .cn-ins.n-red { border-left-color:#B3372F; }
+  .cn-ins.n-orange { border-left-color:#D97B29; }
+  .cn-ins.n-vert { border-left-color:#2E7D32; }
+  .cn-ins-t { font-size:0.92cqw; font-weight:700; color:var(--ink); margin-bottom:0.14cqw; }
+  .cn-ins-d { font-size:0.84cqw; line-height:1.42; color:var(--body); }
+  .cn-pied { flex:0 0 auto; display:flex; justify-content:space-between; align-items:center;
+    gap:1.1cqw; flex-wrap:wrap; }
+  .cn-pied .chol-st-legende { border-top:none; padding-top:0; margin-top:0; gap:0.4cqw 0.95cqw; }
+  .cn-pied .chol-st-lib { font-size:0.82cqw; }
+  .cn-pied .chol-st-pastille { width:0.72cqw; height:0.72cqw; margin-right:0.4cqw; }
+  .cn-src { font-size:0.78cqw; color:var(--muted); text-align:right; }
+  /* En dessous de sept cents pixels de cadre, la troisieme lecture ne tient
+     plus sans reduire les deux premieres sous le seuil de lisibilite : elle
+     est masquee plutot que compressee. */
+  @container (max-width: 760px){
+    .cn-ins:nth-child(4) { display:none; }
+    .cn-ins-d { line-height:1.34; }
+  }
+  /* Sous une certaine largeur, le format diapositive n'a plus de sens :
+     le cadre se deplie en une colonne et retrouve des tailles absolues. */
+  @media (max-width:900px){
+    .chol-nat-cadre { aspect-ratio:auto; padding:14px; gap:12px; container-type:normal; }
+    .cn-corps { grid-template-columns:1fr; }
+    .cn-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .cn-carte svg { max-height:380px; }
+    .chol-nat-cadre .cn-titre { font-size:16px; } .chol-nat-cadre .cn-titre span { font-size:11px; }
+    .chol-nat-cadre .cn-k-l { font-size:9.5px; } .chol-nat-cadre .cn-k-v { font-size:21px; }
+    .chol-nat-cadre .cn-k-d { font-size:10px; }
+    .chol-nat-cadre .cn-bloc-t { font-size:12.5px; } .chol-nat-cadre .cn-bloc-s { font-size:10px; }
+    .chol-nat-cadre .cn-tbl { font-size:11.5px; } .chol-nat-cadre .cn-tbl th { font-size:9px; }
+    .chol-nat-cadre .cn-b .cn-bar { width:44px; height:8px; }
+    .chol-nat-cadre .cn-b > span { font-size:11.5px; }
+    .chol-nat-cadre .cn-ins { border-left-width:3px; padding-left:9px; }
+    .chol-nat-cadre .cn-ins-t { font-size:11.5px; } .chol-nat-cadre .cn-ins-d { font-size:10.5px; }
+    .chol-nat-cadre .cn-pied .chol-st-lib { font-size:11px; }
+    .chol-nat-cadre .cn-src { font-size:10px; }
+  }
   .chc-tab { font-size:12px; font-weight:600; padding:6px 13px; border-radius:20px; border:1px solid var(--border); background:#fff; color:var(--muted); cursor:pointer; transition:all .15s; }
   .chc-tab.on { background:var(--royal); color:#fff; border-color:var(--royal); }
   .chc-tab:hover:not(.on) { border-color:var(--royal); color:var(--royal); }
@@ -7543,74 +7622,214 @@ function cholProvinces() {
   return { par: out, inconnues: inconnues };
 }
 
+/* Adjacence des provinces, calculee une fois depuis les traces eux-memes :
+   deux provinces sont voisines si leurs contours partagent des sommets. Le
+   perimetre de vigilance en decoule sans table saisie a la main. */
+let CHOL_ADJ = null;
+function cholAdjacence() {
+  if (CHOL_ADJ) return CHOL_ADJ;
+  const TOL = 1.2, cle = {}, som = {};
+  PROVINCES.forEach(p => {
+    const g = PROVINCE_PATHS[p.id]; if (!g) return;
+    const pts = [], re = /([\d.]+),([\d.]+)/g; let m;
+    while ((m = re.exec(g.d))) pts.push([Math.round(m[1] / TOL), Math.round(m[2] / TOL)]);
+    som[p.id] = pts;
+  });
+  Object.keys(som).forEach(id => { cle[id] = new Set(som[id].map(q => q[0] + ":" + q[1])); });
+  const adj = {}; Object.keys(som).forEach(id => { adj[id] = []; });
+  const ids = Object.keys(som);
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+    const a = ids[i], b = ids[j]; let n = 0;
+    for (const q of som[b]) {
+      let ok = false;
+      for (let dx = -1; dx <= 1 && !ok; dx++) for (let dy = -1; dy <= 1 && !ok; dy++)
+        if (cle[a].has((q[0] + dx) + ":" + (q[1] + dy))) ok = true;
+      if (ok && ++n >= 3) break;
+    }
+    if (n >= 3) { adj[a].push(b); adj[b].push(a); }
+  }
+  return (CHOL_ADJ = adj);
+}
+
 /* Carte nationale : les vingt-trois provinces, colorees par le statut du
    foyer qu'elles portent. Les provinces sans notification restent en gris
    clair, elles ne sont pas au vert : n'avoir aucun cas notifie et avoir un
-   foyer eteint depuis dix jours ne se valent pas. */
+   foyer eteint depuis dix jours ne se valent pas.
+   Le bloc est calibre pour tenir dans une diapositive au format seize
+   neuvieme : une capture du cadre suffit, sans recadrage ni remontage. */
 function cholCarteNationale() {
   const A = cholProvinces(), par = A.par;
+  const adj = cholAdjacence();
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const POP = (CHOL_P && CHOL_P.sitrep && CHOL_P.sitrep.populations) || {};
+
+  const touch = Object.values(par).filter(o => PROVINCE_PATHS[o.id])
+    .sort((a, b) => PROVINCE_PATHS[a.id].cy - PROVINCE_PATHS[b.id].cy);
+  const actifs = touch.filter(o => o.statut !== "eteint");
+  const totCas = touch.reduce((a, o) => a + o.cas, 0);
+  const totDec = touch.reduce((a, o) => a + o.deces, 0);
+  const totRec = touch.reduce((a, o) => a + o.recents, 0);
+  const nDist = touch.reduce((a, o) => a + o.districts.length, 0);
+  const cfrNat = totCas ? Math.round(totDec / totCas * 1000) / 10 : null;
+  const popExp = Object.keys(POP).reduce((a, k) => a + POP[k], 0);
+
+  /* Perimetre de vigilance : provinces limitrophes d'un foyer, sans
+     notification propre. C'est la ou la surveillance doit porter avant que
+     le premier cas y soit compte. */
+  const idsTouch = touch.map(o => o.id);
+  const vigil = [];
+  touch.forEach(o => (adj[o.id] || []).forEach(v => {
+    if (idsTouch.indexOf(v) < 0 && vigil.indexOf(v) < 0) vigil.push(v);
+  }));
+  const vigilActif = [];
+  actifs.forEach(o => (adj[o.id] || []).forEach(v => {
+    if (idsTouch.indexOf(v) < 0 && vigilActif.indexOf(v) < 0) vigilActif.push(v);
+  }));
+  const nomProv = id => (PROVINCES.find(p => p.id === id) || {}).name || id;
+
+  /* --- carte --- */
   const paths = PROVINCES.map(pv => {
     const geo = PROVINCE_PATHS[pv.id]; if (!geo) return "";
     const o = par[pv.id];
-    if (!o) return `<path d="${geo.d}" fill="var(--surface-2)" stroke="#fff" stroke-width="1.1"
-      ><title>${pv.name} · aucun cas notifié</title></path>`;
-    const c = CHOL_STATUT[o.statut];
-    const cls = o.statut === "culture" ? ' class="cf-pulse"' : "";
-    return `<path${cls} d="${geo.d}" fill="${c.c}" stroke="#fff" stroke-width="1.4"
-      ><title>${pv.name} · ${o.cas} cas, ${o.deces} décès, létalité ${o.cfr == null ? "ND" : String(o.cfr).replace(".", ",")}% · ${c.lib.toLowerCase()} · ${o.districts.length} district${o.districts.length > 1 ? "s" : ""} touché${o.districts.length > 1 ? "s" : ""}</title></path>`;
+    if (!o) {
+      const v = vigil.indexOf(pv.id) >= 0;
+      return `<path d="${geo.d}" fill="${v ? "#EDE6DA" : "var(--surface-2)"}"
+        stroke="${v ? "#B08D2A" : "#fff"}" stroke-width="${v ? 1.6 : 1}" ${v ? 'stroke-dasharray="5 3"' : ""}
+        ><title>${pv.name} · aucun cas notifié${v ? " · limitrophe d'un foyer" : ""}</title></path>`;
+    }
+    const c = CHOL_STATUT[o.statut].c;
+    return `<path${o.statut === "culture" ? ' class="cf-pulse"' : ""} d="${geo.d}" fill="${c}" stroke="#fff" stroke-width="1.4"
+      ><title>${pv.name} · ${o.cas} cas, ${o.deces} décès, létalité ${d1(o.cfr)}% · ${CHOL_STATUT[o.statut].lib.toLowerCase()}</title></path>`;
   }).join("");
-  /* A l'echelle nationale, une province enclavee comme N'Djamena couvre
-     quelques pixels : sa couleur seule ne la signale pas. Chaque province
-     touchee recoit donc un marqueur circulaire proportionne a ses cas et
-     une etiquette deportee reliee par un trait, de sorte que la taille du
-     territoire ne commande pas la visibilite du foyer. */
-  /* Les etiquettes sont empilees depuis une base commune plutot que
-     depuis le centroide de chaque province : deux foyers voisins ont des
-     centroides trop proches pour que l'etagement les separe. */
-  const touch = Object.values(par).filter(o => PROVINCE_PATHS[o.id])
-    .sort((a, b) => PROVINCE_PATHS[a.id].cy - PROVINCE_PATHS[b.id].cy);
   const cmax = Math.max(1, ...touch.map(o => o.cas));
-  const yBase = touch.length
-    ? touch.reduce((a, o) => a + PROVINCE_PATHS[o.id].cy, 0) / touch.length : 0;
+  const yBase = touch.length ? touch.reduce((a, o) => a + PROVINCE_PATHS[o.id].cy, 0) / touch.length : 0;
   const marq = touch.map((o, i) => {
-    const geo = PROVINCE_PATHS[o.id]; if (!geo) return "";
+    const geo = PROVINCE_PATHS[o.id];
     const pv = PROVINCES.find(x => x.id === o.id) || { short: o.nom };
     const c = CHOL_STATUT[o.statut].c;
-    const r = 9 + 13 * Math.sqrt(o.cas / cmax);
-    /* Les etiquettes sont deportees a droite et etagees pour ne pas se
-       recouvrir quand deux foyers sont voisins. */
-    const lx = 480, ly = yBase + (i - (touch.length - 1) / 2) * 54;
+    const r = 10 + 14 * Math.sqrt(o.cas / cmax);
+    const lx = 470, ly = yBase + (i - (touch.length - 1) / 2) * 62;
     return `<g pointer-events="none">
-      <line x1="${geo.cx}" y1="${geo.cy}" x2="${lx - 6}" y2="${ly}" stroke="${c}" stroke-width="1.5" stroke-dasharray="4 3" opacity=".8"/>
-      <circle cx="${geo.cx}" cy="${geo.cy}" r="${r.toFixed(1)}" fill="${c}" fill-opacity=".28"
-        stroke="${c}" stroke-width="2.4"${o.statut === "culture" ? ' class="cf-pulse"' : ""}/>
-      <circle cx="${geo.cx}" cy="${geo.cy}" r="3.4" fill="${c}" stroke="#fff" stroke-width="1.2"/>
-      <text x="${lx}" y="${ly - 4}" font-size="14" font-weight="700" fill="var(--ink)">${pv.short}</text>
-      <text x="${lx}" y="${ly + 13}" font-size="13" font-weight="800" fill="${c}">${o.cas} cas · ${o.deces} décès</text>
+      <line x1="${geo.cx}" y1="${geo.cy}" x2="${lx - 8}" y2="${ly}" stroke="${c}" stroke-width="1.6" stroke-dasharray="4 3" opacity=".85"/>
+      <circle cx="${geo.cx}" cy="${geo.cy}" r="${r.toFixed(1)}" fill="${c}" fill-opacity=".26"
+        stroke="${c}" stroke-width="2.6"${o.statut === "culture" ? ' class="cf-pulse"' : ""}/>
+      <circle cx="${geo.cx}" cy="${geo.cy}" r="3.6" fill="${c}" stroke="#fff" stroke-width="1.3"/>
+      <text x="${lx}" y="${ly - 6}" font-size="19" font-weight="700" fill="#1F3864">${pv.short}</text>
+      <text x="${lx}" y="${ly + 14}" font-size="17" font-weight="800" fill="${c}">${o.cas} cas · ${o.deces} décès</text>
+      <text x="${lx}" y="${ly + 32}" font-size="15" fill="#75706B">${CHOL_STATUT[o.statut].lib.toLowerCase()}</text>
     </g>`;
   }).join("");
-  const lab = marq;
-  const touchees = Object.values(par).sort((a, b) => b.cas - a.cas);
-  const lignes = touchees.map(o => `
-    <tr><td class="l">${cholPastille(o.statut, true)}<strong>${o.nom}</strong></td>
-      <td class="num">${o.cas}</td><td class="num">${o.deces}</td>
-      <td class="num">${o.cfr == null ? "ND" : String(o.cfr).replace(".", ",")} %</td>
-      <td class="l">${o.districts.sort((a, b) => CHOL_STATUT[b.statut].rang - CHOL_STATUT[a.statut].rang)
-        .map(d => `${d.nom} (${CHOL_STATUT[d.statut].court})`).join(", ")}</td></tr>`).join("");
-  const indemnes = PROVINCES.length - touchees.length;
-  return `<div class="chol-nat">
-    <div class="chol-nat-carte">
-      <svg viewBox="0 0 720 946.5" style="width:100%;max-height:620px">${paths}${lab}</svg>
-      ${cholLegendeStatut('<span class="chol-st-lib"><span class="chol-st-pastille" style="background:var(--surface-2);border:1px solid var(--border)"></span>Aucun cas notifié</span>')}
+
+  /* --- analyses --- */
+  const barre = (v, tot, c) => `<span style="width:${tot ? (v / tot * 100).toFixed(1) : 0}%;background:${c}"></span>`;
+  const poids = touch.slice().sort((a, b) => b.cas - a.cas).map(o => {
+    const c = CHOL_STATUT[o.statut].c;
+    return `<tr>
+      <td class="l">${cholPastille(o.statut, true)}<strong>${o.nom}</strong></td>
+      <td class="cn-b"><div class="cn-bar">${barre(o.cas, totCas, c)}</div><span>${o.cas}</span></td>
+      <td class="cn-b"><div class="cn-bar">${barre(o.deces, totDec, c)}</div><span>${o.deces}</span></td>
+      <td class="num"><span class="pill ${ragChol(o.cfr)}">${d1(o.cfr)} %</span></td>
+      <td class="num">${o.recents || "—"}</td></tr>`;
+  }).join("");
+
+  /* Courbe epidemique par province : la carte dit ou, le tableau dit combien,
+     la courbe dit quand. Les series de district sont agregees par province
+     sur les semaines couvertes par l'analyse. */
+  const sems = (CHOL_A && CHOL_A.meta && CHOL_A.meta.sems) || [];
+  const serieProv = {};
+  if (CHOL_A) CHOL_A.districts.forEach(d => {
+    const id = CHOL_PROV_ID[d.prov]; if (!id || !d.courbe) return;
+    const t = serieProv[id] || (serieProv[id] = new Array(sems.length).fill(0));
+    d.courbe.forEach((v, k) => { if (k < t.length) t[k] += v || 0; });
+  });
+  const ordreProv = touch.map(o => o.id).filter(id => serieProv[id]);
+  const totSem = sems.map((_, k) => ordreProv.reduce((a, id) => a + (serieProv[id][k] || 0), 0));
+  const pmax = Math.max(1, ...totSem);
+  /* Le graphique est trace large et plat : dans un cadre au format
+     diapositive, la hauteur est la ressource rare. */
+  const CW = 600, CH = 112, CPL = 26, CPB = 16;
+  const bw = (CW - CPL - 4) / Math.max(1, sems.length);
+  let cg = "";
+  for (let k = 0; k <= 2; k++) { const yy = 4 + (CH - CPB - 4) * (1 - k / 2);
+    cg += `<line x1="${CPL}" y1="${yy.toFixed(1)}" x2="${CW - 4}" y2="${yy.toFixed(1)}" stroke="#E4E0D5" stroke-width=".8"/>
+      <text x="${CPL - 4}" y="${(yy + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="#75706B">${Math.round(pmax * k / 2)}</text>`; }
+  sems.forEach((sm, k) => {
+    let y0 = CH - CPB;
+    ordreProv.forEach(id => {
+      const v = serieProv[id][k] || 0; if (!v) return;
+      const h = (CH - CPB - 4) * v / pmax;
+      y0 -= h;
+      cg += `<rect x="${(CPL + k * bw + bw * .16).toFixed(1)}" y="${y0.toFixed(1)}" width="${(bw * .68).toFixed(1)}"
+        height="${h.toFixed(1)}" fill="${CHOL_STATUT[par[id].statut].c}" rx=".8"><title>S${sm} · ${par[id].nom} : ${v} cas</title></rect>`;
+    });
+    if (k % 2 === 0 || k === sems.length - 1)
+      cg += `<text x="${(CPL + k * bw + bw * .5).toFixed(1)}" y="${CH - 4}" text-anchor="middle" font-size="9" fill="#75706B">S${sm}</text>`;
+  });
+  const kPic = totSem.indexOf(pmax);
+  const courbeHTML = `<svg viewBox="0 0 ${CW} ${CH}" style="width:100%;height:auto;display:block">${cg}</svg>`;
+
+  /* Ecart de letalite entre provinces : c'est le constat que la carte seule
+     ne donne pas, une province peut peser peu en cas et beaucoup en deces. */
+  const parCfr = touch.slice().filter(o => o.cfr != null).sort((a, b) => b.cfr - a.cfr);
+  const haut = parCfr[0], bas = parCfr[parCfr.length - 1];
+  const ecartCfr = (haut && bas && haut !== bas) ? haut.cfr - bas.cfr : null;
+  const partCasHaut = haut && totCas ? haut.cas / totCas * 100 : null;
+  const partDecHaut = haut && totDec ? haut.deces / totDec * 100 : null;
+
+  const lecture = [];
+  if (ecartCfr != null) lecture.push({ n: "red", t: "La létalité ne suit pas le volume",
+    d: `${haut.nom} porte ${d1(partCasHaut)} % des cas et ${d1(partDecHaut)} % des décès, pour une létalité de ${d1(haut.cfr)} %
+        contre ${d1(bas.cfr)} % à ${bas.nom}. ${d1(ecartCfr)} points séparent les deux provinces : l'écart tient à la prise en charge
+        et au délai de recours, non à la souche.` });
+  if (actifs.length) lecture.push({ n: "orange", t: "Où la transmission se poursuit",
+    d: `${totRec} cas sur les deux dernières semaines, tous dans ${actifs.map(o => o.nom).join(" et ")}.
+        ${touch.length > actifs.length ? touch.filter(o => o.statut === "eteint").map(o => o.nom).join(", ") + " n'a plus notifié depuis dix jours et sort de l'épisode." : ""}
+        Le foyer s'est déplacé du rural vers l'urbain.` });
+  else lecture.push({ n: "vert", t: "Aucune transmission active", d: `Aucun cas notifié sur les deux dernières semaines dans les provinces atteintes.` });
+  if (vigilActif.length) lecture.push({ n: "orange", t: "Périmètre de vigilance",
+    d: `${vigilActif.map(nomProv).join(", ")} ${vigilActif.length > 1 ? "sont limitrophes" : "est limitrophe"} d'un foyer encore actif sans avoir notifié de cas.
+        La surveillance y précède le premier cas ; l'absence de notification n'y vaut pas absence de circulation.` });
+
+  const insHTML = lecture.map(i => `<div class="cn-ins n-${i.n}">
+    <div class="cn-ins-t">${i.t}</div><div class="cn-ins-d">${i.d}</div></div>`).join("");
+
+  return `<div class="chol-nat-cadre">
+    <div class="cn-tete">
+      <div class="cn-titre">Choléra · situation nationale<span>${periodeChol()}</span></div>
+      <div class="cn-kpis">
+        ${[["Cas cumulés", nb(totCas), touch.length + " province" + (touch.length > 1 ? "s" : "") + " sur " + PROVINCES.length],
+           ["Décès cumulés", nb(totDec), "létalité " + d1(cfrNat) + " %"],
+           ["Districts touchés", nDist, actifs.length ? actifs.reduce((a, o) => a + o.districts.filter(d => d.statut !== "eteint").length, 0) + " en transmission" : "aucun actif"],
+           ["Cas des 2 dernières semaines", nb(totRec), totRec ? "transmission en cours" : "aucun cas récent"],
+           ["Population des districts atteints", popExp ? nb(popExp) : "ND", popExp ? "recensée pour " + Object.keys(POP).length + " districts" : "populations non transmises"]
+          ].map(([l, v, d]) => `<div class="cn-k"><div class="cn-k-l">${l}</div><div class="cn-k-v">${v}</div><div class="cn-k-d">${d}</div></div>`).join("")}
+      </div>
     </div>
-    <div class="chol-nat-tbl">
-      <table class="dt"><thead><tr><th>Province</th><th style="text-align:right">Cas</th>
-        <th style="text-align:right">Décès</th><th style="text-align:right">Létalité</th><th>Districts touchés</th></tr></thead>
-      <tbody>${lignes}</tbody></table>
-      <div class="dsr-o" style="margin-top:9px">${touchees.length} province${touchees.length > 1 ? "s" : ""} touchée${touchees.length > 1 ? "s" : ""} sur ${PROVINCES.length},
-        ${indemnes} sans notification. Une province sans cas reste en gris : l'absence de notification ne vaut pas
-        absence de circulation, elle vaut absence de signal.
-        ${A.inconnues.length ? `<br><strong>À signaler :</strong> ${A.inconnues.join(", ")} n'est pas rattaché à une province de la carte.` : ""}</div>
+    <div class="cn-corps">
+      <div class="cn-carte">
+        <svg viewBox="0 0 700 946.5" preserveAspectRatio="xMidYMid meet">${paths}${marq}</svg>
+      </div>
+      <div class="cn-droite">
+        <div class="cn-bloc">
+          <div class="cn-bloc-t">Poids de chaque province dans l'épisode</div>
+          <table class="cn-tbl"><thead><tr><th>Province</th><th>Cas</th><th>Décès</th><th>Létalité</th><th>2 sem.</th></tr></thead>
+          <tbody>${poids}</tbody></table>
+        </div>
+        <div class="cn-bloc">
+          <div class="cn-bloc-t">Courbe épidémique par province<span class="cn-bloc-s">semaines ${sems[0]} à ${sems[sems.length - 1]}, pic de ${pmax} cas en S${sems[kPic]}</span></div>
+          ${courbeHTML}
+        </div>
+        <div class="cn-bloc cn-bloc-ins">
+          <div class="cn-bloc-t">Ce que la répartition dit</div>
+          ${insHTML}
+        </div>
+      </div>
+    </div>
+    <div class="cn-pied">
+      ${cholLegendeStatut(`<span class="chol-st-lib"><span class="chol-st-pastille" style="background:var(--surface-2);border:1px solid var(--border)"></span>Aucun cas notifié</span>
+        <span class="chol-st-lib"><span class="chol-st-pastille" style="background:#EDE6DA;border:1.5px dashed #B08D2A"></span>Limitrophe d'un foyer</span>`)}
+      <span class="cn-src">Liste linéaire de surveillance du COUSP · ${dateChol(CHOL_P && CHOL_P.meta ? CHOL_P.meta.fin : null)}${A.inconnues.length ? " · à signaler : " + A.inconnues.join(", ") + " non rattaché à une province" : ""}</span>
     </div>
   </div>`;
 }
