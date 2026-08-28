@@ -3287,6 +3287,17 @@
   .fn-mx td { padding:5px 6px; border-bottom:1px solid var(--border); }
   .fn-mx th.c, .fn-mx td.c { text-align:center; }
   .fn-mx .pt { width:11px; height:11px; border-radius:50%; display:inline-block; }
+  /* --- trajectoire RIM --- */
+  .rim-tr { display:grid; grid-template-columns:1.6fr 2.2fr 1.15fr .5fr .5fr; gap:12px; align-items:center;
+            padding:6px 0; border-top:1px solid var(--border); font-size:12px; }
+  .rim-tr-h { border-top:none; font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+  .rim-tr-l { color:var(--ink); }
+  .rim-tr-b { height:9px; background:var(--surface-2,#F1EFEA); border-radius:2px; overflow:hidden; }
+  .rim-tr-b span { display:block; height:100%; border-radius:2px; }
+  .rim-tr-v, .rim-tr-o, .rim-tr-e { text-align:right; font-variant-numeric:tabular-nums; }
+  .rim-tr-v span { color:var(--muted); }
+  .rim-tr-e { font-weight:700; }
+  @media (max-width:760px){ .rim-tr { grid-template-columns:1.4fr 1fr .6fr; } .rim-tr-b, .rim-tr-o { display:none; } }
   /* --- fil des quatre lectures --- */
   .fn-fil { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-bottom:16px; }
   .fn-fil-e { display:flex; align-items:flex-start; gap:10px; text-align:left; cursor:pointer;
@@ -4470,6 +4481,7 @@ const PROGRAMS = [
       { id:"vacc-pda",       i18n_key:"sub_vacc_pda",      label:"PDA · Protocole d'Accord", status:"yellow", pda:true },
       { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"yellow" },
       { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"yellow" },
+      { id:"vacc-super",     label:"Supervision & monitorage", status:"orange" },
       { id:"vacc-deepdive",  i18n_key:"sub_vacc_deepdive", label:"Analyse approfondie", status:"orange" },
     ]
   },
@@ -12408,6 +12420,47 @@ VIEWS["vacc-deepdive"] = () => {
       ${card("Ce que le tampon logistique explique vraiment", "Test d'association intra-province, doses du mois contre tampon du mois précédent", infer)}
       ${card("Équité entre districts", "Couverture Penta3 par quintile de districts, cumul du semestre", equite + cidTestClassement("pev:Penta3"))}
       ${card("Lecture et priorités", "Ce que les données commandent de faire, dans l'ordre", actions)}
+      ${(() => {
+        /* Trajectoire d'une annee sur l'autre. Le releve RIM porte les memes
+           sept mois en 2025 et en 2026 : la comparaison est a perimetre
+           constant, ce qui n'est pas le cas d'un ecart entre deux annees
+           completes. Elle dit dans quel sens va chaque antigene, et l'ecart
+           a la cible dit s'il y va assez vite. */
+        if (!PEVRIM || !PEVRIM.trajectoire || !PEVRIM.trajectoire.length) return "";
+        const T = PEVRIM.trajectoire.filter(t => t.a2025 != null && t.a2026 != null);
+        if (!T.length) return "";
+        const dd = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+        const ecart = t => t.a2026 - t.a2025;
+        const tri = T.slice().sort((x, y) => ecart(x) - ecart(y));
+        const recule = tri.filter(t => (t.inv ? ecart(t) > 0 : ecart(t) < 0));
+        const hb = T.filter(t => !t.inv && t.a2026 > 100);
+        /* Une cible franchie au-dela de la borne des cent pour cent ne compte
+           pas comme atteinte : le depassement met en cause le denominateur. */
+        const atteint = T.filter(t => t.obj != null && hb.indexOf(t) < 0 && (t.inv ? t.a2026 <= t.obj : t.a2026 >= t.obj));
+        const pire = tri[0], best = tri[tri.length - 1];
+        const barre = t => {
+          const g = ecart(t), bon = t.inv ? g < 0 : g > 0;
+          const w = Math.min(100, Math.abs(g) * 2.2);
+          return `<div class="rim-tr">
+            <div class="rim-tr-l">${t.lib}</div>
+            <div class="rim-tr-b"><span style="width:${w}%;background:${bon ? "#2E7D32" : "#B3372F"}"></span></div>
+            <div class="rim-tr-v">${dd(t.a2025)} <span>→</span> <strong>${dd(t.a2026)}</strong></div>
+            <div class="rim-tr-o">${t.obj == null ? "—" : (t.inv ? "≤ " : "") + dd(t.obj)}</div>
+            <div class="rim-tr-e" style="color:${bon ? "#2E7D32" : "#B3372F"}">${g >= 0 ? "+" : ""}${dd(g)}</div>
+          </div>`;
+        };
+        return card("Dans quel sens va chaque antigène", "Sept mois de 2025 comparés aux sept mêmes mois de 2026 · relevé RIM",
+          `<div class="rim-tr rim-tr-h"><div class="rim-tr-l">Indicateur</div><div class="rim-tr-b"></div>
+             <div class="rim-tr-v">2025 → 2026</div><div class="rim-tr-o">Cible</div><div class="rim-tr-e">Écart</div></div>
+           ${tri.map(barre).join("")}`,
+          `${recule.length} des ${T.length} indicateurs reculent d'une année sur l'autre, ${pire.lib.toLowerCase()} en tête avec
+           ${dd(Math.abs(ecart(pire)))} points perdus, quand ${best.lib.toLowerCase()} en gagne ${dd(Math.abs(ecart(best)))}.
+           Les gains se concentrent sur les antigènes récemment introduits, dont le rapportage se met en place, et les pertes sur
+           des antigènes anciens dont la mesure était réputée stable : le mouvement porte donc autant sur la remontée que sur la
+           vaccination, et les deux ne se démêlent pas dans ce tableau.
+           ${hb.length ? ` ${hb.length} indicateurs dépassent cent pour cent en 2026 : leur progression ne se lit pas tant qu'un dénominateur vraisemblable n'est pas arrêté.` : ""}
+           ${atteint.length ? ` ${atteint.length} indicateurs atteignent leur cible.` : " Aucun indicateur n'atteint sa cible sans dépasser la borne des cent pour cent."}`);
+      })()}
       ${card("Réserves de lecture", "Ce que cette analyse ne permet pas de conclure", reserves)}
     </div>` };
 };
@@ -14374,6 +14427,218 @@ VIEWS["dsr-apercu"] = () => {
 
 
 /* ==============================================================
+   PEV · RELEVE RIM : SUPERVISION, MONITORAGE ET TRAJECTOIRE
+   Le rapport integre mensuel porte deux series que le tableau de
+   bord n'exploitait pas : la supervision des zones de
+   responsabilite et la tenue des reunions de monitorage de
+   district. Ce sont des conditions de production de la
+   couverture, mesurees chaque mois dans les 199 districts. Elles
+   se lisent a cote de la couverture, non a sa place.
+============================================================== */
+let PEVRIM = null;
+fetch("pev_rim.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { PEVRIM = j; if (String(state.sub).indexOf("vacc") === 0) renderMain(); }).catch(() => {});
+
+/* Cumul d'une serie mensuelle sur la fenetre couverte : un taux de
+   supervision ne se moyenne pas, il se recalcule sur le total des zones
+   attendues et des zones effectivement visitees. */
+function rimCumul(bloc, cle) {
+  const out = {};
+  const src = bloc[cle];
+  Object.keys(src).forEach(function (k) {
+    let t = 0, f = 0, prov = null;
+    Object.keys(src[k]).forEach(function (p) {
+      const v = src[k][p];
+      t += v.t || 0; f += v.f || 0;
+      if (v.prov) prov = v.prov;
+    });
+    out[k] = { t: t, f: f, p: t ? Math.round(f / t * 1000) / 10 : null, prov: prov };
+  });
+  return out;
+}
+function rimSerieNat(bloc) {
+  const m = Object.keys(bloc.national).sort();
+  return { mois: m, val: m.map(function (p) { return bloc.national[p].p; }) };
+}
+/* Coefficient de correlation lineaire, rendu avec son effectif : sans le
+   nombre de paires, un coefficient ne se lit pas. */
+function rimCorr(paires) {
+  const n = paires.length;
+  if (n < 3) return { r: null, n: n };
+  const mx = paires.reduce(function (a, p) { return a + p[0]; }, 0) / n;
+  const my = paires.reduce(function (a, p) { return a + p[1]; }, 0) / n;
+  let num = 0, dx = 0, dy = 0;
+  paires.forEach(function (p) { num += (p[0] - mx) * (p[1] - my); dx += (p[0] - mx) * (p[0] - mx); dy += (p[1] - my) * (p[1] - my); });
+  const d = Math.sqrt(dx * dy);
+  return { r: d ? Math.round(num / d * 1000) / 1000 : null, n: n };
+}
+/* Lecteur destine au referentiel de fonctionnalite : taux de supervision
+   d'une province a un mois donne, ou du pays. */
+function foncLireRimSup() {
+  return function (pid, per) {
+    if (!PEVRIM) return null;
+    const b = pid ? (PEVRIM.supervision.provinces[pid] || {}) : PEVRIM.supervision.national;
+    const v = b[per];
+    return v && v.p != null ? v.p : null;
+  };
+}
+
+const RIM_SUP_PAL = ["#B3372F", "#D97B29", "#C9A227", "#7FA83C", "#2E7D32"];
+function rimCoulSup(p) {
+  if (p == null) return "#CEC8BA";
+  return p >= 80 ? RIM_SUP_PAL[4] : p >= 65 ? RIM_SUP_PAL[3] : p >= 50 ? RIM_SUP_PAL[2]
+       : p >= 35 ? RIM_SUP_PAL[1] : RIM_SUP_PAL[0];
+}
+function rimLegendeSup() {
+  return '<div class="fn-lg">' + [["moins de 35%", 0], ["35 à 50%", 1], ["50 à 65%", 2], ["65 à 80%", 3], ["80% et plus", 4]]
+    .map(function (x) { return '<span><i style="background:' + RIM_SUP_PAL[x[1]] + '"></i>' + x[0] + '</span>'; }).join("") + '</div>';
+}
+function rimCarteSup(parProv) {
+  const paths = Object.keys(PROVINCE_PATHS).map(function (id) {
+    const v = parProv[id];
+    const t = v == null ? cidProvNom(id) + " · ND"
+      : cidProvNom(id) + " · " + String(v.p).replace(".", ",") + "% · " + v.f + " visites sur " + v.t + " attendues";
+    return '<path d="' + PROVINCE_PATHS[id].d + '" fill="' + rimCoulSup(v ? v.p : null) + '" stroke="#F1EFEA" stroke-width="1.4"><title>' + t + '</title></path>';
+  }).join("");
+  const lab = Object.keys(PROVINCE_PATHS).map(function (id) {
+    const ctr = CID_CENTROIDES[id]; if (!ctr) return "";
+    const v = parProv[id];
+    const nom = cidProvNom(id).replace(/^(Mayo[- ]Kebbi|Logone|Ennedi)[- ](.)\S*/, "$1-$2.");
+    return '<g class="cid-map-lbl" pointer-events="none">'
+      + '<text x="' + ctr[0] + '" y="' + (ctr[1] - 5) + '" text-anchor="middle">' + nom + '</text>'
+      + '<text x="' + ctr[0] + '" y="' + (ctr[1] + 10) + '" text-anchor="middle" class="v">'
+      + (v == null || v.p == null ? "ND" : Math.round(v.p) + "%") + '</text></g>';
+  }).join("");
+  return '<svg viewBox="' + MAP_VIEWBOX + '" style="width:100%;max-height:560px">' + paths + lab + '</svg>';
+}
+
+VIEWS["vacc-super"] = function () {
+  const crumbs = ["Vaccination · PEV", "Supervision et monitorage"];
+  const et = '<div class="ph"><div class="ph-tag">Programme Élargi de Vaccination · DLMVSE</div>'
+    + '<div class="ph-title">Ce qui entretient la couverture entre deux campagnes</div>';
+  if (!PEVRIM) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé RIM en cours de chargement.</div></div>' };
+
+  const M = PEVRIM.meta;
+  const d1 = function (x) { return x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ","); };
+  const cs = rimCumul(PEVRIM.supervision, "districts");
+  const cm = rimCumul(PEVRIM.monitorage, "districts");
+  const sSup = rimSerieNat(PEVRIM.supervision), sMon = rimSerieNat(PEVRIM.monitorage);
+  const cumP = rimCumul(PEVRIM.supervision, "provinces");
+  const cumPm = rimCumul(PEVRIM.monitorage, "provinces");
+
+  const totT = Object.keys(cs).reduce(function (a, k) { return a + cs[k].t; }, 0);
+  const totF = Object.keys(cs).reduce(function (a, k) { return a + cs[k].f; }, 0);
+  const natSup = totT ? totF / totT * 100 : null;
+  const monT = Object.keys(cm).reduce(function (a, k) { return a + cm[k].t; }, 0);
+  const monF = Object.keys(cm).reduce(function (a, k) { return a + cm[k].f; }, 0);
+  const natMon = monT ? monF / monT * 100 : null;
+  const zeroSup = Object.keys(cs).filter(function (k) { return cs[k].f === 0; });
+  const zeroMon = Object.keys(cm).filter(function (k) { return cm[k].f === 0; });
+  const hb = Object.keys(cs).filter(function (k) { return cs[k].p != null && cs[k].p > 100; });
+
+  /* Relation entre l'intensite de supervision et ce que le district produit.
+     Les deux lectures sont donnees ensemble : le niveau de couverture et la
+     retention entre doses ne se comportent pas de la meme facon. */
+  const idx = {};
+  PEVRIM.districts.forEach(function (x) { idx[x.nom] = x; });
+  const pc = [], pa = [];
+  Object.keys(cs).forEach(function (k) {
+    const d = idx[k]; if (!d || cs[k].p == null) return;
+    if (d.penta3 != null) pc.push([cs[k].p, d.penta3]);
+    if (d.abandon_p1p3 != null) pa.push([cs[k].p, d.abandon_p1p3]);
+  });
+  const rC = rimCorr(pc), rA = rimCorr(pa);
+  /* Comparaison des deux moities du classement de supervision, sur le
+     Penta 3 median, pour donner l'ordre de grandeur derriere le coefficient. */
+  const tri = Object.keys(cs).filter(function (k) { return cs[k].p != null && idx[k] && idx[k].penta3 != null; })
+    .sort(function (a, b) { return cs[a].p - cs[b].p; });
+  const med = function (v) { const s = v.slice().sort(function (a, b) { return a - b; });
+    return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null; };
+  const h = Math.floor(tri.length / 2);
+  const medBas = med(tri.slice(0, h).map(function (k) { return idx[k].penta3; }));
+  const medHaut = med(tri.slice(tri.length - h).map(function (k) { return idx[k].penta3; }));
+
+  const serie = foncSerieSVG([
+    { lib: "Zones de responsabilité supervisées", coul: "#1F3864", v: sSup.val },
+    { lib: "Réunions de monitorage tenues", coul: "#B4913C", v: sMon.val }
+  ], sSup.mois, 100);
+
+  const pires = Object.keys(cs).sort(function (a, b) { return (cs[a].p || 0) - (cs[b].p || 0) || a.localeCompare(b); }).slice(0, 18);
+  const tblD = '<table class="dt"><thead><tr><th>District</th><th>Province</th>'
+    + '<th style="text-align:right">Zones supervisées</th><th style="text-align:right">Réunions tenues</th>'
+    + '<th style="text-align:right">Penta 3</th><th style="text-align:right">Abandon P1-P3</th></tr></thead><tbody>'
+    + pires.map(function (k) {
+        const d = idx[k] || {}, s = cs[k], m = cm[k] || {};
+        const cls = s.p >= 65 ? "green" : s.p >= 35 ? "orange" : "red";
+        return '<tr><td class="l"><strong>' + k + '</strong></td><td>' + (d.prov_nom || "ND") + '</td>'
+          + '<td class="num"><span class="pill ' + cls + '">' + d1(s.p) + ' %</span><div class="dsr-o">' + s.f + ' sur ' + s.t + '</div></td>'
+          + '<td class="num">' + (m.p == null ? '<span class="dsr-o">ND</span>' : d1(m.p) + " %") + '</td>'
+          + '<td class="num">' + (d.penta3 == null ? '<span class="dsr-o">ND</span>' : d1(d.penta3)) + '</td>'
+          + '<td class="num">' + (d.abandon_p1p3 == null ? '<span class="dsr-o">ND</span>' : d1(d.abandon_p1p3)) + '</td></tr>';
+      }).join("") + '</tbody></table>';
+
+  const tblP = '<table class="dt"><thead><tr><th>Province</th>'
+    + '<th style="text-align:right">Zones supervisées</th><th style="text-align:right">Réunions de monitorage</th>'
+    + '<th style="text-align:right">Districts sans aucune visite</th></tr></thead><tbody>'
+    + Object.keys(cumP).sort(function (a, b) { return (cumP[a].p || 0) - (cumP[b].p || 0); }).map(function (id) {
+        const s = cumP[id], m = cumPm[id] || {};
+        const z = zeroSup.filter(function (k) { return cs[k].prov === id; }).length;
+        const cls = s.p >= 65 ? "green" : s.p >= 35 ? "orange" : "red";
+        return '<tr><td class="l"><strong>' + cidProvNom(id) + '</strong></td>'
+          + '<td class="num"><span class="pill ' + cls + '">' + d1(s.p) + ' %</span><div class="dsr-o">' + s.f + ' sur ' + s.t + '</div></td>'
+          + '<td class="num">' + (m.p == null ? '<span class="dsr-o">ND</span>' : d1(m.p) + " %") + '</td>'
+          + '<td class="num">' + (z || "—") + '</td></tr>';
+      }).join("") + '</tbody></table>';
+
+  return { crumbs: crumbs, html: et
+    + '<div class="ph-sub">La couverture se produit chaque mois dans les zones de responsabilité, et le relevé RIM '
+    + 'mesure ce qui les tient : la visite de supervision et la réunion de monitorage du district. Sur '
+    + M.n_districts + ' districts et ' + cidMois(M.mois_min) + ' à ' + cidMois(M.mois_max) + ', '
+    + 'ces deux gestes sont posés une fois sur deux.</div></div>'
+    + '<div class="content">'
+    + '<div class="kpi-grid">'
+    + kpi("Zones de responsabilité supervisées", d1(natSup), " %", "Cible 80 % · " + totF.toLocaleString("fr-FR") + " visites sur " + totT.toLocaleString("fr-FR") + " attendues",
+        "—", "flat", natSup >= 80 ? "green" : natSup >= 50 ? "orange" : "red", true)
+    + kpi("Districts sans aucune visite", zeroSup.length, " /" + Object.keys(cs).length,
+        "Aucune zone supervisée sur les sept mois", "—", "flat", zeroSup.length ? "red" : "green", true)
+    + kpi("Réunions de monitorage tenues", d1(natMon), " %", monF + " réunions sur " + monT + " prévues",
+        "—", "flat", natMon >= 80 ? "green" : natMon >= 50 ? "orange" : "red", true)
+    + kpi("Districts sans aucune réunion", zeroMon.length, " /" + Object.keys(cm).length,
+        "Le district ne s'est pas réuni sur son propre suivi", "—", "flat", zeroMon.length ? "red" : "green", true)
+    + '</div>'
+    + card("Où la supervision descend", "Zones de responsabilité supervisées, cumul " + cidMois(M.mois_min) + " à " + cidMois(M.mois_max),
+        rimCarteSup(cumP) + rimLegendeSup(),
+        "Le taux se calcule sur le total des zones attendues et des visites effectivement portées au relevé, non par moyenne des mois : une province qui déclare peu de zones ne se trouve pas avantagée. "
+        + (hb.length ? hb.length + " district" + (hb.length > 1 ? "s déclarent plus de visites que de zones à visiter, ce qui met en cause le dénominateur de la carte sanitaire retenue localement et non la performance." : " déclare plus de visites que de zones à visiter, ce qui met en cause le dénominateur de la carte sanitaire retenue localement.") : ""))
+    + card("Le geste est régulier, il n'est pas général", "Taux mensuels, janvier à juillet 2026", serie,
+        "La supervision est passée de " + d1(sSup.val[0]) + " à " + d1(sSup.val[sSup.val.length - 1]) + " pour cent et le monitorage de "
+        + d1(sMon.val[0]) + " à " + d1(sMon.val[sMon.val.length - 1]) + " pour cent. Aucune des deux courbes n'a franchi la barre des soixante pour cent sur la période. "
+        + "La progression est réelle et son rythme ne rattrape pas la cible de quatre-vingts pour cent dans l'année en cours.")
+    + card("Ce que la supervision accompagne", "Districts, cumul janvier à juillet 2026", `
+        <div class="ddx-stats">
+          <div class="ddx-st"><div class="ddx-st-l">Corrélation avec la couverture Penta 3</div>
+            <div class="ddx-st-v">${rC.r == null ? "ND" : String(rC.r).replace(".", ",")}</div>
+            <div class="ddx-st-d">sur ${rC.n} districts</div></div>
+          <div class="ddx-st"><div class="ddx-st-l">Corrélation avec l'abandon Penta 1 à Penta 3</div>
+            <div class="ddx-st-v">${rA.r == null ? "ND" : String(rA.r).replace(".", ",")}</div>
+            <div class="ddx-st-d">sur ${rA.n} districts</div></div>
+          <div class="ddx-st"><div class="ddx-st-l">Penta 3 médian, moitié la moins supervisée</div>
+            <div class="ddx-st-v">${d1(medBas)}</div><div class="ddx-st-d">${h} districts</div></div>
+          <div class="ddx-st"><div class="ddx-st-l">Penta 3 médian, moitié la mieux supervisée</div>
+            <div class="ddx-st-v">${d1(medHaut)}</div><div class="ddx-st-d">${h} districts</div></div>
+        </div>`,
+        "La supervision va de pair avec le niveau de couverture et non avec la rétention entre doses : le premier coefficient est positif et modéré, le second est nul. "
+        + "L'écart de " + d1(Math.abs(medHaut - medBas)) + " points entre les deux moitiés du classement donne l'ordre de grandeur derrière ce coefficient. "
+        + "Une association n'est pas un effet, et le sens de la relation peut s'inverser : un district qui vaccine peu peut être aussi celui qu'on visite peu, pour les mêmes raisons d'accès. "
+        + "Ce que le relevé établit est plus modeste et suffit à décider : la supervision n'accompagne pas la rétention, et la perte entre la première et la troisième dose ne se traitera pas par ce levier seul.")
+    + card("Provinces", "Rangées de la moins supervisée à la mieux supervisée", tblP,
+        "La colonne des districts sans aucune visite compte les districts où le relevé ne porte aucune supervision sur sept mois. Elle ne se déduit pas du taux provincial : une province peut afficher un taux moyen acceptable et laisser deux districts entièrement hors du dispositif.")
+    + card("Districts les moins couverts par le dispositif", "Dix-huit premiers du classement", tblD,
+        "Le rapprochement avec la couverture et l'abandon se lit district par district et non comme une règle. Un district sans supervision et à couverture élevée existe dans ce tableau : il signale soit un dénominateur trop bas, soit un dispositif qui tient sans visite, et la distinction se fait sur place.")
+    + '</div>' };
+};
+
+/* ==============================================================
    FONCTIONNALITE DES PROGRAMMES
    Un programme n'est pas fonctionnel a hauteur d'une moyenne. Il
    l'est si chacune de ses conditions de fonctionnement est remplie,
@@ -14426,6 +14691,9 @@ function foncReferentiel() {
         src: "RIM PEV · DLMVSE", f: () => val(() => PEV.national.abandon_p1p3) },
       { p: "personnel", l: "Vaccinateurs formés et affectés", nec: true,
         src: "IHRIS · DRH", f: () => null },
+      { p: "personnel", k: "pev_super", l: "Supervision des zones de responsabilité", nec: false, cible: 80,
+        src: "RIM PEV · DLMVSE", f: () => null,
+        det: "La visite de supervision est ce qui entretient la pratique vaccinale entre deux campagnes : sans elle, la formation reçue une fois cesse de garantir le geste." },
       { p: "info", k: "pev_comp_ids", l: "Complétude du rapportage de surveillance", nec: false, cible: 90,
         src: "Relevé DPSIS", f: () => natDpsis("ids", "comp") }
     ]},
@@ -14878,6 +15146,7 @@ function foncLirePev(ag) {
 const FONC_FX = {
   pev_penta3:   foncLirePev("Penta3"),
   pev_comp_ids: foncLireDpsis("ids", "comp"),
+  pev_super:    foncLireRimSup(),
   sr_acc_qual:  foncLireDsr("acc_qualifie"),
   sr_cpn1:      foncLireDsr("cpn1"),
   sr_cpn4:      foncLireDsr("cpn4"),
