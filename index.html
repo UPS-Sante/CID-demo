@@ -3926,6 +3926,10 @@
   /* ====== Carte choléra à bascule ====== */
   .chol-choix { display:flex; flex-direction:column; gap:10px; }
   .chc-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+  .chc-ech { margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+  .chol-nat { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:20px; align-items:start; }
+  .chol-nat-tbl .dt { font-size:12px; }
+  @media (max-width:900px){ .chol-nat { grid-template-columns:1fr; } }
   .chc-tab { font-size:12px; font-weight:600; padding:6px 13px; border-radius:20px; border:1px solid var(--border); background:#fff; color:var(--muted); cursor:pointer; transition:all .15s; }
   .chc-tab.on { background:var(--royal); color:#fff; border-color:var(--royal); }
   .chc-tab:hover:not(.on) { border-color:var(--royal); color:var(--royal); }
@@ -5219,6 +5223,7 @@ const state = {
   provinceFilter: null,
   mapMode: "performance",
   cholCarte: "cas",
+  cholEchelle: "foyer",
   cadreDir: null,
   infraNiv: "cs",
   minSection: "A",
@@ -7495,6 +7500,120 @@ function setCholTypePeriode(typ) {
 }
 function setCholPeriode(cle) { state.cholPeriode = cle; renderMain(); }
 function setCholCarte(mode) { state.cholCarte = mode; renderMain(); }
+/* Deux echelles de lecture. Le foyer, qui montre le detail des districts
+   atteints, reste l'echelle de travail de la riposte. La vue nationale
+   situe les provinces touchees dans l'ensemble du pays : elle repond a une
+   autre question, celle de savoir ce qui est indemne et jusqu'ou la
+   surveillance doit porter. */
+function setCholEchelle(e) { state.cholEchelle = e; renderMain(); }
+
+/* Correspondance entre les provinces de la liste lineaire et les provinces
+   de la carte nationale. Un nom non reconnu est signale plutot qu'ignore. */
+const CHOL_PROV_ID = {
+  "Hadjer Lamis": "HDL", "Hadjer-Lamis": "HDL", "N'Djamena": "NDJ", "Ndjamena": "NDJ",
+  "Lac": "LAC", "Chari Baguirmi": "CBG", "Chari-Baguirmi": "CBG", "Mayo Kebbi Est": "MKE",
+  "Mayo Kebbi Ouest": "MKO", "Logone Occidental": "LOO", "Logone Oriental": "LOE",
+  "Moyen Chari": "MCH", "Mandoul": "MAN", "Tandjile": "TAN", "Tandjilé": "TAN",
+  "Ouaddai": "OUA", "Ouaddaï": "OUA", "Sila": "SIL", "Salamat": "SAL", "Guera": "GUE",
+  "Guéra": "GUE", "Batha": "BAT", "Kanem": "KAN", "Barh El Gazal": "BAR",
+  "Wadi Fira": "WAD", "Borkou": "BRK", "Tibesti": "TIB", "Ennedi Est": "EES", "Ennedi Ouest": "EOU"
+};
+/* Etat epidemiologique de chaque province, agrege depuis ses districts.
+   Le statut retenu est le plus eleve constate : une province ou un seul
+   district est confirme par culture est une province ou la transmission
+   est etablie, quel que soit l'etat des autres. */
+function cholProvinces() {
+  const out = {}, inconnues = [];
+  if (!CHOL_A) return { par: out, inconnues: inconnues };
+  const cum = (CHOL_P && cholPeriodeCourante()) ? cholPeriodeCourante().bloc.cumul : null;
+  const casDist = {};
+  if (cum && cum.districts) cum.districts.forEach(d => { casDist[d.nom] = d; });
+  CHOL_A.districts.forEach(d => {
+    const id = CHOL_PROV_ID[d.prov];
+    if (!id) { if (inconnues.indexOf(d.prov) < 0) inconnues.push(d.prov); return; }
+    const st = cholStatutDe(d.nom, d.actif && d.recents > 0);
+    const o = out[id] || (out[id] = { id: id, nom: d.prov, cas: 0, deces: 0, districts: [],
+      recents: 0, statut: "eteint" });
+    const c = casDist[d.nom] || d;
+    o.cas += c.cas || 0; o.deces += c.deces || 0; o.recents += d.recents || 0;
+    o.districts.push({ nom: d.nom, statut: st, cas: c.cas || 0, deces: c.deces || 0 });
+    if (CHOL_STATUT[st].rang > CHOL_STATUT[o.statut].rang) o.statut = st;
+  });
+  Object.values(out).forEach(o => { o.cfr = o.cas ? Math.round(o.deces / o.cas * 1000) / 10 : null; });
+  return { par: out, inconnues: inconnues };
+}
+
+/* Carte nationale : les vingt-trois provinces, colorees par le statut du
+   foyer qu'elles portent. Les provinces sans notification restent en gris
+   clair, elles ne sont pas au vert : n'avoir aucun cas notifie et avoir un
+   foyer eteint depuis dix jours ne se valent pas. */
+function cholCarteNationale() {
+  const A = cholProvinces(), par = A.par;
+  const paths = PROVINCES.map(pv => {
+    const geo = PROVINCE_PATHS[pv.id]; if (!geo) return "";
+    const o = par[pv.id];
+    if (!o) return `<path d="${geo.d}" fill="var(--surface-2)" stroke="#fff" stroke-width="1.1"
+      ><title>${pv.name} · aucun cas notifié</title></path>`;
+    const c = CHOL_STATUT[o.statut];
+    const cls = o.statut === "culture" ? ' class="cf-pulse"' : "";
+    return `<path${cls} d="${geo.d}" fill="${c.c}" stroke="#fff" stroke-width="1.4"
+      ><title>${pv.name} · ${o.cas} cas, ${o.deces} décès, létalité ${o.cfr == null ? "ND" : String(o.cfr).replace(".", ",")}% · ${c.lib.toLowerCase()} · ${o.districts.length} district${o.districts.length > 1 ? "s" : ""} touché${o.districts.length > 1 ? "s" : ""}</title></path>`;
+  }).join("");
+  /* A l'echelle nationale, une province enclavee comme N'Djamena couvre
+     quelques pixels : sa couleur seule ne la signale pas. Chaque province
+     touchee recoit donc un marqueur circulaire proportionne a ses cas et
+     une etiquette deportee reliee par un trait, de sorte que la taille du
+     territoire ne commande pas la visibilite du foyer. */
+  /* Les etiquettes sont empilees depuis une base commune plutot que
+     depuis le centroide de chaque province : deux foyers voisins ont des
+     centroides trop proches pour que l'etagement les separe. */
+  const touch = Object.values(par).filter(o => PROVINCE_PATHS[o.id])
+    .sort((a, b) => PROVINCE_PATHS[a.id].cy - PROVINCE_PATHS[b.id].cy);
+  const cmax = Math.max(1, ...touch.map(o => o.cas));
+  const yBase = touch.length
+    ? touch.reduce((a, o) => a + PROVINCE_PATHS[o.id].cy, 0) / touch.length : 0;
+  const marq = touch.map((o, i) => {
+    const geo = PROVINCE_PATHS[o.id]; if (!geo) return "";
+    const pv = PROVINCES.find(x => x.id === o.id) || { short: o.nom };
+    const c = CHOL_STATUT[o.statut].c;
+    const r = 9 + 13 * Math.sqrt(o.cas / cmax);
+    /* Les etiquettes sont deportees a droite et etagees pour ne pas se
+       recouvrir quand deux foyers sont voisins. */
+    const lx = 480, ly = yBase + (i - (touch.length - 1) / 2) * 54;
+    return `<g pointer-events="none">
+      <line x1="${geo.cx}" y1="${geo.cy}" x2="${lx - 6}" y2="${ly}" stroke="${c}" stroke-width="1.5" stroke-dasharray="4 3" opacity=".8"/>
+      <circle cx="${geo.cx}" cy="${geo.cy}" r="${r.toFixed(1)}" fill="${c}" fill-opacity=".28"
+        stroke="${c}" stroke-width="2.4"${o.statut === "culture" ? ' class="cf-pulse"' : ""}/>
+      <circle cx="${geo.cx}" cy="${geo.cy}" r="3.4" fill="${c}" stroke="#fff" stroke-width="1.2"/>
+      <text x="${lx}" y="${ly - 4}" font-size="14" font-weight="700" fill="var(--ink)">${pv.short}</text>
+      <text x="${lx}" y="${ly + 13}" font-size="13" font-weight="800" fill="${c}">${o.cas} cas · ${o.deces} décès</text>
+    </g>`;
+  }).join("");
+  const lab = marq;
+  const touchees = Object.values(par).sort((a, b) => b.cas - a.cas);
+  const lignes = touchees.map(o => `
+    <tr><td class="l">${cholPastille(o.statut, true)}<strong>${o.nom}</strong></td>
+      <td class="num">${o.cas}</td><td class="num">${o.deces}</td>
+      <td class="num">${o.cfr == null ? "ND" : String(o.cfr).replace(".", ",")} %</td>
+      <td class="l">${o.districts.sort((a, b) => CHOL_STATUT[b.statut].rang - CHOL_STATUT[a.statut].rang)
+        .map(d => `${d.nom} (${CHOL_STATUT[d.statut].court})`).join(", ")}</td></tr>`).join("");
+  const indemnes = PROVINCES.length - touchees.length;
+  return `<div class="chol-nat">
+    <div class="chol-nat-carte">
+      <svg viewBox="0 0 720 946.5" style="width:100%;max-height:620px">${paths}${lab}</svg>
+      ${cholLegendeStatut('<span class="chol-st-lib"><span class="chol-st-pastille" style="background:var(--surface-2);border:1px solid var(--border)"></span>Aucun cas notifié</span>')}
+    </div>
+    <div class="chol-nat-tbl">
+      <table class="dt"><thead><tr><th>Province</th><th style="text-align:right">Cas</th>
+        <th style="text-align:right">Décès</th><th style="text-align:right">Létalité</th><th>Districts touchés</th></tr></thead>
+      <tbody>${lignes}</tbody></table>
+      <div class="dsr-o" style="margin-top:9px">${touchees.length} province${touchees.length > 1 ? "s" : ""} touchée${touchees.length > 1 ? "s" : ""} sur ${PROVINCES.length},
+        ${indemnes} sans notification. Une province sans cas reste en gris : l'absence de notification ne vaut pas
+        absence de circulation, elle vaut absence de signal.
+        ${A.inconnues.length ? `<br><strong>À signaler :</strong> ${A.inconnues.join(", ")} n'est pas rattaché à une province de la carte.` : ""}</div>
+    </div>
+  </div>`;
+}
 
 /* ==============================================================
    CHOLERA · CODAGE COULEUR UNIQUE
@@ -7626,6 +7745,9 @@ function carteCholeraChoix() {
     return "";
   }).join("");
   const onglet = (m, l) => `<button class="chc-tab ${mode === m ? "on" : ""}" onclick="setCholCarte('${m}')">${l}</button>`;
+  const ech = state.cholEchelle || "foyer";
+  const ongEch = (e, l) => `<button class="chc-tab ${ech === e ? "on" : ""}" onclick="setCholEchelle('${e}')">${l}</button>`;
+  const barreEch = `<div class="chc-tabs chc-ech">${ongEch("foyer", "Zone épidémique")}${ongEch("nation", "Situation nationale")}</div>`;
   const barre = `<div class="chc-tabs">${onglet("cas", "Nombre de cas")}${onglet("attaque", "Taux d'attaque")}${onglet("letalite", "Taux de létalité")}${onglet("statut", "Statut épidémiologique")}</div>`;
   const paliers = (lib) => `<div class="chol-legende chc-grad">
         ${lib.map((t, i) => `<span class="cl-item"><span class="cl-pastille" style="background:${CHOL_RAMPE[i === 0 ? 0 : i === 1 ? 2 : i === 2 ? 3 : 4]}"></span> ${t}</span>`).join("")}
@@ -7660,7 +7782,16 @@ function carteCholeraChoix() {
       <svg class="chol-carte" viewBox="${cd.vb.join(" ")}" preserveAspectRatio="xMidYMid meet"
         aria-label="Grappe de ${nom}"><g>${fm}</g><g>${lb}</g></svg></div>`;
   }).join("");
+  /* La vue nationale ne porte qu'un seul indicateur, le statut du foyer :
+     un taux d'attaque provincial calcule sur la population entiere d'une
+     province dont un seul district est atteint dirait autre chose que ce
+     qu'il pretend mesurer. La banniere des indicateurs disparait donc. */
+  if (ech === "nation") return `<div class="chol-choix">
+    ${barreEch}
+    ${cholCarteNationale()}
+  </div>`;
   return `<div class="chol-choix">
+    ${barreEch}
     ${barre}
     <div class="chol-grappes">${grappes}</div>
     ${legende}
