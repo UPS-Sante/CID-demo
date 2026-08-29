@@ -3346,6 +3346,22 @@
   .si-mx th:first-child, .si-mx td:first-child { width:132px; }
   .si-mx th:last-child, .si-mx td:last-child { width:66px; }
   .si-mx td.si-cell { padding:0; height:19px; border-bottom:2px solid var(--surface); }
+  /* --- rail de navigation interne a une section --- */
+  .cid-rail { margin:0 0 18px; }
+  .cid-rail-f { display:flex; flex-wrap:wrap; gap:2px; border-bottom:1px solid var(--border); margin-bottom:9px; }
+  .cid-rail-fb { border:none; background:transparent; font:inherit; font-size:11px; font-weight:700;
+                 letter-spacing:.5px; text-transform:uppercase; color:var(--muted); cursor:pointer;
+                 padding:7px 13px; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .cid-rail-fb:hover { color:var(--ink); }
+  .cid-rail-fb.on { color:var(--royal); border-bottom-color:var(--royal); }
+  .cid-rail-s { display:flex; flex-wrap:wrap; gap:6px; }
+  .cid-rail-sb { border:1px solid var(--border); background:var(--surface); font:inherit; font-size:12px;
+                 color:var(--body); cursor:pointer; padding:5px 13px; border-radius:14px;
+                 transition:border-color .15s, background .15s, color .15s; }
+  .cid-rail-sb:hover { border-color:var(--royal-pale); color:var(--ink); }
+  .cid-rail-sb.on { background:var(--royal); border-color:var(--royal); color:#fff; font-weight:600; }
+  .attente-repli { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:14px;
+                   font-size:12.5px; color:var(--body); }
   @media (max-width:760px){ .rh-bar { grid-template-columns:1fr 90px; } .rh-bar .sup-av-g { display:none; } }
   .sup-mx tbody tr:hover td { background-clip:padding-box; }
   @media (max-width:760px){ .sup-duo-l { grid-template-columns:1fr 90px; } .sup-duo-l .sup-av-g, .sup-duo-l .n { display:none; } }
@@ -6442,9 +6458,47 @@ function ajusterCockpit() {
 /* ==============================================================
    RENDER · Main content
 ============================================================== */
+/* Onglets internes d'une section. Les familles declarees sur les
+   sous-sections servent deja a ranger la barre laterale ; elles servent ici
+   a se deplacer sans y remonter, ce qui epargne un aller-retour a chaque
+   changement de page a l'interieur d'une meme famille. Une section sans
+   famille n'affiche rien. */
+function cidRail(progId, subId) {
+  const p = (typeof PROGRAMS !== "undefined" ? PROGRAMS : []).filter(x => x.id === progId)[0];
+  if (!p || !p.sub) return "";
+  const cur = p.sub.filter(s => s.id === subId)[0];
+  if (!cur || !cur.g) return "";
+  const fams = [];
+  p.sub.forEach(s => { if (s.g && fams.indexOf(s.g) < 0) fams.push(s.g); });
+  if (fams.length < 2) return "";
+  const lib = s => s.i18n_key ? t(s.i18n_key) : s.label;
+  const pages = p.sub.filter(s => s.g === cur.g);
+  return '<nav class="cid-rail" aria-label="Navigation de section">'
+    + '<div class="cid-rail-f">' + fams.map(function (f) {
+        const prem = p.sub.filter(s => s.g === f)[0];
+        return '<button class="cid-rail-fb' + (f === cur.g ? " on" : "") + '"'
+          + ' onclick="selectSub(\'' + progId + '\',\'' + prem.id + '\')">' + f + '</button>';
+      }).join("") + '</div>'
+    + (pages.length > 1 ? '<div class="cid-rail-s">' + pages.map(function (s) {
+        return '<button class="cid-rail-sb' + (s.id === subId ? " on" : "") + '"'
+          + ' onclick="selectSub(\'' + progId + '\',\'' + s.id + '\')">' + lib(s) + '</button>';
+      }).join("") + '</div>' : "")
+    + '</nav>';
+}
+
 function renderMainNoyau() {
   const view = VIEWS[state.sub] || (() => placeholderView(state.sub));
   const v = view(state);
+  /* Le rail se glisse en tete du contenu, sous le titre de page. Les vues
+     qui portent deja leur propre fil ne le recoivent pas : deux barres de
+     navigation superposees se genent. */
+  try {
+    const rail = cidRail(state.program, state.sub);
+    if (rail && v.html.indexOf("fn-fil") < 0) {
+      const i = v.html.indexOf('<div class="content">');
+      if (i >= 0) v.html = v.html.slice(0, i + 21) + rail + v.html.slice(i + 21);
+    }
+  } catch (e) { console.error("Rail :", e); }
   // If province filter is set, append province name to the breadcrumb
   if (state.provinceFilter) {
     const p = PROVINCES.find(x => x.id === state.provinceFilter);
@@ -7344,7 +7398,13 @@ VIEWS["sao-league"] = () => {
 };
 
 // ---- Etat generique : vue en attente de source ----
+/* Pages de repli proposees quand une source manque : la plus proche du
+   domaine attendu, pour que la visite ne s'arrete pas sur une impasse. */
+const ATTENTE_REPLI = {
+  "Vaccin antipaludique": [["vacc-couv", "Couverture vaccinale"], ["vacc-deepdive", "Analyse approfondie"]],
+};
 function vueEnAttente(titre, crumb, source, desc) {
+  const repli = ATTENTE_REPLI[crumb] || [];
   return {
     crumbs: ["Vaccination · PEV", crumb],
     html: `
@@ -7354,6 +7414,8 @@ function vueEnAttente(titre, crumb, source, desc) {
         <div class="attente-corps">
           <div class="attente-titre">Cette vue attend sa source de données</div>
           <div class="attente-txt">Le relevé mensuel du PEV ne couvre pas ce domaine. Les indicateurs seront alimentés dès le branchement de ${source}.</div>
+          ${repli.length ? `<div class="attente-repli">En attendant, l'information la plus proche se trouve ici :
+            ${repli.map(r => `<button class="cid-rail-sb" onclick="selectSub('vacc','${r[0]}')">${r[1]} →</button>`).join("")}</div>` : ""}
         </div>
       </div></div>`
   };
@@ -8752,33 +8814,46 @@ VIEWS["vacc-couv"] = () => {
   const horsPer = state.periodMode!=="month" || per<mmin || per>mmax;
   const val=(c)=>horsPer?null:((PEVP.provinces[c]||{}).couv?.[ant]?.[per] ?? null);
   const col=(v)=>v==null?"#CBC7BE":v>=90?"#2E7D32":v>=80?"#C9A227":v>=60?"#D97B29":"#B3372F";
-  const selA=PEVP.meta.antigenes.map(a=>`<button onclick="window.__antSel='${a}';renderMain()" style="padding:5px 11px;border-radius:16px;border:1px solid var(--line);cursor:pointer;background:${a===ant?'#1F3864':'#fff'};color:${a===ant?'#fff':'var(--body)'};font:600 12px/1 inherit;">${a}</button>`).join(" ");
+  /* Le selecteur d'antigene employait ses propres boutons en style
+     incorpore : il prend la forme des filtres du reste du tableau de bord,
+     et la selection de province devient reversible depuis la meme barre. */
+  const provChips = [{ v: "*", l: "Aucune" }].concat(
+    Object.keys(PROVINCE_PATHS).sort((a, b) => cidProvNom(a).localeCompare(cidProvNom(b)))
+      .map(id => ({ v: id, l: cidProvNom(id) })));
+  const selA = '<div class="fn-f">'
+    + foncGroupeFiltre("Antigène", PEVP.meta.antigenes.map(a => ({ v: a, l: a })), "__antSel", ant)
+    + foncGroupeFiltre("Province détaillée", provChips, "__provSel", window.__provSel || "*")
+    + '</div>';
   const paths=Object.keys(PROVINCE_PATHS).map(c=>{const v=val(c);const nm=(PROVINCES.find(p=>p.id===c)||{}).name||c;
-    return `<path d="${PROVINCE_PATHS[c].d}" fill="${col(v)}" stroke="#F1EFEA" stroke-width="1.4" style="cursor:pointer" onclick="window.__provSel='${c}';renderMain()"><title>${nm} · ${v==null?"ND":v+"%"}</title></path>`;}).join("");
-  const sel=window.__provSel;
+    const act = window.__provSel === c;
+    return `<path d="${PROVINCE_PATHS[c].d}" fill="${col(v)}" stroke="${act?"#1B1A16":"#F1EFEA"}" stroke-width="${act?3:1.4}" style="cursor:pointer" onclick="window.__provSel='${window.__provSel===c?"*":c}';renderMain()"><title>${nm} · ${v==null?"ND":v+"%"}</title></path>`;}).join("");
+  const sel = PROVINCE_PATHS[window.__provSel] ? window.__provSel : null;
   let panneau="";
   if(sel){
     const nm=(PROVINCES.find(p=>p.id===sel)||{}).name||sel;
     const serie=(PEVP.provinces[sel]||{}).couv?.[ant]||{};
     const moisAff=cidMoisDeLAnnee(2026);
-    const barres=moisAff.map(m=>{const v=serie[m];const h2=v==null?4:Math.min(120,v*1.1);
-      return `<div style="text-align:center;flex:1"><div style="height:130px;display:flex;align-items:flex-end;justify-content:center"><div style="width:70%;height:${h2}px;background:${v==null?"#CBC7BE":col(v)};border-radius:3px 3px 0 0"></div></div><div style="font-size:11px;margin-top:4px">${MOIS_NOMS[Number(m.slice(5))-1].slice(0,3)}</div><div style="font-size:11px;font-weight:700">${v==null?"ND":Math.round(v)}</div></div>`;}).join("");
+    const vus=moisAff.map(m=>serie[m]).filter(v=>v!=null);
+    const hMax=Math.max(100,...(vus.length?vus:[100]));
+    const barres=moisAff.map(m=>{const v=serie[m];const h2=v==null?4:Math.max(3,v/hMax*126);
+      return `<div style="text-align:center;flex:1"><div style="height:130px;display:flex;align-items:flex-end;justify-content:center;position:relative"><div style="position:absolute;left:0;right:0;bottom:${(100/hMax*126).toFixed(1)}px;border-top:1px dashed var(--muted);opacity:.55"></div><div style="width:70%;height:${h2.toFixed(1)}px;background:${v==null?"#CBC7BE":col(v)};border-radius:3px 3px 0 0"></div></div><div style="font-size:11px;margin-top:4px">${MOIS_NOMS[Number(m.slice(5))-1].slice(0,3)}</div><div style="font-size:11px;font-weight:700">${v==null?"ND":Math.round(v)}</div></div>`;}).join("");
     const doses=(PEVP.provinces[sel]||{}).doses?.[ant]||null;
     const dosesTxt=doses?Object.entries(doses).map(([m,v])=>`${MOIS_NOMS[Number(m.slice(5))-1].slice(0,3)} ${v.toLocaleString("fr-FR")}`).join(" · "):"non disponibles pour cet antigène (séries RIM : Penta3, VAR1, BCG)";
     const pop=(PEVP.population_0_11||{})[sel]?.[per] ?? (PEVP.population_0_11||{})[sel]?.[mmax];
     panneau=card(nm+" · "+ant,"Série mensuelle 2026 · couverture publiée",
       `<div style="display:flex;gap:4px;padding:6px 2px">${barres}</div>
+       <div style="font-size:11px;color:var(--muted);padding:2px 2px 0">Trait discontinu : cent pour cent. Échelle calée sur le maximum de la série${hMax>100?", "+Math.round(hMax)+" pour cent":""}.</div>
        <div style="padding:8px 2px;line-height:1.7;color:var(--body);font-size:13px">
        Doses RIM : ${dosesTxt}.<br>Population 0-11 mois (dénominateur officiel${pop?", "+mf(per<=mmax&&per>=mmin?per:mmax):""}) : ${pop?pop.toLocaleString("fr-FR"):"ND"}.</div>`,
       "Source : "+PEVP.meta.source+". ND affiché pour toute valeur absente, aucune interpolation.");
   }
-  return {crumbs,html:et+`<div class="ph-sub">${horsPer?`Aucun relevé pour ${periodLabel()}. Série disponible de ${mf(mmin)} à ${mf(mmax)} : la carte s'affiche en ND.`:`Couverture ${ant} · ${periodLabel()} · cliquer une province pour le détail.`}</div></div>
+  return {crumbs,html:et+`<div class="ph-sub">${horsPer?`Aucun relevé pour ${periodLabel()}. Série disponible de ${mf(mmin)} à ${mf(mmax)} : la carte s'affiche en ND.`:`Couverture ${ant} · ${periodLabel()} · cliquer une province pour le détail, un second clic l'annule.`}</div></div>
   <div class="content">
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${selA}</div>
+    ${selA}
     <div class="g-2-1">
       ${card("Carte des provinces · "+ant+" · "+periodLabel(),"Vert ≥90 · jaune ≥80 · orange ≥60 · rouge <60 · gris ND",
         `<svg viewBox="${MAP_VIEWBOX}" style="width:100%;max-height:560px">${paths}</svg>`,"")}
-      ${panneau||card("Détail province","Sélection","<div style='padding:10px 2px;color:var(--body)'>Cliquer une province sur la carte pour afficher sa série mensuelle, ses doses RIM et son dénominateur population.</div>","")}
+      ${panneau||card("Détail province","Aucune province retenue","<div style='padding:10px 2px;color:var(--body);line-height:1.7'>Cliquer une province sur la carte, ou la choisir dans le filtre au-dessus, affiche sa série mensuelle, ses doses RIM et son dénominateur de population. Un second clic sur la même province annule la sélection.</div>","")}
     </div>
   </div>`};
 };
@@ -12128,7 +12203,8 @@ VIEWS["explor-dd"] = () => {
 
   function vue(crumbs, tag, titre, sub, kpis, corps) {
     return { crumbs, html: `<div class="ph"><div class="ph-tag">${tag}</div>
-      <div class="ph-title">${titre}</div><div class="ph-sub">${sub}</div></div>
+      <div class="ph-title">${titre}</div><div class="ph-sub">${sub}</div>
+      <div class="ph-fenetre">Valeurs simulées, en attente du branchement de la source. Aucune décision ne se prend sur cet écran.</div></div>
       <div class="content"><div class="kpi-grid">${kpis}</div>${corps}</div>` };
   }
 
@@ -14643,7 +14719,19 @@ VIEWS["vacc-super"] = function () {
     { lib: "Réunions de monitorage tenues", coul: "#B4913C", v: sMon.val }
   ], sSup.mois, 100);
 
-  const pires = Object.keys(cs).sort(function (a, b) { return (cs[a].p || 0) - (cs[b].p || 0) || a.localeCompare(b); }).slice(0, 18);
+  /* Filtres de la page : une province retenue restreint le classement des
+     districts a son territoire, et la profondeur cadre la serie mensuelle. */
+  const fProv = PROV_CANON[window.__supvProv] ? window.__supvProv : null;
+  const nDist = [10, 18, 30].indexOf(Number(window.__supvN)) >= 0 ? Number(window.__supvN) : 18;
+  const dansProv = function (k) { return !fProv || cs[k].prov === fProv; };
+  const pires = Object.keys(cs).filter(dansProv)
+    .sort(function (a, b) { return (cs[a].p || 0) - (cs[b].p || 0) || a.localeCompare(b); }).slice(0, nDist);
+  const barreSup = '<div class="fn-f">'
+    + foncGroupeFiltre("Province", [{ v: "*", l: "Toutes" }].concat(
+        Object.keys(PROV_CANON).sort(function (a, b) { return cidProvNom(a).localeCompare(cidProvNom(b)); })
+          .map(function (id) { return { v: id, l: cidProvNom(id) }; })), "__supvProv", fProv || "*")
+    + foncGroupeFiltre("Districts affichés", [{ v: "10", l: "10" }, { v: "18", l: "18" }, { v: "30", l: "30" }], "__supvN", String(nDist))
+    + '</div>';
   const tblD = '<table class="dt"><thead><tr><th>District</th><th>Province</th>'
     + '<th style="text-align:right">Zones supervisées</th><th style="text-align:right">Réunions tenues</th>'
     + '<th style="text-align:right">Penta 3</th><th style="text-align:right">Abandon P1-P3</th></tr></thead><tbody>'
@@ -14676,6 +14764,7 @@ VIEWS["vacc-super"] = function () {
     + M.n_districts + ' districts et ' + cidMois(M.mois_min) + ' à ' + cidMois(M.mois_max) + ', '
     + 'ces deux gestes sont posés une fois sur deux.</div></div>'
     + '<div class="content">'
+    + barreSup
     + '<div class="kpi-grid">'
     + kpi("Zones de responsabilité supervisées", d1(natSup), " %", "Cible 80 % · " + totF.toLocaleString("fr-FR") + " visites sur " + totT.toLocaleString("fr-FR") + " attendues",
         "—", "flat", natSup >= 80 ? "green" : natSup >= 50 ? "orange" : "red", true)
@@ -14719,7 +14808,8 @@ VIEWS["vacc-super"] = function () {
         et sur d'autres années.</p>
         <div class="mini-liens"><button class="lien-btn" onclick="selectSub('vacc','vacc-sup-effet')">Tableau de bord de la grille de supervision →</button></div>`,
         "Les deux lectures ne se remplacent pas. Le taux administratif dit si le geste est posé et couvre les vingt-trois provinces en 2026 ; le relevé de terrain dit ce que le geste produit et couvre douze provinces de 2020 à 2024. Rapprocher les deux demande d'abord de fixer une définition commune, ce que la page de terrain examine.")
-    + card("Districts les moins couverts par le dispositif", "Dix-huit premiers du classement", tblD,
+    + card("Districts les moins couverts par le dispositif",
+        (fProv ? cidProvNom(fProv) + " · " : "") + pires.length + " premiers du classement", tblD,
         "Le rapprochement avec la couverture et l'abandon se lit district par district et non comme une règle. Un district sans supervision et à couverture élevée existe dans ce tableau : il signale soit un dénominateur trop bas, soit un dispositif qui tient sans visite, et la distinction se fait sur place.")
     + '</div>' };
 };
