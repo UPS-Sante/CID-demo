@@ -3333,6 +3333,19 @@
   .rh-fam-g { position:relative; height:13px; background:#F1EFEA; border-radius:2px; }
   .rh-fam-g i { position:absolute; top:0; height:100%; border-radius:2px; }
   .rh-fam-g b { position:absolute; left:50%; top:-2px; width:1px; height:17px; background:var(--muted); }
+  /* --- explorateur du rapportage --- */
+  .si-bascule { display:inline-flex; gap:2px; padding:3px; background:var(--surface-2,#F1EFEA);
+                border-radius:5px; margin:2px 0 16px; }
+  .si-bt { border:none; background:transparent; font:inherit; font-size:12px; color:var(--body);
+           padding:6px 15px; border-radius:4px; cursor:pointer; transition:background .15s, color .15s; }
+  .si-bt:hover { color:var(--ink); }
+  .si-bt.on { background:var(--royal); color:#fff; font-weight:600; }
+  .si-mx-wrap { overflow-x:auto; }
+  .si-mx th.c { font-size:9px; letter-spacing:0; padding:4px 2px; }
+  .si-mx { table-layout:fixed; width:100%; min-width:760px; }
+  .si-mx th:first-child, .si-mx td:first-child { width:132px; }
+  .si-mx th:last-child, .si-mx td:last-child { width:66px; }
+  .si-mx td.si-cell { padding:0; height:19px; border-bottom:2px solid var(--surface); }
   @media (max-width:760px){ .rh-bar { grid-template-columns:1fr 90px; } .rh-bar .sup-av-g { display:none; } }
   .sup-mx tbody tr:hover td { background-clip:padding-box; }
   @media (max-width:760px){ .sup-duo-l { grid-template-columns:1fr 90px; } .sup-duo-l .sup-av-g, .sup-duo-l .n { display:none; } }
@@ -4593,11 +4606,14 @@ const PROGRAMS = [
     id:"dpsis", c:"dpsis", icon:"SI", label:"Système d'Information",
     dir:"DPSIS", groupe:"Fonctions d'appui",
     sub:[
-      { id:"dpsis-comp",    i18n_key:"sub_dpsis_comp", label:"Complétude & promptitude",  status:"yellow" },
-      { id:"dpsis-qual",    i18n_key:"sub_dpsis_qual", label:"Qualité des données",  status:"green" },
-      { id:"dpsis-pev-qual", label:"Qualité des séries PEV", status:"yellow" },
-      { id:"dpsis-dsr-qual", label:"Qualité des séries DSR", status:"orange" },
-      { id:"dpsis-carte",   label:"Carte sanitaire · Répertoire", status:"green" },
+      /* Trois familles : ce qui remonte, ce que valent les series remontees,
+         et le referentiel sur lequel les deux se calculent. */
+      { id:"dpsis-comp",     i18n_key:"sub_dpsis_comp", label:"Complétude & promptitude", status:"yellow", g:"Transmission" },
+      { id:"dpsis-explo",    label:"Explorateur du rapportage",   status:"orange", g:"Transmission" },
+      { id:"dpsis-qual",     i18n_key:"sub_dpsis_qual", label:"Signalements qualité",     status:"green",  g:"Qualité des séries" },
+      { id:"dpsis-pev-qual", label:"Séries PEV",                  status:"yellow", g:"Qualité des séries" },
+      { id:"dpsis-dsr-qual", label:"Séries DSR",                  status:"orange", g:"Qualité des séries" },
+      { id:"dpsis-carte",    label:"Carte sanitaire · Répertoire", status:"green", g:"Référentiel" },
     ]
   },
   {
@@ -15001,6 +15017,275 @@ VIEWS["vacc-sup-effet"] = function () {
         "La colonne du milieu porte l'exigence retenue en filtre, ce qui permet de voir si une province basse au score global l'est sur cette exigence-là ou sur d'autres.")
     + card("Calage du jeu simulé", "Ce qui est repris du relevé réel et ce qui est tiré au sort", tblC,
         M.note)
+    + '</div>' };
+};
+
+/* ==============================================================
+   DPSIS · EXPLORATEUR DU RAPPORTAGE
+   Une seule selection, cinq facons de la regarder. Le systeme de
+   rapportage, la mesure, la province et la profondeur sont
+   choisis une fois ; la bascule change la representation sans
+   changer les donnees, ce qui permet de passer d'une carte a une
+   matrice ou a un nuage sans reconstruire la question.
+============================================================== */
+const SI_MES = {
+  comp: { lib: "Complétude", cible: 95, unite: " %", det: "Part des rapports attendus qui sont parvenus" },
+  promp: { lib: "Promptitude", cible: 90, unite: " %", det: "Part des rapports parvenus dans le délai" },
+  ecart: { lib: "Écart complétude moins promptitude", cible: null, unite: " points", det: "Rapports parvenus hors délai, en points de pourcentage" }
+};
+const SI_VUES = { carte: "Carte", matrice: "Matrice", serie: "Séries", nuage: "Nuage", tableau: "Tableau croisé" };
+
+function siSystemes() {
+  if (!DPSISQ) return [];
+  /* Un systeme n'est propose que s'il porte des valeurs : trois des dix
+     declares n'en ont aucune, et les offrir au filtre reviendrait a promettre
+     une lecture qui n'existe pas. */
+  return DPSISQ.systemes.filter(function (s) {
+    return Object.keys(DPSISQ.valeurs).some(function (p) {
+      const u = DPSISQ.valeurs[p]["National"];
+      return u && u[s.code] && u[s.code].comp != null;
+    });
+  });
+}
+function siSel() {
+  const S = siSystemes();
+  const sys = S.some(s => s.code === window.__siSys) ? window.__siSys : "rma_global";
+  const mes = SI_MES[window.__siMes] ? window.__siMes : "comp";
+  const vue = SI_VUES[window.__siVue] ? window.__siVue : "carte";
+  const prov = PROV_CANON[window.__siProv] ? window.__siProv : null;
+  const prof = [12, 24, 36].indexOf(Number(window.__siProf)) >= 0 ? Number(window.__siProf) : 24;
+  return { sys: sys, mes: mes, vue: vue, prov: prov, prof: prof, systemes: S };
+}
+function siPer() {
+  const der = DPSISQ.meta.derniere_periode_couverte;
+  const p = cidPerCourante();
+  return (state.periodMode !== "month" || p < "2020-01" || p > der) ? der : p;
+}
+function siVal(unite, sys, mes, per) {
+  const u = (DPSISQ.valeurs[per] || {})[unite];
+  if (!u || !u[sys]) return null;
+  const c = u[sys].comp, p = u[sys].promp;
+  if (mes === "comp") return c == null ? null : c;
+  if (mes === "promp") return p == null ? null : p;
+  return c == null || p == null ? null : c - p;
+}
+function siFenetre(n) {
+  const out = []; let p = siPer();
+  for (let i = 0; i < n; i++) { out.unshift(p); p = cidPrec(p); }
+  return out;
+}
+function siCoul(v, mes) {
+  if (v == null) return "#CEC8BA";
+  if (mes === "ecart") return v <= 3 ? "#2E7D32" : v <= 8 ? "#7FA83C" : v <= 15 ? "#C9A227" : v <= 25 ? "#D97B29" : "#B3372F";
+  const c = SI_MES[mes].cible;
+  return v >= c ? "#2E7D32" : v >= c - 5 ? "#7FA83C" : v >= c - 15 ? "#C9A227" : v >= c - 30 ? "#D97B29" : "#B3372F";
+}
+function siLegende(mes) {
+  const it = mes === "ecart"
+    ? [["3 points ou moins", "#2E7D32"], ["3 à 8", "#7FA83C"], ["8 à 15", "#C9A227"], ["15 à 25", "#D97B29"], ["plus de 25", "#B3372F"]]
+    : [["cible atteinte", "#2E7D32"], ["moins de 5 points sous la cible", "#7FA83C"],
+       ["5 à 15 points sous", "#C9A227"], ["15 à 30 points sous", "#D97B29"], ["plus de 30 points sous", "#B3372F"]];
+  return '<div class="fn-lg">' + it.map(x => '<span><i style="background:' + x[1] + '"></i>' + x[0] + '</span>').join("")
+    + '<span><i style="background:#CEC8BA"></i>non renseigné</span></div>';
+}
+
+VIEWS["dpsis-explo"] = function () {
+  const crumbs = ["Système d'Information", "Explorateur du rapportage"];
+  const et = '<div class="ph"><div class="ph-tag">Rapportage de routine · DPSIS</div>'
+    + '<div class="ph-title">Explorateur du rapportage</div>';
+  if (!DPSISQ) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé DPSIS en cours de chargement.</div></div>' };
+
+  const S = siSel(), per = siPer(), M = SI_MES[S.mes];
+  const sysDef = S.systemes.filter(x => x.code === S.sys)[0] || {};
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const ids = Object.keys(PROV_CANON);
+  const mois = siFenetre(S.prof);
+
+  const vals = {};
+  ids.forEach(id => { vals[id] = siVal(PROV_CANON[id], S.sys, S.mes, per); });
+  const nat = siVal("National", S.sys, S.mes, per);
+  const dispo = ids.filter(id => vals[id] != null);
+  const atteint = M.cible == null ? dispo.filter(id => vals[id] <= 8).length : dispo.filter(id => vals[id] >= M.cible).length;
+  const tri = dispo.slice().sort((a, b) => (M.cible == null ? vals[b] - vals[a] : vals[a] - vals[b]));
+  const etendue = dispo.length ? Math.max.apply(null, dispo.map(id => vals[id])) - Math.min.apply(null, dispo.map(id => vals[id])) : null;
+
+  /* --- bascules et filtres --- */
+  const barre = '<div class="fn-f">'
+    + foncGroupeFiltre("Système de rapportage", S.systemes.map(s => ({ v: s.code, l: s.libelle })), "__siSys", S.sys)
+    + foncGroupeFiltre("Mesure", Object.keys(SI_MES).map(k => ({ v: k, l: SI_MES[k].lib })), "__siMes", S.mes)
+    + '</div><div class="fn-f">'
+    + foncGroupeFiltre("Province", [{ v: "*", l: "Toutes" }].concat(ids.slice().sort((a, b) => cidProvNom(a).localeCompare(cidProvNom(b))).map(id => ({ v: id, l: cidProvNom(id) }))), "__siProv", S.prov || "*")
+    + foncGroupeFiltre("Profondeur", [{ v: "12", l: "12 mois" }, { v: "24", l: "24 mois" }, { v: "36", l: "36 mois" }], "__siProf", String(S.prof))
+    + '</div>'
+    + '<div class="si-bascule">' + Object.keys(SI_VUES).map(function (k) {
+        return '<button class="si-bt' + (k === S.vue ? " on" : "") + '" onclick="window.__siVue=\'' + k + '\';renderMain()">'
+          + SI_VUES[k] + '</button>'; }).join("") + '</div>';
+
+  /* --- les cinq representations --- */
+  let corps = "", sousTitre = "", note = "";
+
+  if (S.vue === "carte") {
+    const paths = ids.map(function (id) {
+      const v = vals[id];
+      return '<path d="' + PROVINCE_PATHS[id].d + '" fill="' + siCoul(v, S.mes) + '" stroke="#F1EFEA" stroke-width="1.4"'
+        + ' style="cursor:pointer" onclick="window.__siProv=\'' + id + '\';window.__siVue=\'serie\';renderMain()">'
+        + '<title>' + cidProvNom(id) + ' · ' + (v == null ? "non renseigné" : d1(v) + M.unite) + '</title></path>';
+    }).join("");
+    const lab = ids.map(function (id) {
+      const c = CID_CENTROIDES[id]; if (!c) return "";
+      const nom = cidProvNom(id).replace(/^(Mayo[- ]Kebbi|Logone|Ennedi)[- ](.)\S*/, "$1-$2.");
+      return '<g class="cid-map-lbl" pointer-events="none"><text x="' + c[0] + '" y="' + (c[1] - 5) + '" text-anchor="middle">'
+        + nom + '</text><text x="' + c[0] + '" y="' + (c[1] + 10) + '" text-anchor="middle" class="v">'
+        + (vals[id] == null ? "ND" : Math.round(vals[id])) + '</text></g>';
+    }).join("");
+    corps = '<svg viewBox="' + MAP_VIEWBOX + '" style="width:100%;max-height:560px">' + paths + lab + '</svg>' + siLegende(S.mes);
+    sousTitre = cidMois(per) + " · " + sysDef.libelle;
+    note = "Cliquer une province ouvre sa série mensuelle sur la même sélection. La carte porte un seul mois : une province rouge un mois donné peut être régulière le reste de l'année, ce que la matrice montre et que la carte ne peut pas montrer.";
+  }
+
+  if (S.vue === "matrice") {
+    /* Province par mois : c'est la representation qui distingue un defaut
+       ponctuel d'un defaut installe. */
+    corps = '<div class="si-mx-wrap"><table class="fn-mx si-mx"><thead><tr><th>Province</th>'
+      + mois.map(m => '<th class="c" title="' + cidMois(m) + '">' + (m.slice(5) === "01" ? m.slice(2, 4) + "·" : "") + m.slice(5) + '</th>').join("")
+      + '<th class="c">Moyenne</th></tr></thead><tbody>'
+      + ids.slice().sort(function (a, b) {
+          const ma = mois.map(m => siVal(PROV_CANON[a], S.sys, S.mes, m)).filter(x => x != null);
+          const mb = mois.map(m => siVal(PROV_CANON[b], S.sys, S.mes, m)).filter(x => x != null);
+          const va = ma.length ? ma.reduce((x, y) => x + y, 0) / ma.length : -1;
+          const vb = mb.length ? mb.reduce((x, y) => x + y, 0) / mb.length : -1;
+          return S.mes === "ecart" ? vb - va : va - vb;
+        }).map(function (id) {
+          const ser = mois.map(m => siVal(PROV_CANON[id], S.sys, S.mes, m));
+          const ok = ser.filter(x => x != null);
+          const moy = ok.length ? ok.reduce((a, b) => a + b, 0) / ok.length : null;
+          return '<tr><td>' + cidProvNom(id) + '</td>'
+            + ser.map(function (v, i) {
+                return '<td class="c si-cell" style="background:' + siCoul(v, S.mes) + '" title="'
+                  + cidProvNom(id) + ' · ' + cidMois(mois[i]) + ' · ' + (v == null ? "non renseigné" : d1(v) + M.unite) + '"></td>';
+              }).join("")
+            + '<td class="c">' + d1(moy) + '</td></tr>';
+        }).join("") + '</tbody></table></div>' + siLegende(S.mes);
+    sousTitre = S.prof + " mois jusqu'à " + cidMois(per) + " · " + sysDef.libelle;
+    note = "Une ligne uniformément verte est une province qui tient, une ligne qui vire en fin de série est une province qui décroche, une ligne grise est une province absente du relevé. Les trois appellent des suites différentes et se ressemblent sur une carte mensuelle.";
+  }
+
+  if (S.vue === "serie") {
+    const nats = mois.map(m => siVal("National", S.sys, S.mes, m));
+    const series = [{ lib: "National", coul: "#1F3864", v: nats }];
+    if (S.prov) series.push({ lib: cidProvNom(S.prov), coul: "#B4913C", v: mois.map(m => siVal(PROV_CANON[S.prov], S.sys, S.mes, m)) });
+    if (M.cible != null) series.push({ lib: "Cible " + M.cible + " %", coul: "#B3372F", v: mois.map(() => M.cible) });
+    corps = foncSerieSVG(series, mois, S.mes === "ecart" ? 40 : 100);
+    sousTitre = S.prof + " mois jusqu'à " + cidMois(per) + " · " + sysDef.libelle
+      + (S.prov ? " · " + cidProvNom(S.prov) : " · sélectionner une province pour la superposer");
+    note = "La série nationale lisse ce que la matrice fait voir. Un national stable peut recouvrir une province qui décroche et une autre qui progresse, et c'est le cas ici sur plusieurs mois.";
+  }
+
+  if (S.vue === "nuage") {
+    /* Completude en abscisse, promptitude en ordonnee : la diagonale separe
+       ce qui arrive de ce qui arrive a temps. */
+    const pts = ids.map(function (id) {
+      return { id: id, c: siVal(PROV_CANON[id], S.sys, "comp", per), p: siVal(PROV_CANON[id], S.sys, "promp", per) };
+    }).filter(x => x.c != null && x.p != null);
+    const W = 860, H = 380, ml = 44, mr = 16, mt = 14, mb = 34, iw = W - ml - mr, ih = H - mt - mb;
+    const X = v => ml + v / 100 * iw, Y = v => mt + ih - v / 100 * ih;
+    corps = pts.length ? '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%">'
+      + [0, 25, 50, 75, 100].map(function (g) {
+          return '<line x1="' + ml + '" y1="' + Y(g) + '" x2="' + (W - mr) + '" y2="' + Y(g) + '" stroke="#E4E0D5"/>'
+            + '<text x="' + (ml - 6) + '" y="' + (Y(g) + 3.5) + '" text-anchor="end" font-size="9.5" fill="#75706B">' + g + '</text>'
+            + '<text x="' + X(g) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="9.5" fill="#75706B">' + g + '</text>'; }).join("")
+      + '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(100) + '" y2="' + Y(100) + '" stroke="#A09A93" stroke-dasharray="4 3"/>'
+      + '<line x1="' + X(95) + '" y1="' + mt + '" x2="' + X(95) + '" y2="' + (mt + ih) + '" stroke="#B3372F" stroke-dasharray="3 3" opacity="0.6"/>'
+      + '<line x1="' + ml + '" y1="' + Y(90) + '" x2="' + (W - mr) + '" y2="' + Y(90) + '" stroke="#B3372F" stroke-dasharray="3 3" opacity="0.6"/>'
+      + pts.map(function (x) {
+          const sel = S.prov === x.id;
+          const regle = x.c >= 95 && x.p >= 90;
+          /* Trois groupes plutot que deux : les provinces qui approchent les
+             cibles forment un amas ou les etiquettes se recouvrent, et les
+             nommer sur le graphique le rend illisible sans rien apprendre. */
+          const proche = !regle && x.c >= 92 && x.p >= 86;
+          const gauche = x.c > 78;
+          const nom = ((!regle && !proche) || sel)
+            ? '<text x="' + (X(x.c) + (gauche ? -7 : 7)).toFixed(1) + '" y="' + (Y(x.p) + 3).toFixed(1)
+              + '" text-anchor="' + (gauche ? "end" : "start") + '" font-size="8.5" fill="#75706B">'
+              + cidProvNom(x.id) + '</text>' : "";
+          return '<circle cx="' + X(x.c).toFixed(1) + '" cy="' + Y(x.p).toFixed(1) + '" r="' + (sel ? 6.5 : 4.5)
+            + '" fill="' + (sel ? "#B4913C" : regle ? "#2E7D32" : proche ? "#7FA83C" : "#1F3864") + '" fill-opacity="' + (sel ? 0.95 : 0.55) + '">'
+            + '<title>' + cidProvNom(x.id) + ' · complétude ' + d1(x.c) + ' % · promptitude ' + d1(x.p) + ' %</title></circle>'
+            + nom; }).join("")
+      + '</svg><div class="fn-lg"><span><i style="background:#2E7D32"></i>'
+      + pts.filter(x => x.c >= 95 && x.p >= 90).length + ' provinces aux deux cibles</span>'
+      + '<span><i style="background:#7FA83C"></i>'
+      + pts.filter(x => !(x.c >= 95 && x.p >= 90) && x.c >= 92 && x.p >= 86).length + ' provinces qui en approchent, nommées au survol</span>'
+      + '<span><i style="background:#1F3864"></i>provinces écartées, nommées sur le graphique</span>'
+      + '<span><i style="background:#A09A93"></i>diagonale : tout ce qui arrive arrive à temps</span>'
+      + '<span><i style="background:#B3372F"></i>cibles de 95 et 90 pour cent</span></div>'
+      : '<p>Ce système ne porte pas les deux mesures : le nuage demande la complétude et la promptitude.</p>';
+    sousTitre = "Complétude en abscisse, promptitude en ordonnée · " + cidMois(per) + " · " + sysDef.libelle;
+    note = "L'écart à la diagonale est la part des rapports qui arrivent hors délai. Une province collée à la diagonale mais loin du coin supérieur a un problème de couverture du rapportage ; une province haute en abscisse et basse en ordonnée a un problème de calendrier. Les deux ne se traitent pas de la même façon et se confondent sur un taux unique.";
+  }
+
+  if (S.vue === "tableau") {
+    /* Croisement complet : chaque province contre chaque systeme, sur la
+       mesure retenue. C'est la lecture qui designe si un defaut tient a la
+       province ou au systeme. */
+    const cols = S.systemes;
+    corps = '<div class="si-mx-wrap"><table class="fn-mx"><thead><tr><th>Province</th>'
+      + cols.map(c => '<th class="c" title="' + c.perimetre + '">' + c.libelle + '</th>').join("")
+      + '</tr></thead><tbody>'
+      + ids.slice().sort((a, b) => cidProvNom(a).localeCompare(cidProvNom(b))).map(function (id) {
+          return '<tr><td>' + cidProvNom(id) + '</td>'
+            + cols.map(function (c) {
+                const v = siVal(PROV_CANON[id], c.code, S.mes, per);
+                return '<td class="c" style="background:' + (v == null ? "transparent" : siCoul(v, S.mes) + "38") + '">'
+                  + (v == null ? '<span class="dsr-o">ND</span>' : d1(v)) + '</td>';
+              }).join("") + '</tr>';
+        }).join("")
+      + '<tr><td><strong>National</strong></td>'
+      + cols.map(function (c) {
+          const v = siVal("National", c.code, S.mes, per);
+          return '<td class="c"><strong>' + (v == null ? "ND" : d1(v)) + '</strong></td>'; }).join("")
+      + '</tr></tbody></table></div>';
+    sousTitre = cidMois(per) + " · " + M.lib.toLowerCase() + " de chaque système";
+    note = "Une colonne basse partout désigne un système qui ne remonte pas, et le problème est alors national. Une ligne basse partout désigne une province qui ne transmet sur aucun canal, et le problème est alors territorial. Les deux se distinguent ici et pas sur une carte, qui ne porte qu'un système à la fois.";
+  }
+
+  /* Comparaison des systemes au mois retenu, toujours affichee. */
+  const tblSys = '<table class="dt"><thead><tr><th>Système</th><th>Périmètre</th>'
+    + '<th style="text-align:right">Complétude</th><th style="text-align:right">Promptitude</th>'
+    + '<th style="text-align:right">Écart</th><th style="text-align:right">Provinces sous la cible</th></tr></thead><tbody>'
+    + S.systemes.map(function (s) {
+        const c = siVal("National", s.code, "comp", per), p = siVal("National", s.code, "promp", per);
+        const sous = ids.filter(function (id) { const v = siVal(PROV_CANON[id], s.code, "comp", per); return v != null && v < 95; }).length;
+        const nd = ids.filter(function (id) { return siVal(PROV_CANON[id], s.code, "comp", per) == null; }).length;
+        return '<tr' + (s.code === S.sys ? ' style="background:var(--royal-tint)"' : '') + '>'
+          + '<td class="l"><strong>' + s.libelle + '</strong></td><td>' + s.perimetre + '</td>'
+          + '<td class="num">' + (c == null ? '<span class="dsr-o">ND</span>' : '<span class="pill ' + (c >= 95 ? "green" : c >= 80 ? "orange" : "red") + '">' + d1(c) + ' %</span>') + '</td>'
+          + '<td class="num">' + (p == null ? '<span class="dsr-o">ND</span>' : d1(p) + " %") + '</td>'
+          + '<td class="num">' + (c == null || p == null ? '<span class="dsr-o">ND</span>' : d1(c - p)) + '</td>'
+          + '<td class="num">' + sous + ' / ' + (ids.length - nd) + (nd ? '<div class="dsr-o">' + nd + ' non renseignées</div>' : "") + '</td></tr>';
+      }).join("") + '</tbody></table>';
+
+  return { crumbs: crumbs, html: et
+    + '<div class="ph-sub">Une seule sélection, cinq représentations. Le système, la mesure, la province et la '
+    + 'profondeur sont choisis une fois ; la bascule change la façon de regarder sans changer la question. '
+    + sysDef.libelle + ' · ' + M.lib.toLowerCase() + ' · ' + cidMois(per) + '.</div></div>'
+    + '<div class="content">'
+    + barre
+    + '<div class="kpi-grid">'
+    + kpi("Valeur nationale", d1(nat), M.unite, sysDef.libelle + " · " + cidMois(per), "—", "flat",
+        nat == null ? "na" : siCoul(nat, S.mes) === "#2E7D32" ? "green" : siCoul(nat, S.mes) === "#B3372F" ? "red" : "orange", true)
+    + kpi(M.cible == null ? "Provinces sous huit points d'écart" : "Provinces à la cible", atteint, " /" + dispo.length,
+        M.cible == null ? "Rapports quasiment tous dans le délai" : "Cible de " + M.cible + " pour cent", "—", "flat",
+        dispo.length && atteint / dispo.length >= 0.7 ? "green" : atteint ? "orange" : "red", true)
+    + kpi("Étendue entre provinces", d1(etendue), M.unite, "Écart entre la plus haute et la plus basse", "—", "flat",
+        etendue > 40 ? "red" : etendue > 20 ? "orange" : "green", true)
+    + kpi("Provinces non renseignées", ids.length - dispo.length, " /" + ids.length,
+        "Ce système ne couvre pas tout le territoire", "—", "flat", ids.length - dispo.length ? "red" : "green", true)
+    + '</div>'
+    + card(SI_VUES[S.vue] + " · " + M.lib, sousTitre, corps, note)
+    + card("Tous les systèmes au mois retenu", "Le système en filtre est surligné · " + cidMois(per), tblSys,
+        "Les périmètres ne se comparent pas terme à terme : le rapportage des centres de santé porte sur plus de deux mille structures, celui des hôpitaux nationaux sur quelques unités. Un écart de dix points ne pèse pas le même nombre de rapports selon la ligne, et la colonne des provinces sous la cible corrige en partie cette lecture.")
     + '</div>' };
 };
 
