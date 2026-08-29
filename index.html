@@ -3322,6 +3322,15 @@
   .sup-duo-l .v { text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); }
   .sup-duo-l .n { text-align:right; font-size:10.5px; color:var(--muted); }
   .sup-mx td.c { font-variant-numeric:tabular-nums; font-weight:600; }
+  /* --- ressources humaines --- */
+  .rh-bars { display:flex; flex-direction:column; gap:9px; }
+  .rh-bar { display:grid; grid-template-columns:230px 1fr 110px; gap:14px; align-items:center; font-size:12px; }
+  .rh-bar-l { color:var(--ink); }
+  .rh-bar-l span { display:block; font-size:10.5px; color:var(--muted); }
+  .rh-bar-v { text-align:right; font-variant-numeric:tabular-nums; }
+  .rh-bar-v span { display:block; font-size:10.5px; color:var(--muted); }
+  .rh-heat td.c { font-variant-numeric:tabular-nums; }
+  @media (max-width:760px){ .rh-bar { grid-template-columns:1fr 90px; } .rh-bar .sup-av-g { display:none; } }
   .sup-mx tbody tr:hover td { background-clip:padding-box; }
   @media (max-width:760px){ .sup-duo-l { grid-template-columns:1fr 90px; } .sup-duo-l .sup-av-g, .sup-duo-l .n { display:none; } }
   @media (max-width:760px){ .rim-tr { grid-template-columns:1.4fr 1fr .6fr; } .rim-tr-b, .rim-tr-o { display:none; } }
@@ -4545,6 +4554,17 @@ const PROGRAMS = [
     ]
   },
   // ===== FONCTIONS D'APPUI =====
+  {
+    id:"rh", c:"min", icon:"RH", label:"Ressources humaines",
+    dir:"DRH", groupe:"Fonctions d'appui",
+    sub:[
+      { id:"rh-apercu",  label:"Aperçu du capital humain", status:"orange", g:"Synthèses" },
+      { id:"rh-repart",  label:"Allocation et écarts",     status:"red",    g:"Répartition" },
+      { id:"rh-statut",  label:"Statuts et continuité",    status:"red",    g:"Répartition" },
+      { id:"rh-form",    label:"Agents en formation",      status:"orange", g:"Compétences" },
+      { id:"rh-service", label:"Effectifs et service",     status:"orange", g:"Effet sur le service" },
+    ]
+  },
   {
     id:"diem", c:"min", icon:"INF", label:"Infrastructures sanitaires",
     dir:"DIEM", groupe:"Fonctions d'appui",
@@ -14977,6 +14997,412 @@ VIEWS["vacc-sup-effet"] = function () {
         "La colonne du milieu porte l'exigence retenue en filtre, ce qui permet de voir si une province basse au score global l'est sur cette exigence-là ou sur d'autres.")
     + card("Calage du jeu simulé", "Ce qui est repris du relevé réel et ce qui est tiré au sort", tblC,
         M.note)
+    + '</div>' };
+};
+
+/* ==============================================================
+   RESSOURCES HUMAINES · CAPITAL HUMAIN
+   L'effectif ne se lit pas seul. Il se rapporte a une population,
+   a un parc de structures et a des zones de responsabilite, puis
+   se confronte a ce que les programmes produisent. C'est le
+   passage de la gestion administrative du personnel a une lecture
+   de capital : ou la ressource manque, ou elle ne tient qu'a des
+   contrats hors budget, et ce qu'elle change au service rendu.
+============================================================== */
+let RH = null;
+fetch("rh_donnees.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { RH = j; if (String(state.sub).indexOf("rh-") === 0) renderMain(); }).catch(() => {});
+
+const RH_ETAPES = [
+  { id: "rh-apercu",  n: "01", t: "Aperçu du capital humain", q: "Combien d'agents et où" },
+  { id: "rh-repart",  n: "02", t: "Allocation et écarts",     q: "Où la ressource manque" },
+  { id: "rh-statut",  n: "03", t: "Statuts et continuité",    q: "Ce qui tient hors budget" },
+  { id: "rh-form",    n: "04", t: "Agents en formation",      q: "Ce qui arrive et pour quel programme" },
+  { id: "rh-service", n: "05", t: "Effectifs et service",     q: "Ce que la ressource change" }
+];
+function rhFil(actif) {
+  return '<div class="fn-fil">' + RH_ETAPES.map(function (e) {
+    return '<button class="fn-fil-e' + (e.id === actif ? " on" : "") + '" onclick="selectSub(\'rh\',\'' + e.id + '\')">'
+      + '<span class="fn-fil-n">' + e.n + '</span><span class="fn-fil-x">'
+      + '<span class="fn-fil-t">' + e.t + '</span><span class="fn-fil-q">' + e.q + '</span></span></button>';
+  }).join("") + '</div>';
+}
+function rhAttente(crumbs, titre) {
+  return { crumbs: crumbs, html: '<div class="ph"><div class="ph-tag">Ressources humaines · DRH</div>'
+    + '<div class="ph-title">' + titre + '</div>'
+    + '<div class="ph-sub">Base des ressources humaines en cours de chargement.</div></div>' };
+}
+const rhD1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+const rhD2 = x => x == null ? "ND" : String(Math.round(x * 100) / 100).replace(".", ",");
+const rhN = x => x == null ? "ND" : Number(x).toLocaleString("fr-FR");
+
+/* Echelle a cinq classes calee sur la distribution observee : une echelle
+   absolue ecraserait vingt-deux provinces derriere la capitale. */
+function rhClasses(vals) {
+  const v = vals.filter(x => x != null).sort((a, b) => a - b);
+  if (!v.length) return [];
+  return [0.2, 0.4, 0.6, 0.8].map(f => v[Math.min(v.length - 1, Math.floor(v.length * f))]);
+}
+const RH_PAL = ["#B3372F", "#D97B29", "#C9A227", "#7FA83C", "#2E7D32"];
+function rhCoul(v, bornes, inv) {
+  if (v == null) return "#CEC8BA";
+  let k = 0;
+  while (k < bornes.length && v >= bornes[k]) k++;
+  return RH_PAL[inv ? 4 - k : k];
+}
+function rhCarte(vals, bornes, fmt, inv, titre) {
+  const paths = Object.keys(PROVINCE_PATHS).map(function (id) {
+    const v = vals[id];
+    return '<path d="' + PROVINCE_PATHS[id].d + '" fill="' + rhCoul(v, bornes, inv) + '" stroke="#F1EFEA" stroke-width="1.4">'
+      + '<title>' + cidProvNom(id) + ' · ' + (v == null ? "ND" : fmt(v)) + (titre ? ' · ' + titre : '') + '</title></path>';
+  }).join("");
+  const lab = Object.keys(PROVINCE_PATHS).map(function (id) {
+    const c = CID_CENTROIDES[id]; if (!c) return "";
+    const nom = cidProvNom(id).replace(/^(Mayo[- ]Kebbi|Logone|Ennedi)[- ](.)\S*/, "$1-$2.");
+    return '<g class="cid-map-lbl" pointer-events="none"><text x="' + c[0] + '" y="' + (c[1] - 5) + '" text-anchor="middle">'
+      + nom + '</text><text x="' + c[0] + '" y="' + (c[1] + 10) + '" text-anchor="middle" class="v">'
+      + (vals[id] == null ? "ND" : fmt(vals[id])) + '</text></g>';
+  }).join("");
+  return '<svg viewBox="' + MAP_VIEWBOX + '" style="width:100%;max-height:560px">' + paths + lab + '</svg>';
+}
+function rhLegende(bornes, fmt, inv) {
+  const lib = ["moins de " + fmt(bornes[0]), fmt(bornes[0]) + " à " + fmt(bornes[1]),
+               fmt(bornes[1]) + " à " + fmt(bornes[2]), fmt(bornes[2]) + " à " + fmt(bornes[3]),
+               fmt(bornes[3]) + " et plus"];
+  return '<div class="fn-lg">' + lib.map(function (l, k) {
+    return '<span><i style="background:' + RH_PAL[inv ? 4 - k : k] + '"></i>' + l + '</span>';
+  }).join("") + '</div>';
+}
+
+/* ==============================================================
+   01 · APERCU DU CAPITAL HUMAIN
+============================================================== */
+VIEWS["rh-apercu"] = function () {
+  const crumbs = ["Ressources humaines", "Aperçu du capital humain"];
+  if (!RH) return rhAttente(crumbs, "Ce dont dispose le système de santé");
+  const M = RH.meta, P = RH.provinces;
+  const dens = {}; P.forEach(p => { dens[p.id] = p.dens; });
+  const b = rhClasses(P.map(p => p.dens));
+  const fmt = x => rhD1(x);
+  const hors = 100 - M.part_etat;
+  const tri = P.slice().sort((a, b2) => (a.dens || 0) - (b2.dens || 0));
+  const tbl = '<table class="dt"><thead><tr><th>Province</th><th style="text-align:right">Agents</th>'
+    + '<th style="text-align:right">Pour 10 000 habitants</th><th style="text-align:right">Par structure</th>'
+    + '<th style="text-align:right">Par zone de responsabilité</th><th style="text-align:right">Sur budget de l\'État</th></tr></thead><tbody>'
+    + tri.map(function (p) {
+        const cls = p.dens >= b[3] ? "green" : p.dens >= b[1] ? "orange" : "red";
+        return '<tr><td class="l"><strong>' + cidProvNom(p.id) + '</strong></td><td class="num">' + rhN(p.total) + '</td>'
+          + '<td class="num"><span class="pill ' + cls + '">' + rhD2(p.dens) + '</span></td>'
+          + '<td class="num">' + rhD2(p.par_fosa) + '</td><td class="num">' + rhD2(p.par_zr) + '</td>'
+          + '<td class="num">' + rhD1(p.part_etat) + ' %</td></tr>';
+      }).join("") + '</tbody></table>';
+  const rep = RH.statuts.map(function (s) {
+    const n = P.reduce((a, p) => a + p[s.code], 0) + RH.chu.reduce((a, c) => a + c[s.code], 0);
+    return { s: s, n: n, part: n / M.effectif_total * 100 };
+  }).sort((a, b2) => b2.n - a.n);
+  const barres = '<div class="rh-bars">' + rep.map(function (r) {
+    return '<div class="rh-bar"><div class="rh-bar-l">' + r.s.lib + '<span>' + r.s.fam + '</span></div>'
+      + '<div class="sup-av-g"><i style="width:' + r.part + '%;background:'
+      + (r.s.fam === "État" ? "#1F3864" : "#B4913C") + '"></i></div>'
+      + '<div class="rh-bar-v"><strong>' + rhN(r.n) + '</strong><span>' + rhD1(r.part) + ' %</span></div></div>';
+  }).join("") + '</div>';
+
+  return { crumbs: crumbs, html: ''
+    + '<div class="ph"><div class="ph-tag">Ressources humaines · DRH</div>'
+    + '<div class="ph-title">Ce dont dispose le système de santé</div>'
+    + '<div class="ph-sub">' + rhN(M.effectif_total) + ' agents, dont ' + rhN(M.effectif_chu)
+    + ' dans les deux centres hospitaliers universitaires, tenus hors des ratios provinciaux. '
+    + 'Un tiers de l\'effectif ne relève pas du budget de l\'État. La densité va de '
+    + rhD2(Math.min.apply(null, P.map(p => p.dens))) + ' à ' + rhD2(Math.max.apply(null, P.map(p => p.dens)))
+    + ' agents pour dix mille habitants selon la province.</div></div>'
+    + '<div class="content">' + rhFil("rh-apercu")
+    + '<div class="kpi-grid">'
+    + kpi("Effectif recensé", rhN(M.effectif_total), " agents", M.n_provinces + " provinces et " + M.n_chu + " centres universitaires", "—", "flat", "", true)
+    + kpi("Densité médiane", rhD2(P.map(p => p.dens).sort((a, b2) => a - b2)[Math.floor(P.length / 2)]), " pour 10 000 hab.",
+        "Écart de un à " + Math.round(Math.max.apply(null, P.map(p => p.dens)) / Math.min.apply(null, P.map(p => p.dens))) + " entre provinces", "—", "flat", "orange", true)
+    + kpi("Hors budget de l'État", rhD1(hors), " %", "Contrats de partenaires, contrats locaux et comités de gestion", "—", "flat", hors > 25 ? "red" : "orange", true)
+    + kpi("Agents en formation", rhN(M.agents_en_formation), "", M.specialites + " spécialités · " + rhD1(M.part_femmes_formation) + " % de femmes", "—", "flat", "orange", true)
+    + '</div>'
+    + card("Densité de personnel", "Agents pour dix mille habitants · classes de quintile",
+        rhCarte(dens, b, fmt, false, "agents pour 10 000 habitants") + rhLegende(b, fmt, false),
+        "La population provinciale est déduite de la cohorte des moins d'un an et de la part de "
+        + rhD2(M.part_0_11 * 100) + " pour cent mesurée sur 495 zones de responsabilité lors des supervisions. "
+        + "Elle sert de dénominateur et n'a pas valeur de recensement : un écart sur cette base déplace la densité de toutes les provinces dans le même sens, et non le classement entre elles. "
+        + "Les classes sont des quintiles de la distribution observée : une échelle absolue écraserait vingt-deux provinces derrière la capitale.")
+    + card("Composition de l'effectif", "Par statut, provinces et centres universitaires réunis", barres,
+        "Les deux couleurs séparent ce que l'État paie de ce qu'il ne paie pas. Un agent sous contrat de comité de gestion rend le même service qu'un fonctionnaire et n'offre pas la même garantie de continuité : c'est cette distinction que la gestion du capital humain doit porter, là où un décompte administratif se contenterait du total.")
+    + card("Provinces", "Rangées de la moins dotée à la mieux dotée", tbl,
+        "Les trois dénominateurs ne classent pas de la même façon. La population dit ce que la province doit couvrir, le parc de structures ce qu'elle doit faire tourner, la zone de responsabilité ce qu'elle doit atteindre. Une province bien placée sur l'un et mal sur l'autre pose une question d'implantation, non de volume.")
+    + '</div>' };
+};
+
+/* ==============================================================
+   02 · ALLOCATION ET ECARTS
+============================================================== */
+VIEWS["rh-repart"] = function () {
+  const crumbs = ["Ressources humaines", "Allocation et écarts"];
+  if (!RH) return rhAttente(crumbs, "Où la ressource manque");
+  const P = RH.provinces;
+  const base = ["ec_pop", "ec_fosa"].indexOf(window.__rhBase) >= 0 ? window.__rhBase : "ec_pop";
+  const att = base === "ec_pop" ? "att_pop" : "att_fosa";
+  const libBase = base === "ec_pop" ? "la population" : "le parc de structures";
+  const vals = {}; P.forEach(p => { vals[p.id] = p[base]; });
+  const b = rhClasses(P.map(p => p[base]));
+  const fmt = x => (x >= 0 ? "+" : "") + Math.round(x);
+  const tri = P.slice().sort((a, b2) => (a[base] || 0) - (b2[base] || 0));
+  const deficit = P.filter(p => p[base] < 0);
+  const manque = deficit.reduce((a, p) => a + Math.abs(p[base]), 0);
+  const tbl = '<table class="dt"><thead><tr><th>Province</th><th style="text-align:right">Effectif</th>'
+    + '<th style="text-align:right">Attendu sur ' + (base === "ec_pop" ? "population" : "structures") + '</th>'
+    + '<th style="text-align:right">Écart</th><th style="text-align:right">Écart relatif</th>'
+    + '<th>Lecture</th></tr></thead><tbody>'
+    + tri.map(function (p) {
+        const e = p[base], rel = p[att] ? e / p[att] * 100 : null;
+        return '<tr><td class="l"><strong>' + cidProvNom(p.id) + '</strong></td><td class="num">' + rhN(p.total) + '</td>'
+          + '<td class="num">' + rhN(p[att]) + '</td>'
+          + '<td class="num" style="color:' + (e >= 0 ? "#2E7D32" : "#B3372F") + ';font-weight:700">' + fmt(e) + '</td>'
+          + '<td class="num">' + rhD1(rel) + ' %</td>'
+          + '<td>' + (e < -p[att] * 0.25 ? "déficit marqué"
+              : e < 0 ? "sous la moyenne nationale"
+              : e > p[att] * 0.25 ? "dotation supérieure à la moyenne" : "proche de la moyenne") + '</td></tr>';
+      }).join("") + '</tbody></table>';
+  const chuTbl = '<table class="dt"><thead><tr><th>Établissement</th><th style="text-align:right">Agents</th>'
+    + '<th style="text-align:right">Part de l\'effectif national</th></tr></thead><tbody>'
+    + RH.chu.map(c => '<tr><td class="l"><strong>' + c.nom + '</strong></td><td class="num">' + rhN(c.total)
+        + '</td><td class="num">' + rhD1(c.total / RH.meta.effectif_total * 100) + ' %</td></tr>').join("")
+    + '</tbody></table>';
+
+  return { crumbs: crumbs, html: ''
+    + '<div class="ph"><div class="ph-tag">Ressources humaines · allocation</div>'
+    + '<div class="ph-title">Où la ressource manque</div>'
+    + '<div class="ph-sub">L\'effectif de chaque province est comparé à celui qu\'elle aurait si la densité nationale '
+    + 's\'appliquait partout. L\'écart n\'est pas une norme d\'effectif, c\'est une mesure de dispersion : il dit de '
+    + 'combien la répartition actuelle s\'écarte d\'une répartition proportionnelle à ' + libBase + '.</div></div>'
+    + '<div class="content">' + rhFil("rh-repart")
+    + '<div class="fn-f">'
+    + foncGroupeFiltre("Base de comparaison", [{ v: "ec_pop", l: "Population" }, { v: "ec_fosa", l: "Parc de structures" }], "__rhBase", base)
+    + '</div>'
+    + '<div class="kpi-grid">'
+    + kpi("Provinces en déficit", deficit.length, " /" + P.length, "Effectif inférieur à la répartition proportionnelle", "—", "flat", "red", true)
+    + kpi("Agents manquants au total", rhN(manque), "", "Somme des écarts négatifs, à effectif national constant", "—", "flat", "red", true)
+    + kpi("Écart le plus fort", cidProvNom(tri[0].id), "", fmt(tri[0][base]) + " agents par rapport à l'attendu", "—", "flat", "red", true)
+    + kpi("Concentration universitaire", rhD1(RH.meta.effectif_chu / RH.meta.effectif_total * 100), " %",
+        rhN(RH.meta.effectif_chu) + " agents dans deux établissements", "—", "flat", "orange", true)
+    + '</div>'
+    + card("Écart à la répartition proportionnelle", "Agents en plus ou en moins par rapport à " + libBase,
+        rhCarte(vals, b, fmt, false, "agents d'écart") + rhLegende(b, fmt, false),
+        "Le calcul se fait à effectif national constant : ce que gagnerait une province, une autre le perdrait. C'est une lecture de redéploiement, pas de recrutement. "
+        + "Changer de base de comparaison change les provinces désignées, ce qui est le point : une province peu peuplée mais dotée de nombreuses structures n'a pas le même besoin selon qu'on raisonne en population à couvrir ou en portes à tenir ouvertes.")
+    + card("Province par province", "Rangées du déficit le plus fort au surplus le plus fort", tbl,
+        "L'écart relatif rapporte l'écart à l'attendu : il permet de comparer une petite province à une grande. Un déficit de cent agents ne pèse pas de la même façon sur une province qui en compte cent cinquante et sur une qui en compte six cents.")
+    + card("Les deux centres hospitaliers universitaires", "Tenus hors des ratios provinciaux", chuTbl,
+        "Ces deux établissements ont une vocation nationale et leur effectif ne se rapporte pas à une population provinciale. Les inclure dans la densité de N'Djamena la ferait passer pour une anomalie d'allocation alors qu'il s'agit d'une fonction de recours.")
+    + '</div>' };
+};
+
+/* ==============================================================
+   03 · STATUTS ET CONTINUITE
+============================================================== */
+VIEWS["rh-statut"] = function () {
+  const crumbs = ["Ressources humaines", "Statuts et continuité"];
+  if (!RH) return rhAttente(crumbs, "Ce qui tient hors budget de l'État");
+  const P = RH.provinces, S = RH.statuts;
+  const hors = {}; P.forEach(p => { hors[p.id] = 100 - p.part_etat; });
+  const b = rhClasses(P.map(p => 100 - p.part_etat));
+  const fmt = x => Math.round(x) + "%";
+  /* Chaque cellule porte la part d'un statut dans l'effectif de la province :
+     les lignes se comparent entre elles, la somme de chaque ligne vaut cent. */
+  const heat = '<table class="fn-mx rh-heat"><thead><tr><th>Province</th>'
+    + S.map(s => '<th class="c" title="' + s.fam + '">' + s.lib + '</th>').join("")
+    + '<th class="c">Hors budget</th><th class="c">Effectif</th></tr></thead><tbody>'
+    + P.slice().sort((a, b2) => (100 - b2.part_etat) - (100 - a.part_etat)).map(function (p) {
+        return '<tr><td>' + cidProvNom(p.id) + '</td>'
+          + S.map(function (s) {
+              const v = p.total ? p[s.code] / p.total * 100 : null;
+              const c = s.fam === "État" ? "31,56,100" : "180,145,60";
+              return '<td class="c" style="background:rgba(' + c + ',' + (0.06 + 0.7 * Math.min(1, (v || 0) / 60)) + ')"'
+                + ' title="' + cidProvNom(p.id) + ' · ' + s.lib + ' · ' + rhN(p[s.code]) + ' agents">' + rhD1(v) + '</td>';
+            }).join("")
+          + '<td class="c"><strong>' + rhD1(100 - p.part_etat) + '</strong></td>'
+          + '<td class="c">' + rhN(p.total) + '</td></tr>';
+      }).join("") + '</tbody></table>';
+  const risque = P.filter(p => 100 - p.part_etat >= 40).sort((a, b2) => (b2.total * (100 - b2.part_etat)) - (a.total * (100 - a.part_etat)));
+  const expose = P.reduce((a, p) => a + p.total * (100 - p.part_etat) / 100, 0);
+
+  return { crumbs: crumbs, html: ''
+    + '<div class="ph"><div class="ph-tag">Ressources humaines · continuité</div>'
+    + '<div class="ph-title">Ce qui tient hors budget de l\'État</div>'
+    + '<div class="ph-sub">Un agent sous contrat de partenaire ou de comité de gestion rend le même service qu\'un '
+    + 'fonctionnaire et n\'offre pas la même garantie de durée. Sur les provinces, ' + rhN(Math.round(expose))
+    + ' agents sont dans ce cas, et leur répartition n\'est pas uniforme.</div></div>'
+    + '<div class="content">' + rhFil("rh-statut")
+    + '<div class="kpi-grid">'
+    + kpi("Agents hors budget de l'État", rhN(Math.round(expose)), "", "Contrats de partenaires, contrats locaux et comités de gestion", "—", "flat", "red", true)
+    + kpi("Provinces au-dessus de 40 %", risque.length, " /" + P.length, "Part de l'effectif hors budget de l'État", "—", "flat", risque.length ? "red" : "green", true)
+    + kpi("Part la plus élevée", rhD1(Math.max.apply(null, P.map(p => 100 - p.part_etat))), " %",
+        cidProvNom(P.slice().sort((a, b2) => (100 - b2.part_etat) - (100 - a.part_etat))[0].id), "—", "flat", "red", true)
+    + kpi("Part la plus basse", rhD1(Math.min.apply(null, P.map(p => 100 - p.part_etat))), " %",
+        cidProvNom(P.slice().sort((a, b2) => (100 - a.part_etat) - (100 - b2.part_etat))[0].id), "—", "flat", "green", true)
+    + '</div>'
+    + card("Dépendance aux contrats hors budget", "Part de l'effectif provincial · classes de quintile",
+        rhCarte(hors, b, fmt, true, "hors budget de l'État") + rhLegende(b, fmt, true),
+        "La carte ne classe pas les provinces par performance mais par exposition. Une province où la moitié des agents dépend d'un financement de partenaire ou d'une recette locale perd la moitié de sa capacité si ce financement s'arrête, et cela ne se voit sur aucun indicateur de service tant que l'arrêt n'a pas eu lieu.")
+    + card("Composition détaillée", "Part de chaque statut dans l'effectif de la province", heat,
+        "Les cinq colonnes somment à cent pour chaque ligne. Le bleu marque ce que l'État paie, l'ocre ce qu'il ne paie pas, et l'intensité la part. Les comités de gestion et les partenaires ne se substituent pas aux mêmes endroits : les premiers pèsent dans les provinces méridionales, les seconds là où les projets sont implantés.")
+    + '</div>' };
+};
+
+/* ==============================================================
+   04 · AGENTS EN FORMATION
+============================================================== */
+VIEWS["rh-form"] = function () {
+  const crumbs = ["Ressources humaines", "Agents en formation"];
+  if (!RH) return rhAttente(crumbs, "Ce qui arrive et pour quel programme");
+  const F = RH.formation, G = RH.formation_prog, M = RH.meta;
+  const sel = G.some(g => g.prog === window.__rhProg) ? window.__rhProg : "*";
+  const liste = sel === "*" ? F : F.filter(x => x.prog === sel);
+  const seul = F.filter(x => x.t === 1).length;
+  const max = Math.max.apply(null, G.map(g => g.t));
+  const barres = '<div class="rh-bars">' + G.map(function (g) {
+    return '<div class="rh-bar"><div class="rh-bar-l">' + g.prog + '<span>' + g.n_spec + ' spécialités · '
+      + rhD1(g.part_f) + ' % de femmes</span></div>'
+      + '<div class="sup-av-g"><i style="width:' + (g.t / max * 100) + '%;background:'
+      + (g.part_f >= 30 ? "#2E7D32" : g.part_f >= 15 ? "#B4913C" : "#B3372F") + '"></i></div>'
+      + '<div class="rh-bar-v"><strong>' + rhN(g.t) + '</strong><span>' + rhD1(g.t / M.agents_en_formation * 100) + ' %</span></div></div>';
+  }).join("") + '</div>';
+  const tbl = '<table class="dt"><thead><tr><th>Spécialité</th><th>Programme concerné</th>'
+    + '<th style="text-align:right">Femmes</th><th style="text-align:right">Hommes</th>'
+    + '<th style="text-align:right">Total</th><th style="text-align:right">Part de femmes</th></tr></thead><tbody>'
+    + liste.slice(0, 30).map(function (x) {
+        const pf = x.t ? x.f / x.t * 100 : null;
+        return '<tr><td class="l"><strong>' + x.lib + '</strong></td><td>' + x.prog + '</td>'
+          + '<td class="num">' + x.f + '</td><td class="num">' + x.m + '</td>'
+          + '<td class="num"><strong>' + x.t + '</strong></td>'
+          + '<td class="num"><span class="pill ' + (pf >= 30 ? "green" : pf >= 15 ? "orange" : "red") + '">' + rhD1(pf) + ' %</span></td></tr>';
+      }).join("") + '</tbody></table>';
+
+  return { crumbs: crumbs, html: ''
+    + '<div class="ph"><div class="ph-tag">Ressources humaines · formation</div>'
+    + '<div class="ph-title">Ce qui arrive et pour quel programme</div>'
+    + '<div class="ph-sub">' + rhN(M.agents_en_formation) + ' agents en spécialisation, répartis sur ' + M.specialites
+    + ' spécialités dont ' + seul + ' ne comptent qu\'un seul agent. Rapportée à l\'effectif recensé, cette promotion '
+    + 'représente ' + rhD1(M.agents_en_formation / M.effectif_total * 100) + ' pour cent du personnel.</div></div>'
+    + '<div class="content">' + rhFil("rh-form")
+    + '<div class="fn-f">'
+    + foncGroupeFiltre("Programme", [{ v: "*", l: "Tous" }].concat(G.map(g => ({ v: g.prog, l: g.prog }))), "__rhProg", sel)
+    + '</div>'
+    + '<div class="kpi-grid">'
+    + kpi("Agents en formation", rhN(M.agents_en_formation), "", rhD1(M.agents_en_formation / M.effectif_total * 100) + " % de l'effectif recensé", "—", "flat", "orange", true)
+    + kpi("Part de femmes", rhD1(M.part_femmes_formation), " %", "Une agente pour quatre agents en spécialisation", "—", "flat", "red", true)
+    + kpi("Spécialités à un seul agent", seul, " /" + M.specialites, "Aucune masse critique n'y est constituée", "—", "flat", "red", true)
+    + kpi("Premier programme servi", G[0].prog, "", rhN(G[0].t) + " agents, soit " + rhD1(G[0].t / M.agents_en_formation * 100) + " %", "—", "flat", "orange", true)
+    + '</div>'
+    + card("Répartition par programme", "Spécialités rapprochées du programme qu'elles servent", barres,
+        "Le rapprochement est fait sur le libellé de la spécialité : il indique une orientation, non une affectation. "
+        + "La couleur des barres porte la part de femmes. Les soins hospitaliers concentrent " + rhD1(G[0].t / M.agents_en_formation * 100)
+        + " pour cent de la promotion quand la nutrition en reçoit " + rhD1((G.filter(g => g.prog === "Nutrition")[0] || { t: 0 }).t / M.agents_en_formation * 100)
+        + " pour cent : la spécialisation suit la structure hospitalière plutôt que la charge de morbidité.")
+    + card("Spécialités" + (sel === "*" ? "" : " · " + sel), "Trente premières par effectif, filtre appliqué", tbl,
+        "La parité varie fortement d'une spécialité à l'autre. La santé de la reproduction et les sciences infirmières comptent une majorité ou une forte minorité de femmes, la chirurgie et l'épidémiologie presque aucune. Une politique de spécialisation qui ne suit pas cette répartition reconduit l'écart sans le voir.")
+    + '</div>' };
+};
+
+/* ==============================================================
+   05 · EFFECTIFS ET SERVICE
+============================================================== */
+VIEWS["rh-service"] = function () {
+  const crumbs = ["Ressources humaines", "Effectifs et service"];
+  if (!RH) return rhAttente(crumbs, "Ce que la ressource change");
+  const P = RH.provinces, I = RH.inference;
+  const dens = ["dens", "par_fosa", "par_zr"].indexOf(window.__rhDens) >= 0 ? window.__rhDens : "dens";
+  const serv = I.some(x => x.serv === window.__rhServ) ? window.__rhServ : "penta3";
+  const lignes = I.filter(x => x.dens === dens);
+  const cur = lignes.filter(x => x.serv === serv)[0];
+  const densLib = (I.filter(x => x.dens === dens)[0] || {}).dens_lib;
+  const servs = []; I.forEach(x => { if (!servs.some(s => s.v === x.serv)) servs.push({ v: x.serv, l: x.serv_lib }); });
+  const denss = []; I.forEach(x => { if (!denss.some(s => s.v === x.dens)) denss.push({ v: x.dens, l: x.dens_lib }); });
+
+  const coul = r => r == null ? "transparent"
+    : (r > 0 ? "rgba(46,125,50," : "rgba(179,55,47,") + (0.08 + 0.6 * Math.min(1, Math.abs(r))) + ")";
+  const mat = '<table class="fn-mx"><thead><tr><th>Indicateur de service</th>'
+    + '<th class="c">Corrélation linéaire</th><th class="c">Sans la capitale</th>'
+    + '<th class="c">Corrélation de rang</th><th class="c">Sans la capitale</th>'
+    + '<th class="c">Moitié la moins dotée</th><th class="c">Moitié la mieux dotée</th>'
+    + '<th class="c">Écart de Welch</th></tr></thead><tbody>'
+    + lignes.map(function (x) {
+        return '<tr><td>' + x.serv_lib + '</td>'
+          + '<td class="c" style="background:' + coul(x.r) + '">' + rhD2(x.r) + '</td>'
+          + '<td class="c" style="background:' + coul(x.r_sans_ndj) + '">' + rhD2(x.r_sans_ndj) + '</td>'
+          + '<td class="c" style="background:' + coul(x.rho) + '">' + rhD2(x.rho) + '</td>'
+          + '<td class="c" style="background:' + coul(x.rho_sans_ndj) + '">' + rhD2(x.rho_sans_ndj) + '</td>'
+          + '<td class="c">' + rhD1(x.med_bas) + '</td><td class="c">' + rhD1(x.med_haut) + '</td>'
+          + '<td class="c">' + rhD2(x.t) + '</td></tr>';
+      }).join("") + '</tbody></table>';
+
+  /* Nuage : une province par point, la capitale distinguee. */
+  const W = 860, H = 280, ml = 44, mr = 14, mt = 12, mb = 34, iw = W - ml - mr, ih = H - mt - mb;
+  const pts = P.filter(p => p[dens] != null && p[serv] != null);
+  const xs = pts.map(p => p[dens]), ys = pts.map(p => p[serv]);
+  const x0 = 0, x1 = Math.max.apply(null, xs) * 1.05;
+  const y0 = Math.min.apply(null, ys) * 0.9, y1 = Math.max.apply(null, ys) * 1.05;
+  const X = v => ml + (v - x0) / (x1 - x0) * iw, Y = v => mt + ih - (v - y0) / Math.max(0.001, y1 - y0) * ih;
+  const nuage = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%">'
+    + [0, 0.5, 1].map(function (f) { const y = mt + ih - f * ih;
+        return '<line x1="' + ml + '" y1="' + y + '" x2="' + (W - mr) + '" y2="' + y + '" stroke="#E4E0D5"/>'
+          + '<text x="' + (ml - 6) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="9.5" fill="#75706B">'
+          + rhD1(y0 + f * (y1 - y0)) + '</text>'; }).join("")
+    + pts.map(function (p) {
+        const cap = p.id === "NDJ";
+        return '<circle cx="' + X(p[dens]).toFixed(1) + '" cy="' + Y(p[serv]).toFixed(1) + '" r="' + (cap ? 6 : 4.5)
+          + '" fill="' + (cap ? "#B4913C" : "#1F3864") + '" fill-opacity="' + (cap ? 0.95 : 0.55) + '">'
+          + '<title>' + cidProvNom(p.id) + ' · ' + rhD2(p[dens]) + ' · ' + rhD1(p[serv]) + '</title></circle>'
+          + '<text x="' + (X(p[dens]) + 7).toFixed(1) + '" y="' + (Y(p[serv]) + 3).toFixed(1) + '" font-size="8.5" fill="#75706B">'
+          + cidProvNom(p.id).slice(0, 12) + '</text>';
+      }).join("")
+    + [0, 0.5, 1].map(function (f) { const v = x0 + f * (x1 - x0);
+        return '<text x="' + X(v).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="9.5" fill="#75706B">'
+          + rhD2(v) + '</text>'; }).join("")
+    + '</svg><div class="fn-lg"><span><i style="background:#1F3864"></i>une province</span>'
+    + '<span><i style="background:#B4913C"></i>N\'Djamena</span></div>';
+
+  return { crumbs: crumbs, html: ''
+    + '<div class="ph"><div class="ph-tag">Ressources humaines · effet sur le service</div>'
+    + '<div class="ph-title">Ce que la ressource change</div>'
+    + '<div class="ph-sub">Trois mesures de dotation croisées avec cinq indicateurs de service, sur les vingt-trois '
+    + 'provinces. Aucun des quinze croisements ne fait apparaître de relation positive : la dotation en personnel, '
+    + 'telle qu\'elle est mesurée ici, ne prédit pas ce que la province produit.</div></div>'
+    + '<div class="content">' + rhFil("rh-service")
+    + '<div class="fn-f">'
+    + foncGroupeFiltre("Mesure de dotation", denss, "__rhDens", dens)
+    + foncGroupeFiltre("Indicateur de service", servs, "__rhServ", serv)
+    + '</div>'
+    + '<div class="kpi-grid">'
+    + kpi("Corrélation linéaire", rhD2(cur.r), "", densLib + " et " + cur.serv_lib.toLowerCase(), "—", "flat",
+        cur.r > 0.3 ? "green" : cur.r < -0.3 ? "red" : "orange", true)
+    + kpi("Corrélation de rang", rhD2(cur.rho), "", "Insensible aux valeurs extrêmes", "—", "flat",
+        Math.abs(cur.rho) < 0.2 ? "orange" : cur.rho > 0 ? "green" : "red", true)
+    + kpi("Moitié la moins dotée", rhD1(cur.med_bas), "", "Moyenne de l'indicateur sur " + Math.floor(cur.n / 2) + " provinces", "—", "flat", "", true)
+    + kpi("Moitié la mieux dotée", rhD1(cur.med_haut), "", "Écart de Welch de " + rhD2(cur.t), "—", "flat", "", true)
+    + '</div>'
+    + card("Matrice des croisements", densLib + " contre chaque indicateur de service · " + P.length + " provinces", mat,
+        "Chaque ligne donne quatre lectures du même croisement. La corrélation linéaire suit les valeurs extrêmes, la corrélation de rang ne les suit pas, "
+        + "et la colonne sans la capitale dit si le coefficient tenait à elle seule. Quand les quatre s'accordent sur un coefficient faible, comme ici, la relation n'existe pas au niveau provincial. "
+        + "L'écart de Welch compare les deux moitiés du classement de dotation : aucune valeur n'atteint deux, seuil en deçà duquel un écart de cette taille s'obtient couramment par le seul hasard de l'échantillonnage.")
+    + card(densLib + " et " + cur.serv_lib.toLowerCase(), "Une province par point · la capitale distinguée", nuage,
+        "Le nuage sert à voir d'où vient le coefficient. La capitale se détache sur toutes les mesures de dotation, et l'écarter ne change pas le résultat, ce que la colonne correspondante de la matrice confirme.")
+    + card("Ce que ce résultat autorise à dire", "Et ce qu'il n'autorise pas", `
+        <p>Il n'établit pas que le personnel est sans effet. Trois lectures restent ouvertes et les données présentes ne
+        permettent pas de choisir entre elles.</p>
+        <p>La première est que la répartition suit déjà le besoin : les provinces les mieux dotées seraient celles où la
+        charge est la plus lourde, et leur performance apparente s'en trouverait tirée vers le bas. C'est l'explication
+        la plus économique et elle est invérifiable sans une mesure de charge indépendante de l'effectif.</p>
+        <p>La deuxième est que les indicateurs de service ne discriminent pas. La couverture Penta 3 dépasse cent pour
+        cent dans la majorité des provinces, ce qui met en cause son dénominateur bien avant sa relation au personnel.</p>
+        <p>La troisième est que l'effectif recensé ne dit rien de la présence effective au poste ni de la qualification.
+        Un décompte administratif compte des inscrits, pas des agents en fonction.</p>
+        <p>Aucune décision de redéploiement ne se fonde sur ces coefficients. Ce qu'ils établissent est plus étroit et
+        suffit à orienter le travail : la dotation ne s'optimise pas sur ces indicateurs tant qu'une mesure de charge et
+        une mesure de présence n'auront pas été construites.</p>`)
     + '</div>' };
 };
 
