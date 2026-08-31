@@ -4299,6 +4299,107 @@
     .h-etat { display: inline-flex !important; }
   }
 
+
+  /* ==============================================================
+     MODE MURAL
+     Le tableau de bord est projete sur des ecrans de salle de
+     reunion, vus de plusieurs metres et souvent de faible
+     definition. Trois defauts s'y revelent : le corps de texte
+     descend a dix points, le gris des notes et des en-tetes se
+     dilue sur une dalle mal calibree, et les etiquettes des
+     graphiques, posees a neuf points et demi, disparaissent.
+     Ce mode ne change ni les donnees ni la mise en page : il
+     remonte l'echelle typographique, ferme les gris et elargit
+     la zone de contenu. Il se coupe d'un bouton et ne touche
+     a rien quand il est eteint.
+  ============================================================== */
+  body.mural {
+    /* Gris fermes : le meme texte, lisible sur une dalle non calibree. */
+    --muted: #4F4A44;
+    --muted-2: #6B655E;
+    --border: #D8D2C4;
+    --border-2: #B9B2A4;
+    --sb-w: 244px;
+  }
+  body.mural .ph-title { font-size: 34px; letter-spacing: -0.5px; }
+  body.mural .ph-sub { font-size: 17px; line-height: 1.5; max-width: none; color: var(--body); }
+  body.mural .ph-tag { font-size: 12px; letter-spacing: 1.1px; }
+  body.mural .ph-fenetre { font-size: 14px; }
+
+  body.mural .kpi { padding: 16px 18px; }
+  body.mural .kpi-value { font-size: 38px; }
+  body.mural .kpi-label { font-size: 13px; min-height: 32px; letter-spacing: 0.4px; }
+  body.mural .kpi-sub, body.mural .kpi-foot, body.mural .kpi-delta { font-size: 13px; }
+
+  body.mural .card-title { font-size: 19px; }
+  body.mural .card-sub { font-size: 14px; }
+  body.mural .card-foot { font-size: 14px; line-height: 1.6; color: var(--body); }
+  body.mural .card-body { padding: 18px 20px; }
+  body.mural .card-body p { font-size: 15.5px; line-height: 1.65; }
+
+  body.mural .dt { font-size: 16px; }
+  body.mural .dt th { font-size: 12px; letter-spacing: 0.9px; padding: 10px 12px; }
+  body.mural .dt td { padding: 11px 12px; }
+  body.mural .pill { font-size: 13px; padding: 3px 11px; }
+  body.mural .fn-mx { font-size: 14.5px; }
+  body.mural .fn-mx th { font-size: 12px; }
+  body.mural .fn-mx td { padding: 7px 8px; }
+  body.mural .si-mx th.c { font-size: 11px; }
+  body.mural .ec-tbl { font-size: 15px; }
+  body.mural .ec-tbl th { font-size: 12px; }
+  body.mural .tbl-s { font-size: 15px; }
+  body.mural .dsr-o { font-size: 12.5px; }
+
+  /* Les etiquettes des graphiques ne sont pas retouchees. Les figures ont
+     une zone de dessin en unites propres et s'etirent a la largeur du
+     conteneur : la barre laterale une fois repliee, elles gagnent un tiers
+     de largeur et leurs etiquettes grandissent d'autant. Leur imposer une
+     taille en pixels compterait l'agrandissement deux fois et ferait
+     chevaucher les graduations avec le titre d'axe, dont la marge est
+     calculee sur la taille d'origine. */
+  body.mural .fn-lg { font-size: 14px; }
+  body.mural .fn-lg i { width: 14px; height: 14px; }
+
+  body.mural .fn-f-l { font-size: 12px; }
+  body.mural .cid-chip, body.mural .fn-sel { font-size: 14px; padding-top: 7px; padding-bottom: 7px; }
+  body.mural .si-bt, body.mural .cid-rail-sb { font-size: 14px; padding: 7px 16px; }
+  body.mural .cid-rail-fb { font-size: 13px; padding: 8px 15px; }
+
+  body.mural .sb-bloc { font-size: 11px; }
+  body.mural .prog-label { font-size: 14px; }
+  body.mural .subprog { font-size: 13.5px; }
+  body.mural .subprog-grp { font-size: 10.5px; }
+  body.mural .breadcrumb { font-size: 13px; }
+  body.mural .tb-btn { font-size: 13px; padding: 6px 12px; }
+
+  /* Sous 1400 pixels de large, une dalle de salle laisse peu de
+     place : la barre laterale se replie pour rendre la largeur au
+     contenu, sans quoi l'agrandissement du texte le comprime. */
+  @media (max-width: 1400px) {
+    body.mural .sb { display: none; }
+  }
+
+
+  /* Blocs editoriaux et encarts : ils portent leurs propres tailles et ne
+     suivent pas l'echelle generale sans y etre nommes. */
+  body.mural .ap-band { padding: 24px 28px; }
+  body.mural .ap-band-t { font-size: 13px; }
+  body.mural .ap-band-h { font-size: 28px; }
+  body.mural .ap-band-s { font-size: 17px; max-width: none; line-height: 1.6; }
+  body.mural .ap-i { padding: 18px 20px; }
+  body.mural .ap-i-t, body.mural .ap-i-h { font-size: 17px; }
+  body.mural .ap-i-s, body.mural .ap-i-txt { font-size: 15px; line-height: 1.6; }
+  body.mural .cid-res-note { font-size: 15px; color: var(--body); }
+  body.mural .attente-txt { font-size: 16px; max-width: none; }
+  body.mural .attente-titre { font-size: 19px; }
+  body.mural .dsr-src { font-size: 15px; }
+  body.mural .cid-anom-liste { font-size: 15px; line-height: 1.7; }
+
+  /* Six compteurs sur une dalle de 1366 points laissent deux cents points
+     par carte : la valeur y descend d'un cran pour que l'intitule tienne. */
+  body.mural .kpi-grid.g6 .kpi-value { font-size: 31px; }
+  body.mural .kpi-grid.g6 .kpi-label { font-size: 12px; }
+
 </style>
 </head>
 <body>
@@ -6640,6 +6741,7 @@ function renderTopbar(v) {
       </div>
 
       <div class="tb-actions">
+        <button class="tb-btn${document.body.classList.contains("mural") ? " tb-btn-principal" : ""}" id="btn-mural" onclick="basculerMural()" title="Agrandir la typographie et renforcer les contrastes pour une projection en salle">⛶ Mural</button>
         <button class="tb-btn" onclick="ouvrirSeuils()" title="Définir les seuils vert / jaune / orange / rouge">⚙ Seuils</button>
         <button class="tb-btn" onclick="ouvrirExportPDF()" title="Exporter en PDF · tout ou partie du tableau de bord">⬇ PDF</button>
       </div>
@@ -9896,7 +9998,26 @@ function ecranChargement() {
   if (m) m.innerHTML = `<div class="cid-load"><div class="cid-load-spin"></div><div class="cid-load-txt">Chargement des données…</div></div>`;
 }
 
+/* Mode mural : bascule, memoire locale et ouverture directe par l'adresse,
+   pour qu'un ecran de salle demarre deja dans le bon rendu. */
+function basculerMural(force) {
+  const on = force === undefined ? !document.body.classList.contains("mural") : !!force;
+  document.body.classList.toggle("mural", on);
+  try { localStorage.setItem("cid_mural", on ? "1" : "0"); } catch (e) {}
+  try { renderMain(); } catch (e) {}
+}
+function initMural() {
+  let on = false;
+  try {
+    const q = new URLSearchParams(location.search).get("mural");
+    if (q !== null) on = q !== "0";
+    else on = localStorage.getItem("cid_mural") === "1";
+  } catch (e) {}
+  if (on) document.body.classList.add("mural");
+}
+
 function init() {
+  initMural();
   applyStaticTranslations();
   document.documentElement.setAttribute("lang", state.lang);
   document.documentElement.setAttribute("dir", state.lang === "ar" ? "rtl" : "ltr");
