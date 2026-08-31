@@ -4400,6 +4400,76 @@
   body.mural .kpi-grid.g6 .kpi-value { font-size: 31px; }
   body.mural .kpi-grid.g6 .kpi-label { font-size: 12px; }
 
+
+  /* ==============================================================
+     FIGURES : LISIBILITE SELON LA LARGEUR DISPONIBLE
+     Une figure a une zone de dessin en unites propres et s'etire a
+     la largeur de son conteneur. Ses etiquettes suivent ce facteur :
+     un graphique dessine sur 860 unites, rendu sur 300 points de
+     large, affiche des graduations de trois points. Le probleme
+     n'est pas la mise en page, qui ne deborde nulle part, mais
+     l'echelle de dessin.
+     Deux reponses, selon le sens du manque de place.
+  ============================================================== */
+
+  /* Ecrans etroits : la figure garde une largeur de dessin minimale
+     et defile dans son enveloppe. Les etiquettes conservent la taille
+     pour laquelle les marges ont ete calculees, donc rien ne se
+     chevauche, au prix d'un glissement lateral sur la figure seule.
+     La page, elle, ne defile pas horizontalement. */
+  @media (max-width: 900px) {
+    .card-body, .map-wrap, .pd-scatter { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .card-body > svg[viewBox],
+    .card-body > div > svg[viewBox],
+    .pd-scatter > svg[viewBox] { min-width: 700px; }
+    /* La carte des provinces est dessinee sur six cents unites : la
+       porter a cette largeur ramene ses libelles a la taille prevue.
+       Elle accepte par ailleurs le pincement et le glissement, ce qui
+       reste la voie normale pour lire un district sur un telephone.
+       La taille S de sa barre d'outils reste exclue du plancher : c'est
+       le reglage par lequel le lecteur demande une carte compacte, et le
+       lui refuser reviendrait a supprimer la commande. */
+    .map-svg-wrap:not([data-size="S"]) { min-width: 600px; max-width: none; }
+    /* Les tableaux larges defilaient deja par leur propre enveloppe :
+       la regle ci-dessus ne doit pas leur en ajouter une seconde. */
+    .card-body .si-mx-wrap { overflow-x: visible; }
+  }
+
+  /* Ecrans larges : la carte des provinces restait plafonnee a 520
+     points quelle que soit la place, ce qui maintenait ses libelles
+     sous sept points sur une dalle de 1920. Le plafond suit
+     desormais la largeur disponible. */
+  @media (min-width: 1500px) {
+    .map-svg-wrap { max-width: 680px; }
+    .map-svg-wrap[data-size="M"] { max-width: 680px; }
+    .g-2-1 .map-svg-wrap, .grid-2 .map-svg-wrap { max-width: 620px; }
+  }
+  @media (min-width: 1800px) {
+    .map-svg-wrap { max-width: 780px; }
+    .map-svg-wrap[data-size="M"] { max-width: 780px; }
+    .g-2-1 .map-svg-wrap, .grid-2 .map-svg-wrap { max-width: 700px; }
+  }
+
+  /* Une carte logee dans la colonne etroite d'une grille deux tiers
+     un tiers descend sous quatre cents points de large, et ses
+     libelles sous cinq points, y compris sur une dalle de 1366. La
+     grille passe en pleine largeur tant que la colonne etroite ne
+     peut pas accueillir la carte. */
+  @media (max-width: 1500px) {
+    .g-2-1:has(.map-svg-wrap), .g-1-2:has(.map-svg-wrap) { grid-template-columns: 1fr; }
+  }
+
+  /* Le bandeau d'un compteur juxtapose son intitule et sa courbe de
+     rappel : sur un telephone, les deux ne tiennent pas cote a cote. */
+  @media (max-width: 480px) {
+    .kpi-head { flex-wrap: wrap; }
+    .kpi-head .kpi-label { min-width: 100%; }
+    .kpi-spark { display: none; }
+    /* Un intitule d'un seul mot long depasse encore la carte : il se
+       coupe plutot que de la faire deborder. */
+    .kpi-label { overflow-wrap: anywhere; hyphens: auto; }
+  }
+
 </style>
 </head>
 <body>
