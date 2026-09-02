@@ -3367,6 +3367,10 @@
                  transition:border-color .15s, background .15s, color .15s; }
   .cid-rail-sb:hover { border-color:var(--royal-pale); color:var(--ink); }
   .cid-rail-sb.on { background:var(--royal); border-color:var(--royal); color:#fff; font-weight:600; }
+  .cid-avis-langue { margin-top:9px; display:inline-block; font-size:11.5px; color:var(--gold-d);
+                     background:var(--gold-tint,#F7F1E2); border:1px solid var(--gold-pale,#E2D3AC);
+                     border-radius:5px; padding:5px 11px; }
+  [dir="rtl"] .cid-avis-langue { text-align:right; }
   .attente-repli { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:14px;
                    font-size:12.5px; color:var(--body); }
   @media (max-width:760px){ .rh-bar { grid-template-columns:1fr 90px; } .rh-bar .sup-av-g { display:none; } }
@@ -6181,6 +6185,7 @@ const I18N = {
     sub_vacc_overview: "نظرة عامة",
     sub_vacc_deepdive: "تحليل معمق",
     sub_vacc_scenario: "محاكاة السيناريوهات",
+    sub_vacc_apercu: "نظرة عامة على البرنامج",
     sub_vacc_couv: "تغطية التطعيم",
     sub_vacc_zd: "صفر جرعة",
     sub_vacc_surv: "المراقبة الوبائية",
@@ -6698,6 +6703,217 @@ function ajusterCockpit() {
 /* ==============================================================
    RENDER · Main content
 ============================================================== */
+/* ==============================================================
+   TRADUCTION DES EN-TETES DE VUE
+   Le dictionnaire I18N couvre l'ossature : barre laterale, barre
+   d'outils, libelles de navigation. Le contenu analytique des
+   soixante-dix pages est ecrit en francais dans le corps de chaque
+   vue et ne passe pas par lui. En anglais comme en arabe, le titre
+   et le surtitre de page restaient donc en francais, ce qui est la
+   premiere chose que lit un visiteur.
+   Cette table les porte, appliquee au rendu et non vue par vue,
+   pour qu'aucune des soixante-dix fonctions n'ait a etre reecrite.
+   Le corps des pages reste en francais et l'ecran le dit.
+============================================================== */
+const VUE_TITRES = {
+  "cousp-sitrep":   { en: "Cholera outbreak · situation report", ar: "وباء الكوليرا · تقرير الوضع" },
+  "cousp-alert":    { en: "Active cholera clusters", ar: "بؤر الكوليرا النشطة" },
+  "cousp-surv":     { en: "Cholera response", ar: "الاستجابة للكوليرا" },
+  "cousp-deepdive": { en: "In-depth analysis of the episode", ar: "تحليل معمّق للحدث الوبائي" },
+  "vacc-apercu":    { en: "Programme overview", ar: "نظرة عامة على البرنامج" },
+  "vacc-deepdive":  { en: "Where immunisation is lost, and why", ar: "أين يُفقد التطعيم ولماذا" },
+  "vacc-couv":      { en: "Immunisation coverage · provincial map", ar: "التغطية التطعيمية · خريطة المقاطعات" },
+  "vacc-zd":        { en: "Zero-dose · where immunisation does not reach the child", ar: "الأطفال بلا جرعة · حيث لا يصل التطعيم" },
+  "vacc-surv":      { en: "Vaccine-preventable diseases", ar: "الأمراض التي يمكن الوقاية منها باللقاح" },
+  "vacc-intrants":  { en: "Vaccines and supplies", ar: "اللقاحات والمستلزمات" },
+  "vacc-cold":      { en: "Cold chain functionality", ar: "أداء سلسلة التبريد" },
+  "vacc-super":     { en: "What sustains coverage between campaigns", ar: "ما يحافظ على التغطية بين الحملات" },
+  "vacc-sup-effet": { en: "Supervision of health centres", ar: "الإشراف على المراكز الصحية" },
+  "vacc-coord":     { en: "Coordination bodies and partner commitments", ar: "هيئات التنسيق والتزامات الشركاء" },
+  "vacc-palu":      { en: "Malaria vaccine · scale-up", ar: "لقاح الملاريا · التوسع في التطبيق" },
+  "vacc-pda":       { en: "MoA · Memorandum of Agreement (Immunisation)", ar: "مذكرة الاتفاق · مكوّن التطعيم" },
+  "dsr-explo":      { en: "Indicator explorer", ar: "مستكشف المؤشرات" },
+  "dsr-deepdive":   { en: "Where the continuum of care breaks", ar: "أين تنقطع سلسلة الرعاية" },
+  "dsr-mat":        { en: "Maternal health · continuum of care", ar: "صحة الأم · سلسلة الرعاية" },
+  "dsr-neonat":     { en: "Newborn health", ar: "صحة المواليد" },
+  "dsr-sraj":       { en: "Adolescent health", ar: "صحة المراهقين" },
+  "dsr-pf":         { en: "Family planning", ar: "تنظيم الأسرة" },
+  "dsr-stock":      { en: "Reproductive health commodity stocks", ar: "مخزون منتجات الصحة الإنجابية" },
+  "dsr-com":        { en: "Community health worker activity", ar: "نشاط العاملين الصحيين المجتمعيين" },
+  "prog-palu":      { en: "Malaria · provincial map", ar: "الملاريا · خريطة المقاطعات" },
+  "prog-nut":       { en: "Nutrition · provincial map", ar: "التغذية · خريطة المقاطعات" },
+  "prog-vih":       { en: "HIV · provincial map", ar: "فيروس نقص المناعة · خريطة المقاطعات" },
+  "prog-soins":     { en: "Curative care · provincial map", ar: "الرعاية العلاجية · خريطة المقاطعات" },
+  "prog-recouv":    { en: "Cost recovery · provincial map", ar: "استرداد التكاليف · خريطة المقاطعات" },
+  "prog-tb":        { en: "Detection, treatment and co-infection", ar: "الكشف والعلاج والعدوى المشتركة" },
+  "rh-apercu":      { en: "What the health system has to work with", ar: "ما يتوفر للنظام الصحي" },
+  "rh-repart":      { en: "Where the resource is missing", ar: "أين ينقص المورد البشري" },
+  "rh-statut":      { en: "What rests outside the State budget", ar: "ما يقوم خارج ميزانية الدولة" },
+  "rh-form":        { en: "Who is coming, and for which programme", ar: "من سيلتحق ولأي برنامج" },
+  "rh-metier":      { en: "The staff behind each service", ar: "الكوادر خلف كل خدمة" },
+  "rh-service":     { en: "What the resource changes", ar: "ما الذي يغيّره المورد البشري" },
+  "diem-apercu":    { en: "State of the facility stock", ar: "حالة المنشآت الصحية" },
+  "diem-prov":      { en: "State of the facility stock by province", ar: "حالة المنشآت حسب المقاطعة" },
+  "diem-equip":     { en: "Equipment and mobility", ar: "التجهيزات ووسائل التنقل" },
+  "diem-fonct":     { en: "Service functionality in district hospitals", ar: "أداء خدمات مستشفيات المقاطعات" },
+  "diem-dd":        { en: "What the state of the facilities requires", ar: "ما تستوجبه حالة المنشآت" },
+  "dpml-dispo":     { en: "End-of-month medicine stocks", ar: "مخزون الأدوية في نهاية الشهر" },
+  "dpml-rupt":      { en: "Facilities in stock-out", ar: "المنشآت التي نفد مخزونها" },
+  "dpml-perim":     { en: "Expired and near-expiry products", ar: "المنتجات المنتهية والقريبة من الانتهاء" },
+  "dpsis-comp":     { en: "Reporting completeness and timeliness", ar: "اكتمال التبليغ وتوقيته" },
+  "dpsis-explo":    { en: "Reporting explorer", ar: "مستكشف التبليغ" },
+  "dpsis-qual":     { en: "Data quality alert centre", ar: "مركز بلاغات جودة البيانات" },
+  "dpsis-pev-qual": { en: "What the data says about how it is produced", ar: "ما تكشفه البيانات عن طريقة إنتاجها" },
+  "dpsis-dsr-qual": { en: "Half the reproductive health indicators cannot be steered as they stand", ar: "نصف مؤشرات الصحة الإنجابية غير قابلة للتوجيه بحالتها الراهنة" },
+  "dpsis-carte":    { en: "National registry of health facilities", ar: "السجل الوطني للمنشآت الصحية" },
+  "drh-vacance":    { en: "Vacant posts by category", ar: "الوظائف الشاغرة حسب الفئة" },
+  "drh-effectifs":  { en: "Health workforce numbers", ar: "أعداد الكوادر الصحية" },
+  "explor-comp":    { en: "Province comparator", ar: "أداة مقارنة المقاطعات" },
+  "explor-alert":   { en: "Register of active alerts", ar: "سجل الإنذارات النشطة" },
+  "explor-rech":    { en: "Cross-cutting search", ar: "بحث شامل" },
+  "explor-dd":      { en: "What alerts and gaps say together", ar: "ما تقوله الإنذارات والفجوات مجتمعة" },
+  "explor-mdo":     { en: "Provincial distribution of notifiable diseases", ar: "التوزيع الإقليمي للأمراض الخاضعة للترصد" },
+  "fonc-vue":       { en: "What makes a programme work", ar: "ما الذي يجعل البرنامج يعمل" },
+  "fonc-carte":     { en: "Where functionality can be established", ar: "أين يمكن إثبات الأداء" },
+  "fonc-suivi":     { en: "How long the question has been under review", ar: "منذ متى والمسألة قيد الدراسة" },
+  "fonc-dd":        { en: "What is missing, and who to ask for it", ar: "ما هو الناقص ومن يُطلب منه" },
+  "cadre-suivi":    { en: "Indicators retained by directorate", ar: "المؤشرات المعتمدة حسب الإدارة" },
+  "vacc-scenario":  { en: "What each decision would produce", ar: "ما الذي سينتج عن كل قرار" },
+  "inference":      { en: "Six decision questions, six tests", ar: "ستة أسئلة قرار وستة اختبارات" },
+  "econometrie":    { en: "What the series support as a conclusion", ar: "ما تدعمه السلاسل الزمنية من استنتاج" },
+  "simu-dd":        { en: "Which targets can be met, and by whom", ar: "أي الأهداف يمكن بلوغها ومن يبلغها" },
+  "sao-league":     { en: "Sao Health Challenge", ar: "تحدي ساو الصحي" }
+};
+
+/* Surtitres : ils nomment la direction ou le domaine, et se repetent
+   d'une page a l'autre. La table est donc indexee sur le libelle. */
+const VUE_SURTITRES = {
+  "Rapport de situation · COUSP": { en: "Situation report · PHEOC", ar: "تقرير الوضع · مركز عمليات الطوارئ" },
+  "Foyers actifs · COUSP": { en: "Active clusters · PHEOC", ar: "البؤر النشطة · مركز عمليات الطوارئ" },
+  "Riposte au choléra · COUSP": { en: "Cholera response · PHEOC", ar: "الاستجابة للكوليرا · مركز عمليات الطوارئ" },
+  "Analyse approfondie · COUSP": { en: "In-depth analysis · PHEOC", ar: "تحليل معمّق · مركز عمليات الطوارئ" },
+  "Programme Élargi de Vaccination · DLMVSE": { en: "Expanded Programme on Immunisation · DLMVSE", ar: "البرنامج الموسع للتحصين · إدارة مكافحة الأمراض" },
+  "Programme Élargi de Vaccination · DLMVSE et DGPML": { en: "Expanded Programme on Immunisation · DLMVSE and DGPML", ar: "البرنامج الموسع للتحصين · إدارة مكافحة الأمراض والصيدلة" },
+  "Équité vaccinale · enfants non atteints": { en: "Immunisation equity · children not reached", ar: "الإنصاف في التطعيم · أطفال لم يُبلغوا" },
+  "Surveillance des MEV · IDS": { en: "VPD surveillance · IDSR", ar: "ترصد الأمراض التي يمكن الوقاية منها باللقاح" },
+  "Chaîne du froid · DLMVSE": { en: "Cold chain · DLMVSE", ar: "سلسلة التبريد · إدارة مكافحة الأمراض" },
+  "Programme Élargi de Vaccination · grille de supervision": { en: "Expanded Programme on Immunisation · supervision checklist", ar: "البرنامج الموسع للتحصين · استمارة الإشراف" },
+  "Coordination · PEV": { en: "Coordination · EPI", ar: "التنسيق · البرنامج الموسع للتحصين" },
+  "Vaccin antipaludique · R21 / RTS,S": { en: "Malaria vaccine · R21 / RTS,S", ar: "لقاح الملاريا · R21 / RTS,S" },
+  "Sous-composante Immunisation · PDA": { en: "Immunisation sub-component · MoA", ar: "مكوّن التطعيم · مذكرة الاتفاق" },
+  "Santé de la reproduction · DSR": { en: "Reproductive health · DSR", ar: "الصحة الإنجابية · إدارة الصحة الإنجابية" },
+  "Direction de la Santé de la Reproduction · DSR": { en: "Directorate of Reproductive Health · DSR", ar: "إدارة الصحة الإنجابية" },
+  "Santé maternelle · DSR": { en: "Maternal health · DSR", ar: "صحة الأم · إدارة الصحة الإنجابية" },
+  "Santé néonatale · DSR": { en: "Newborn health · DSR", ar: "صحة المواليد · إدارة الصحة الإنجابية" },
+  "Santé des adolescents et des jeunes · DSR": { en: "Adolescent and youth health · DSR", ar: "صحة المراهقين والشباب · إدارة الصحة الإنجابية" },
+  "Planification familiale · DSR": { en: "Family planning · DSR", ar: "تنظيم الأسرة · إدارة الصحة الإنجابية" },
+  "Stocks SR · DSR": { en: "RH commodity stocks · DSR", ar: "مخزون الصحة الإنجابية" },
+  "Santé communautaire · DSR": { en: "Community health · DSR", ar: "الصحة المجتمعية · إدارة الصحة الإنجابية" },
+  "Programme National de Lutte contre le Paludisme": { en: "National Malaria Control Programme", ar: "البرنامج الوطني لمكافحة الملاريا" },
+  "Direction de la Nutrition": { en: "Directorate of Nutrition", ar: "إدارة التغذية" },
+  "Programme Sectoriel de Lutte contre le Sida": { en: "National AIDS Control Programme", ar: "البرنامج القطاعي لمكافحة الإيدز" },
+  "Soins curatifs · DHIS2": { en: "Curative care · DHIS2", ar: "الرعاية العلاجية · DHIS2" },
+  "Recouvrement des coûts · DHIS2": { en: "Cost recovery · DHIS2", ar: "استرداد التكاليف · DHIS2" },
+  "PNLT · Tuberculose": { en: "NTP · Tuberculosis", ar: "البرنامج الوطني لمكافحة السل" },
+  "Ressources humaines · DRH": { en: "Human resources · DRH", ar: "الموارد البشرية · إدارة الموارد البشرية" },
+  "Ressources humaines · allocation": { en: "Human resources · allocation", ar: "الموارد البشرية · التوزيع" },
+  "Ressources humaines · continuité": { en: "Human resources · continuity", ar: "الموارد البشرية · الاستمرارية" },
+  "Ressources humaines · formation": { en: "Human resources · training", ar: "الموارد البشرية · التكوين" },
+  "Ressources humaines · services": { en: "Human resources · services", ar: "الموارد البشرية · الخدمات" },
+  "Ressources humaines · effet sur le service": { en: "Human resources · effect on service", ar: "الموارد البشرية · الأثر على الخدمة" },
+  "Direction des Infrastructures, des Équipements et de la Maintenance · DIEM": { en: "Directorate of Infrastructure, Equipment and Maintenance · DIEM", ar: "إدارة المنشآت والتجهيزات والصيانة" },
+  "Infrastructures sanitaires · DIEM": { en: "Health infrastructure · DIEM", ar: "المنشآت الصحية · إدارة المنشآت" },
+  "Analyse approfondie · Infrastructures": { en: "In-depth analysis · Infrastructure", ar: "تحليل معمّق · المنشآت" },
+  "Logistique · DGPML": { en: "Supply chain · DGPML", ar: "اللوجستيك · إدارة الصيدلة" },
+  "Ruptures de stock · DGPML": { en: "Stock-outs · DGPML", ar: "نفاد المخزون · إدارة الصيدلة" },
+  "DGPML · Gestion des péremptions": { en: "DGPML · Expiry management", ar: "إدارة الصيدلة · تدبير الصلاحية" },
+  "Rapportage de routine · DPSIS": { en: "Routine reporting · DPSIS", ar: "التبليغ الروتيني · إدارة نظم المعلومات" },
+  "Qualité des données · DPSIS": { en: "Data quality · DPSIS", ar: "جودة البيانات · إدارة نظم المعلومات" },
+  "Accompagnement des directions · CID": { en: "Support to directorates · CID", ar: "مواكبة الإدارات · مركز ذكاء البيانات" },
+  "Carte sanitaire · DPSIS": { en: "Health facility map · DPSIS", ar: "الخريطة الصحية · إدارة نظم المعلومات" },
+  "🪑 Postes vacants · DRH": { en: "🪑 Vacant posts · DRH", ar: "🪑 الوظائف الشاغرة · إدارة الموارد البشرية" },
+  "Ressources Humaines · DRH": { en: "Human Resources · DRH", ar: "الموارد البشرية · إدارة الموارد البشرية" },
+  "⚙ Vue en cours d'instrumentation": { en: "⚙ View still being instrumented", ar: "⚙ شاشة قيد التجهيز" },
+  "Explorateur · CID": { en: "Explorer · CID", ar: "المستكشف · مركز ذكاء البيانات" },
+  "Alertes · CID": { en: "Alerts · CID", ar: "الإنذارات · مركز ذكاء البيانات" },
+  "Recherche · CID": { en: "Search · CID", ar: "البحث · مركز ذكاء البيانات" },
+  "Analyse approfondie · Explorateur": { en: "In-depth analysis · Explorer", ar: "تحليل معمّق · المستكشف" },
+  "Surveillance intégrée · CID": { en: "Integrated surveillance · CID", ar: "الترصد المتكامل · مركز ذكاء البيانات" },
+  "Fonctionnalité · UPS-Santé": { en: "Functionality · UPS-Santé", ar: "الأداء · وحدة تسريع الأداء" },
+  "Fonctionnalité · lecture provinciale": { en: "Functionality · provincial reading", ar: "الأداء · القراءة الإقليمية" },
+  "Fonctionnalité · suivi": { en: "Functionality · follow-up", ar: "الأداء · المتابعة" },
+  "Analyse approfondie · Fonctionnalité": { en: "In-depth analysis · Functionality", ar: "تحليل معمّق · الأداء" },
+  "Cadre d'indicateurs · UPS-Santé": { en: "Indicator framework · UPS-Santé", ar: "إطار المؤشرات · وحدة تسريع الأداء" },
+  "Aide à la décision · UPS-Santé": { en: "Decision support · UPS-Santé", ar: "دعم القرار · وحدة تسريع الأداء" },
+  "Méthodes quantitatives · UPS-Santé": { en: "Quantitative methods · UPS-Santé", ar: "الأساليب الكمية · وحدة تسريع الأداء" },
+  "Analyse approfondie · Simulation": { en: "In-depth analysis · Simulation", ar: "تحليل معمّق · المحاكاة" },
+  "◆ Classement de performance": { en: "◆ Performance ranking", ar: "◆ ترتيب الأداء" }
+};
+
+/* Avertissement porte sur chaque page hors francais : le commentaire
+   d'analyse, les intitules de colonne et les notes de bas de figure
+   restent en francais. Le dire vaut mieux que le laisser decouvrir. */
+const VUE_HERO = {
+  "min-overview": {
+    titre: { en: "Minister's dashboard", ar: "لوحة قيادة الوزير" },
+    kicker: { en: "Delivery Unit · Ministry of Public Health and Prevention",
+              ar: "وحدة تسريع الأداء · وزارة الصحة العامة والوقاية" }
+  },
+  "dsr-apercu": {
+    titre: { en: "Programme overview", ar: "نظرة عامة على البرنامج" },
+    kicker: { en: "Directorate of Reproductive Health · Ministry of Public Health and Prevention",
+              ar: "إدارة الصحة الإنجابية · وزارة الصحة العامة والوقاية" }
+  }
+};
+
+const VUE_AVIS = {
+  en: "Page headings are translated. Analytical commentary, table headers and figure notes remain in French.",
+  ar: "عناوين الصفحات مترجمة. أما التعليق التحليلي وعناوين الجداول وملاحظات الرسوم فتبقى بالفرنسية."
+};
+
+/* Application au rendu. Une substitution ciblee sur les deux blocs
+   d'en-tete evite de reecrire soixante-dix fonctions de vue. */
+function cidTraduireEntete(html, subId) {
+  const lg = (typeof state !== "undefined" && state.lang) ? state.lang : "fr";
+  if (lg === "fr") return html;
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const hero = VUE_HERO[subId];
+  if (hero) {
+    if (hero.titre && hero.titre[lg]) {
+      html = html.replace(/(<div class="ck2-hero-titre">)([\s\S]*?)(<\/div>)/,
+        (m, a, txt, b) => a + esc(hero.titre[lg]) + b);
+    }
+    if (hero.kicker && hero.kicker[lg]) {
+      html = html.replace(/(<div class="ck2-hero-kicker">)([\s\S]*?)(<\/div>)/,
+        (m, a, txt, b) => a + esc(hero.kicker[lg]) + b);
+    }
+  }
+  const tt = VUE_TITRES[subId];
+  if (tt && tt[lg]) {
+    html = html.replace(/(<div class="ph-title">)([\s\S]*?)(<\/div>)/,
+      (m, a, txt, b) => a + esc(tt[lg]) + b);
+  }
+  html = html.replace(/(<div class="ph-tag">)([\s\S]*?)(<\/div>)/, function (m, a, txt, b) {
+    const s = VUE_SURTITRES[txt.trim()];
+    return a + (s && s[lg] ? esc(s[lg]) : txt) + b;
+  });
+  const avis = VUE_AVIS[lg];
+  if (avis && html.indexOf("cid-avis-langue") < 0) {
+    const bloc = '<div class="cid-avis-langue">' + esc(avis) + '</div>';
+    const avant = html;
+    html = html.replace(/(<div class="ph-sub">[\s\S]*?<\/div>)/, "$1" + bloc);
+    /* Deux pages n'ont pas de chapeau : l'avis se pose alors sous le
+       titre, faute de quoi elles seraient les seules a n'en porter aucun. */
+    if (html === avant) {
+      html = html.replace(/(<div class="ph-title">[\s\S]*?<\/div>)/, "$1" + bloc);
+    }
+    if (html === avant) {
+      html = html.replace(/(<div class="ck2-srcs">[\s\S]*?<\/div>)/, "$1" + bloc);
+    }
+  }
+  return html;
+}
+
 /* Onglets internes d'une section. Les familles declarees sur les
    sous-sections servent deja a ranger la barre laterale ; elles servent ici
    a se deplacer sans y remonter, ce qui epargne un aller-retour a chaque
@@ -6732,6 +6948,7 @@ function renderMainNoyau() {
   /* Le rail se glisse en tete du contenu, sous le titre de page. Les vues
      qui portent deja leur propre fil ne le recoivent pas : deux barres de
      navigation superposees se genent. */
+  try { v.html = cidTraduireEntete(v.html, state.sub); } catch (e) { console.error("Traduction :", e); }
   try {
     const rail = cidRail(state.program, state.sub);
     if (rail && v.html.indexOf("fn-fil") < 0) {
