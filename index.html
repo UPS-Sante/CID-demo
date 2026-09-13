@@ -4677,9 +4677,6 @@
      tomberait a six points et demi. */
   .c10-map-vide text { font-family:var(--font); font-size:17px; font-weight:700; fill:#8A7F68;
                        letter-spacing:.3px; }
-  /* La carte accompagne le compteur, elle ne le domine pas : sa hauteur est
-     bornee a celle de la colonne de gauche. */
-  .c10-hero .cid-fig-carte { max-width:none; max-height:560px; width:auto; margin:0 auto; display:block; }
 
   /* Ecrans etroits : les grands corps de la presentation ne tiennent pas
      tels quels, ils sont reduits plutot que laisses deborder. */
@@ -4700,6 +4697,45 @@
     .c10-fin3 { gap:30px; }
     .c10-fin3 span { font-size:42px; }
     .c10-ent { flex-direction:column; gap:3px; }
+  }
+
+
+  /* ==============================================================
+     CARTES PAYS SUR ECRAN LARGE ET BAS
+     La zone de dessin de la carte est haute : six cents unites de large
+     pour neuf cent quarante-six de haut. Plafonnee en largeur, elle
+     depasse la hauteur d'un ecran seize neuvieme et la page se lit en
+     deux ou trois defilements alors que mille neuf cents points de
+     large restent inexploites. Plafonnee en hauteur avec une largeur
+     libre, elle se reduit et se centre entre deux bandes vides.
+     La sortie est de fixer la hauteur et de laisser la largeur suivre
+     le rapport intrinseque du dessin : ni bande vide, ni page a
+     rallonge. La hauteur suit celle de la fenetre, pas une valeur fixe,
+     pour qu'une dalle de 1080 en profite plus qu'une de 768.
+  ============================================================== */
+  /* Un plancher est necessaire : sur une dalle de 768 points de haut,
+     soixante-seize pour cent de la fenetre ramenaient la carte a 370
+     points de large et ses libelles a 5,9 points. Le plancher de 740
+     points de haut vaut 469 de large, soit des libelles a 7,4 points.
+     Sur une telle dalle la carte depasse donc l'ecran ; c'est le choix
+     assume de la lisibilite contre le defilement. */
+  @media (min-width: 1100px) {
+    .cid-fig-carte { height: clamp(740px, 76vh, 900px); width: auto; max-width: 100%;
+                     margin: 0 auto; display: block; }
+  }
+  /* Le bandeau du Chantier 10 donne plus de place au compteur qu'a la
+     carte : c'est le chiffre qui porte la lecture. */
+  @media (min-width: 1100px) { .c10-hero { grid-template-columns: 1.35fr 1fr; } }
+
+  /* Sur un ecran seize neuvieme, empiler six blocs sur deux rangees de
+     trois allonge la page sans utiliser la largeur. Au dela de 1500
+     points ils tiennent sur une seule rangee, et la page perd une
+     rangee entiere de defilement. */
+  @media (min-width: 1500px) {
+    .c10-grid3 { grid-template-columns: repeat(6, 1fr); gap: 22px; }
+    .c10-grid3.vag { grid-template-columns: repeat(3, 1fr); gap: 34px; }
+    .c10-item-n { font-size: 36px; }
+    .c10-item-l { font-size: 13.5px; }
   }
 
 </style>
