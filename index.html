@@ -4425,7 +4425,7 @@
     .card-body, .map-wrap, .pd-scatter { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .card-body > svg[viewBox],
     .card-body > div > svg[viewBox],
-    .pd-scatter > svg[viewBox] { min-width: 700px; }
+    .pd-scatter > svg[viewBox] { min-width: 760px; }
     /* La carte des provinces est dessinee sur six cents unites : la
        porter a cette largeur ramene ses libelles a la taille prevue.
        Elle accepte par ailleurs le pincement et le glissement, ce qui
@@ -4531,6 +4531,53 @@
      largeur de dessin minimale et le defilement lateral ; le plafond
      ne doit pas la contredire. */
   @media (max-width: 900px) { .cid-fig-carte { max-width: none; } }
+
+
+  /* ==============================================================
+     REPLI DES CONTENEURS A LARGEUR CONTRAINTE
+     Trois familles d'elements poussaient encore la page vers la droite
+     sur les largeurs etroites et intermediaires. Les regles suivantes
+     sont posees en fin de feuille : elles portent la meme specificite
+     que les regles d'origine et l'emportent par l'ordre, sans recourir
+     a une declaration prioritaire.
+  ============================================================== */
+
+  /* La grille de tuiles d'accueil etait decoupee en nombre fixe de
+     colonnes par paliers. Entre deux paliers, six tuiles a largeur
+     minimale depassaient le conteneur de cent trente-huit points sur
+     une dalle de 1024. Le nombre de colonnes suit desormais la place
+     reellement disponible. */
+  .ck2-grid { grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); }
+  .ck2-tile { min-width: 0; overflow-wrap: anywhere; }
+  .ck2-label, .ck2-cat, .ck2-top { min-width: 0; overflow-wrap: anywhere; }
+
+  /* Les bascules de vue tenaient sur une seule ligne quoi qu'il arrive :
+     cinq boutons dans 360 points ne tiennent pas. */
+  .si-bascule { flex-wrap: wrap; max-width: 100%; }
+  .cid-outils { max-width: 100%; }
+  .cid-outils > * { min-width: 0; max-width: 100%; }
+
+  /* Un tableau large sans enveloppe pousse la page entiere. L'enveloppe
+     lui est donnee ici pour tous les gabarits de tableau du tableau de
+     bord, y compris ceux qui ne l'avaient pas a la main. */
+  @media (max-width: 900px) {
+    .card-body > table, .card-body > div > table { display: block; overflow-x: auto; max-width: 100%; }
+  }
+
+
+  /* Le bandeau d'accueil pose le titre a gauche et les compteurs a droite
+     sur une seule ligne. Entre 900 et 1200 points, les deux ne tiennent
+     plus cote a cote : les compteurs etaient coupes par le bord et les
+     pastilles de source chevauchaient la ligne de date. Le bandeau se
+     replie en colonne tant que la place manque, et le repli existant
+     sous 900 points continue de s'appliquer. */
+  @media (max-width: 1200px) {
+    .ck2-hero { flex-wrap: wrap; align-items: flex-start; }
+    .ck2-hero-l { flex: 1 1 100%; min-width: 0; }
+    .ck2-counts { flex: 1 1 100%; justify-content: flex-start; flex-wrap: wrap; gap: 20px; margin-top: 4px; }
+    .ck2-count { text-align: left; }
+    .ck2-srcs { display: block; line-height: 1.9; }
+  }
 
 </style>
 </head>
@@ -4837,6 +4884,7 @@ const PROGRAMS = [
       { id:"rh-apercu",  label:"Aperçu du capital humain", status:"orange", g:"Synthèses" },
       { id:"rh-repart",  label:"Allocation et écarts",     status:"red",    g:"Répartition" },
       { id:"rh-statut",  label:"Statuts et continuité",    status:"red",    g:"Répartition" },
+      { id:"rh-qualif",  label:"Qualifications",       status:"green",  g:"Compétences" },
       { id:"rh-form",    label:"Agents en formation",      status:"orange", g:"Compétences" },
       { id:"rh-metier",  label:"Personnel par service",    status:"red",    g:"Effet sur le service" },
       { id:"rh-service", label:"Effectifs et service",     status:"orange", g:"Effet sur le service" },
@@ -6784,7 +6832,10 @@ const VUE_TITRES = {
   "inference":      { en: "Six decision questions, six tests", ar: "ستة أسئلة قرار وستة اختبارات" },
   "econometrie":    { en: "What the series support as a conclusion", ar: "ما تدعمه السلاسل الزمنية من استنتاج" },
   "simu-dd":        { en: "Which targets can be met, and by whom", ar: "أي الأهداف يمكن بلوغها ومن يبلغها" },
-  "sao-league":     { en: "Sao Health Challenge", ar: "تحدي ساو الصحي" }
+  "sao-league":     { en: "Sao Health Challenge", ar: "تحدي ساو الصحي" },
+  "diem-cdf":       { en: "What keeps the temperature, and where", ar: "ما الذي يحفظ درجة الحرارة وأين" },
+  "diem-cdf-renouv": { en: "What will need replacing, and when", ar: "ما الذي سيلزم استبداله ومتى" },
+  "rh-qualif":      { en: "Which profession behind each staff member", ar: "أي مهنة خلف كل موظف" }
 };
 
 /* Surtitres : ils nomment la direction ou le domaine, et se repetent
@@ -6849,7 +6900,10 @@ const VUE_SURTITRES = {
   "Aide à la décision · UPS-Santé": { en: "Decision support · UPS-Santé", ar: "دعم القرار · وحدة تسريع الأداء" },
   "Méthodes quantitatives · UPS-Santé": { en: "Quantitative methods · UPS-Santé", ar: "الأساليب الكمية · وحدة تسريع الأداء" },
   "Analyse approfondie · Simulation": { en: "In-depth analysis · Simulation", ar: "تحليل معمّق · المحاكاة" },
-  "◆ Classement de performance": { en: "◆ Performance ranking", ar: "◆ ترتيب الأداء" }
+  "◆ Classement de performance": { en: "◆ Performance ranking", ar: "◆ ترتيب الأداء" },
+  "Chaîne du froid · DIEM et DLMVSE": { en: "Cold chain · DIEM and DLMVSE", ar: "سلسلة التبريد · إدارة المنشآت وإدارة مكافحة الأمراض" },
+  "Chaîne du froid · renouvellement du parc": { en: "Cold chain · fleet renewal", ar: "سلسلة التبريد · تجديد الأسطول" },
+  "Ressources humaines · qualifications": { en: "Human resources · qualifications", ar: "الموارد البشرية · المؤهلات" }
 };
 
 /* Avertissement porte sur chaque page hors francais : le commentaire
@@ -13940,6 +13994,131 @@ VIEWS["simu-dd"] = () => {
 };
 
 /* ==============================================================
+   QUALIFICATIONS · RELEVE DRHFP 2026
+   Le jeu DONNEES_RH donne l'effectif par province et par statut, non
+   le metier. Le releve de la direction des ressources humaines et de
+   la formation professionnelle le donne : trente-huit qualifications
+   pour 12 383 agents.
+   Les deux releves viennent de la meme direction et ne concordent pas.
+   Aucun n'est corrige par l'autre, les deux sont affiches et l'ecart
+   est instruit.
+============================================================== */
+let RHQ = null;
+fetch("rh_drhfp.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { RHQ = j; if (String(state.sub).indexOf("rh-") === 0) renderMain(); }).catch(() => {});
+
+const RHQ_PAL = ["#1F3B5C", "#4B6A8A", "#7A93AC", "#A9B9C8", "#CEC8BA"];
+
+VIEWS["rh-qualif"] = function () {
+  const crumbs = ["Ressources humaines", "Qualifications"];
+  const et = '<div class="ph"><div class="ph-tag">Ressources humaines · qualifications</div>'
+    + '<div class="ph-title">Quel métier derrière chaque agent</div>';
+  if (!RHQ) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé en cours de chargement.</div></div>' };
+
+  const M = RHQ.meta, C = RHQ.recoupement;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const fam = window.__rhqFam || "*";
+  const F = RHQ.familles;
+
+  /* Familles de metier en barres empilees : trente-huit lignes ne se
+     lisent pas, cinq familles oui, et la famille retenue s'ouvre. */
+  const W = 860, H = 62;
+  let x = 0;
+  const ruban = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%">'
+    + F.map(function (f, i) {
+        const w = f.n / M.total * W;
+        const on = fam === f.nom;
+        const g = '<g style="cursor:pointer" onclick="window.__rhqFam=\'' + (on ? "*" : f.nom.replace(/'/g, "\\'")) + '\';renderMain()">'
+          + '<rect x="' + x.toFixed(1) + '" y="0" width="' + (w - 1.5).toFixed(1) + '" height="34" fill="'
+          + RHQ_PAL[i] + '" fill-opacity="' + (fam === "*" || on ? 1 : .42) + '" rx="2">'
+          + '<title>' + f.nom + ' · ' + nb(f.n) + ' agents · ' + d1(f.n / M.total * 100) + ' %</title></rect>'
+          + (w > 54 ? '<text x="' + (x + w / 2).toFixed(1) + '" y="22" text-anchor="middle" font-size="12" '
+            + 'font-weight="700" fill="#fff">' + d1(f.n / M.total * 100) + ' %</text>' : "")
+          + '<text x="' + (x + w / 2).toFixed(1) + '" y="50" text-anchor="middle" font-size="10.5" fill="var(--muted)">'
+          + (w > 120 ? f.nom.split(" ")[0] : "") + '</text></g>';
+        x += w;
+        return g;
+      }).join("") + '</svg>';
+
+  const sel = F.filter(f => f.nom === fam)[0];
+  const liste = (sel ? sel.metiers : RHQ.qualifications.map(q => ({ lib: q.lib, n: q.n })));
+  const maxN = Math.max.apply(null, liste.map(m => m.n));
+  const tableau = '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr>'
+    + '<th>Qualification</th><th>Agents</th><th>Part du corps</th><th></th></tr></thead><tbody>'
+    + liste.map(function (m) {
+        return '<tr><td style="text-align:left">' + m.lib + '</td><td>' + nb(m.n) + '</td>'
+          + '<td>' + d1(m.n / M.total * 100) + ' %</td>'
+          + '<td style="width:30%"><div style="height:9px;border-radius:3px;background:#4B6A8A;width:'
+          + (m.n / maxN * 100).toFixed(1) + '%"></div></td></tr>';
+      }).join("")
+    + '</tbody></table></div>';
+
+  /* Recoupement des deux releves : c'est le sens de l'ecart qui compte,
+     pas seulement son ampleur. */
+  const CMP = C.provinces.filter(p => p.donnees_rh != null).slice()
+    .sort((a, b) => b.ecart_pct - a.ecart_pct);
+  const cmpTbl = '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr>'
+    + '<th>Province</th><th>DONNEES_RH</th><th>DRHFP 2026</th><th>Écart</th><th>Écart relatif</th></tr></thead><tbody>'
+    + CMP.map(function (p) {
+        const c = p.ecart > 0 ? "var(--rag-orange)" : "var(--royal)";
+        return '<tr><td style="text-align:left">' + p.nom + '</td>'
+          + '<td>' + nb(p.donnees_rh) + '</td><td>' + nb(p.drhfp) + '</td>'
+          + '<td style="color:' + c + '">' + (p.ecart > 0 ? "+" : "") + nb(p.ecart) + '</td>'
+          + '<td style="color:' + c + '">' + (p.ecart_pct > 0 ? "+" : "") + d1(p.ecart_pct) + ' %</td></tr>';
+      }).join("")
+    + '</tbody></table></div>';
+
+  return {
+    crumbs: crumbs,
+    html: et + '<div class="ph-sub">' + nb(M.total) + ' agents répartis en ' + M.n_qualifications
+      + ' qualifications. ' + nb(M.total_provinces) + ' sont affectés en province, '
+      + nb(M.total_hors_province) + ' aux centres universitaires, en formation ou non classés. '
+      + 'Relevé de la direction des ressources humaines et de la formation professionnelle, 2026.</div></div>'
+      + '<div class="content">'
+      + '<div class="kpi-grid">'
+      + kpi("Effectif du relevé", nb(M.total), " agents", M.n_qualifications + " qualifications distinctes", "—", "flat", "", true)
+      + kpi("Soins infirmiers et obstétricaux", d1(F[0].n / M.total * 100), " %", nb(F[0].n) + " agents, premier corps", "—", "flat", "", true)
+      + kpi("Santé publique et prévention", d1(F.filter(f => f.nom.indexOf("Santé publique") === 0)[0].n / M.total * 100), " %",
+          nb(F.filter(f => f.nom.indexOf("Santé publique") === 0)[0].n) + " agents pour nutrition, épidémiologie et assainissement", "—", "flat", "orange", true)
+      + kpi("Non classés", d1(1573 / M.total * 100), " %", "1 573 agents sans qualification renseignée", "—", "flat", "red", true)
+      + '</div>'
+      + card("Cinq familles de métier", "Part de l'effectif · cliquer une famille l'ouvre dans le tableau",
+          ruban
+          + '<div class="fn-lg">' + F.map(function (f, i) {
+              return '<span><i style="background:' + RHQ_PAL[i] + '"></i>' + f.nom + ' · ' + nb(f.n) + '</span>';
+            }).join("") + '</div>',
+          "Le rattachement d'une qualification à une famille est un choix de lecture, explicite et révisable. "
+          + "Il ne figure pas dans le relevé.")
+      + card(sel ? sel.nom : "Les trente-huit qualifications",
+          sel ? nb(sel.n) + " agents, " + d1(sel.n / M.total * 100) + " % de l'effectif" : "Classées par effectif décroissant",
+          tableau,
+          "Trois qualifications portent la moitié du corps : infirmiers ATS et IB, médecins, infirmiers diplômés d'État.")
+      + card("Deux relevés de la même direction ne concordent pas",
+          "Effectif par province · DONNEES_RH contre relevé DRHFP 2026",
+          '<p style="margin:0 0 12px">Sur les ' + C.n_apparies + ' provinces appariées, le total passe de '
+          + nb(C.total_donnees_rh) + ' à ' + nb(C.total_drhfp) + ' agents, soit ' + d1(C.ecart_pct) + ' %. '
+          + 'Ce total masque l\'essentiel : l\'écart change de sens selon la province. '
+          + C.n_sup + ' provinces sont plus dotées dans le relevé DRHFP, ' + C.n_inf + ' le sont moins, '
+          + 'et l\'écart médian atteint ' + d1(C.ecart_median) + ' % en valeur absolue, jusqu\'à '
+          + d1(C.ecart_max) + ' %. Une baisse de périmètre produirait un écart de même sens partout. '
+          + 'Ce qui est observé ressemble à deux règles d\'affectation différentes, ou à une réaffectation '
+          + 'entre les deux dates de relevé.</p>'
+          + cmpTbl,
+          "Aucun des deux relevés n'est corrigé par l'autre. La question est à porter à la direction : "
+          + "quelle date d'observation, quel périmètre, et quelle règle rattache un agent à une province.")
+      + aiBox("Ce que le relevé ne permet pas",
+          "Le croisement d'une qualification avec une province n'est pas disponible. Le tableau source le porte, "
+          + "mais c'est un document scanné : seuls les totaux de ligne et de colonne sont repris ici, parce qu'ils "
+          + "se contrôlent l'un l'autre et tombent tous deux sur les " + nb(M.total) + " imprimés. Transcrire la "
+          + "matrice complète de trente-huit lignes par vingt-neuf colonnes ferait entrer des erreurs de lecture "
+          + "sans moyen de les détecter. Une reprise depuis le fichier source de la direction lèverait la limite.",
+          "Limite de la source")
+      + '</div>'
+  };
+};
+
+/* ==============================================================
    INFRASTRUCTURES SANITAIRES · DIEM
    Etat du parc bati aux trois echelons de l'offre : hopitaux de
    province, hopitaux de district, centres de sante. Les valeurs
@@ -13998,7 +14177,7 @@ function infraCarte(niv) {
     return `<text x="${geo.cx}" y="${geo.cy}" text-anchor="middle" font-size="10.5" font-weight="700"
       fill="#fff" style="paint-order:stroke;stroke:rgba(0,0,0,.28);stroke-width:2.4px">${v}</text>`;
   }).join("");
-  return `<svg viewBox="${MAP_VIEWBOX}" style="width:100%;max-height:540px">${paths}${lab}</svg>`;
+  return `<svg viewBox="${MAP_VIEWBOX}" class="cid-fig-carte">${paths}${lab}</svg>`;
 }
 function infraLegende(niv) {
   if (niv === "hp") return `<div class="chol-st-legende">
@@ -16922,7 +17101,8 @@ VIEWS["rh-service"] = function () {
         cur.infl ? cidProvNom(cur.infl.id) + " · écart de " + rhD2(cur.infl.delta) : "ND", "—", "flat",
         cur.infl && Math.abs(cur.infl.delta) > 0.2 ? "red" : "orange", true)
     + '</div>'
-    + card("Matrice des croisements", densLib + " contre chaque indicateur de service · " + P.length + " provinces", mat,
+    + card("Matrice des croisements", densLib + " contre chaque indicateur de service · " + P.length + " provinces",
+        '<div class="si-mx-wrap">' + mat + '</div>',
         "La corrélation linéaire suit les valeurs extrêmes, la corrélation de rang ne les suit pas. La province la plus influente est celle dont le retrait déplace le plus le coefficient : elle est recalculée pour chaque ligne et n'est pas la même partout, "
         + "ce qui interdit de la deviner. Le Tibesti et l'Ennedi Ouest pèsent quand la dotation est rapportée à la population, parce que leur population dérivée est faible ; N'Djamena pèse quand elle est rapportée aux structures ou aux zones, parce qu'elle en compte peu pour beaucoup d'agents. "
         + "Le coefficient sans elle reste faible ou négatif dans les quinze cas : la relation ne tient donc pas à un point isolé, elle n'existe pas. "
