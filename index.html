@@ -4632,6 +4632,10 @@
 
   .c10-grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:26px 34px; margin:26px 0 6px; }
   .c10-grid2 { display:grid; grid-template-columns:repeat(2,1fr); gap:30px; }
+  /* La grille passait bien a une colonne sous 1100 points, mais le tableau
+     de recapitulatif qu'elle contient debordait de quatorze points sous
+     400 : c'est lui, et non la grille, qui recoit l'enveloppe. */
+  .c10-grid2 > div { min-width:0; overflow-x:auto; }
   .c10-item i { display:block; width:44px; height:3px; border-radius:2px; margin-bottom:12px; }
   .c10-item-n { font-size:42px; font-weight:800; line-height:1; color:var(--c10-encre); letter-spacing:-1px; }
   .c10-item-l { font-size:14.5px; font-weight:700; margin-top:8px; color:var(--c10-encre); }
@@ -4685,7 +4689,7 @@
   }
   @media (max-width:820px) {
     .c10 { padding:16px 14px 20px; }
-    .c10-grid3, .c10-portee { grid-template-columns:1fr; gap:22px; }
+    .c10-grid3, .c10-portee, .c10-grid2 { grid-template-columns:1fr; gap:22px; }
     .c10-head-n { font-size:58px; letter-spacing:-2px; }
     .c10-an-big { font-size:54px; }
     .c10-tot-n { font-size:46px; }
@@ -5007,15 +5011,7 @@ const PROGRAMS = [
       { id:"rh-form",    label:"Agents en formation",      status:"orange", g:"Compétences" },
       { id:"rh-metier",  label:"Personnel par service",    status:"red",    g:"Effet sur le service" },
       { id:"rh-service", label:"Effectifs et service",     status:"orange", g:"Effet sur le service" },
-    ]
-  },
-  {
-    id:"c10", c:"min", icon:"C10", label:"Chantier 10 · Réalisations",
-    dir:"MSP", groupe:"Fonctions d'appui",
-    sub:[
-      { id:"c10-traj",   label:"Quatre années tenues",   status:"green", g:"Réalisations" },
-      { id:"c10-compo",  label:"Composition et financement", status:"green", g:"Réalisations" },
-      { id:"c10-moyens", label:"Ce qui les fait fonctionner", status:"green", g:"Moyens" },
+      { id:"c10-moyens", label:"Intégrations à la fonction publique", status:"green", g:"Chantier 10" },
     ]
   },
   {
@@ -5029,6 +5025,8 @@ const PROGRAMS = [
       { id:"diem-equip",  label:"Équipements et mobilité", status:"red", g:"Équipements" },
       { id:"diem-cdf",    label:"État du parc froid",   status:"green",  g:"Chaîne du froid" },
       { id:"diem-cdf-renouv", label:"Vieillissement et renouvellement", status:"green", g:"Chaîne du froid" },
+      { id:"c10-traj",   label:"Quatre années tenues",       status:"green", g:"Chantier 10" },
+      { id:"c10-compo",  label:"Composition et financement", status:"green", g:"Chantier 10" },
     ]
   },
   {
@@ -7035,7 +7033,8 @@ const VUE_SURTITRES = {
   "Chaîne du froid · DIEM et DLMVSE": { en: "Cold chain · DIEM and DLMVSE", ar: "سلسلة التبريد · إدارة المنشآت وإدارة مكافحة الأمراض" },
   "Chaîne du froid · renouvellement du parc": { en: "Cold chain · fleet renewal", ar: "سلسلة التبريد · تجديد الأسطول" },
   "Ressources humaines · qualifications": { en: "Human resources · qualifications", ar: "الموارد البشرية · المؤهلات" },
-  "Grandes réalisations · Chantier 10": { en: "Major achievements · Workstream 10", ar: "الإنجازات الكبرى · الورش العاشر" }
+  "Infrastructures sanitaires · Chantier 10": { en: "Health infrastructure · Workstream 10", ar: "المنشآت الصحية · الورش العاشر" },
+  "Ressources humaines · Chantier 10": { en: "Human resources · Workstream 10", ar: "الموارد البشرية · الورش العاشر" }
 };
 
 /* Avertissement porte sur chaque page hors francais : le commentaire
@@ -11911,14 +11910,21 @@ fetch("chantier10.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null
 const C10_COUL = { or: "#D97B29", navy: "#0C2E5C", rouge: "#B3372F", vert: "#1E7A4C", brun: "#8A6A3C" };
 function c10Nb(x) { return x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " "); }
 function c10D1(x) { return x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ","); }
+function c10RecTbl(rec) {
+  return '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr>'
+    + '<th>Grandeur</th><th>Présentation du chantier</th><th>Relevé instruit au tableau de bord</th><th>Lecture</th>'
+    + '</tr></thead><tbody>'
+    + rec.map(r => '<tr>' + r.map(x => '<td style="text-align:left">' + x + '</td>').join("") + '</tr>').join("")
+    + '</tbody></table></div>';
+}
 function c10Ent() {
   return '<div class="c10-ent"><span>République du Tchad · Ministère de la Santé publique</span>'
     + '<span>Chantier 10</span></div>';
 }
 
 VIEWS["c10-traj"] = function () {
-  const crumbs = ["Chantier 10", "Quatre années tenues"];
-  const et = '<div class="ph"><div class="ph-tag">Grandes réalisations · Chantier 10</div>'
+  const crumbs = ["Infrastructures sanitaires", "Chantier 10 · Quatre années tenues"];
+  const et = '<div class="ph"><div class="ph-tag">Infrastructures sanitaires · Chantier 10</div>'
     + '<div class="ph-title">172 ouvrages de santé, quatre années tenues</div>';
   if (!C10) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé en cours de chargement.</div></div>' };
 
@@ -11970,7 +11976,7 @@ VIEWS["c10-traj"] = function () {
     html: et + '<div class="ph-sub">Ce qui suit n\'est pas un programme annoncé. C\'est ce qui est sorti de terre '
       + 'entre 2022 et 2026, province par province. ' + c10Nb(M.construits) + ' ouvrages construits et équipés, '
       + c10Nb(M.rehabilites) + ' réhabilités et équipés.</div></div>'
-      + '<div class="content c10">'
+      + '<div class="content"><div class="c10">'
       + c10Ent()
       + '<div class="c10-hero">'
       + '<div class="c10-hero-l">'
@@ -11999,13 +12005,13 @@ VIEWS["c10-traj"] = function () {
             : 'Le classeur et la présentation concordent.') + '</p>',
           "La carte porte une présence, non un comptage. Le nombre d'ouvrages par province n'est pas repris : "
           + "le classeur mélange, dans une même colonne, des lots d'ouvrages et des lots de machines.")
-      + '</div>'
+      + '</div></div>'
   };
 };
 
 VIEWS["c10-compo"] = function () {
-  const crumbs = ["Chantier 10", "Composition et financement"];
-  const et = '<div class="ph"><div class="ph-tag">Grandes réalisations · Chantier 10</div>'
+  const crumbs = ["Infrastructures sanitaires", "Chantier 10 · Composition et financement"];
+  const et = '<div class="ph"><div class="ph-tag">Infrastructures sanitaires · Chantier 10</div>'
     + '<div class="ph-title">Ce que recouvrent les 172 ouvrages</div>';
   if (!C10) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé en cours de chargement.</div></div>' };
 
@@ -12040,7 +12046,7 @@ VIEWS["c10-compo"] = function () {
     crumbs: crumbs,
     html: et + '<div class="ph-sub">' + c10Nb(M.total) + ' ouvrages livrés, dont ' + c10Nb(M.construits)
       + ' construits et équipés et ' + c10Nb(M.rehabilites) + ' réhabilités et équipés.</div></div>'
-      + '<div class="content c10">'
+      + '<div class="content"><div class="c10">'
       + c10Ent()
       + '<div class="c10-head">'
       + '<div class="c10-head-n">' + M.total + '</div>'
@@ -12068,19 +12074,35 @@ VIEWS["c10-compo"] = function () {
           "121 et 51 somment à 172 et recoupent la présentation. La ventilation ligne à ligne du classeur, elle, "
           + "n'est pas reprise : le nombre entre parenthèses y désigne tantôt des ouvrages, tantôt des machines, "
           + "et une lecture mécanique donne 190 ouvrages au lieu de 172.")
+      + ((typeof CCE !== "undefined" && CCE) ? card(
+          "Ce que la présentation dit du parc froid, et ce que l'inventaire dit",
+          "Grandeurs communes aux deux sources, posées côte à côte",
+          c10RecTbl([
+            ["Équipements de chaîne du froid", "2 750 (présentation)",
+             c10Nb(CCE.meta.n_equipements) + " (inventaire national)",
+             "Sept appareils d'écart, sans incidence sur les parts."],
+            ["Part en bon état", "91 % (présentation)",
+             c10D1(CCE.national.part_fonct) + " % (inventaire national)", "Concordant."],
+            ["Formations équipées", "81 %, soit 1 783 sur 2 204 inventoriées (présentation)",
+             c10D1(CCE.meta.n_fosa / 2762 * 100) + " %, soit " + c10Nb(CCE.meta.n_fosa) + " sur 2 762 au parc DIEM",
+             "Même numérateur ou presque, dénominateur différent : les formations inventoriées d'un côté, "
+             + "le parc de structures de l'autre. Les deux taux sont justes et ne répondent pas à la même question."]
+          ]),
+          "L'inventaire est instruit sous Chaîne du froid, dans cette même section. Aucune valeur n'est corrigée "
+          + "par l'autre : les écarts de dénominateur sont explicités plutôt que lissés.") : "")
       + aiBox("Un poste hors décompte",
           C10.hors_decompte.n + " " + C10.hors_decompte.lib.toLowerCase() + " figurent au classeur sur une ligne "
           + "multiprovinciale, en " + C10.hors_decompte.annee + ", sur " + C10.hors_decompte.fin.toLowerCase()
           + ". Elles n'entrent ni dans le récapitulatif de " + M.construits + " ni dans les " + M.total
           + " publiés. Le poste est réel et important ; il est signalé ici plutôt qu'ajouté à un total qui ne le porte pas.",
           "Signalement")
-      + '</div>'
+      + '</div></div>'
   };
 };
 
 VIEWS["c10-moyens"] = function () {
-  const crumbs = ["Chantier 10", "Ce qui fait fonctionner les ouvrages"];
-  const et = '<div class="ph"><div class="ph-tag">Grandes réalisations · Chantier 10</div>'
+  const crumbs = ["Ressources humaines", "Chantier 10 · Intégrations à la fonction publique"];
+  const et = '<div class="ph"><div class="ph-tag">Ressources humaines · Chantier 10</div>'
     + '<div class="ph-title">Un centre de santé sans soignant est un bâtiment</div>';
   if (!C10) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé en cours de chargement.</div></div>' };
 
@@ -12102,30 +12124,15 @@ VIEWS["c10-moyens"] = function () {
   if (typeof RHQ !== "undefined" && RHQ) {
     rec.push(["Effectif total en poste", "10 870 agents (présentation)",
       c10Nb(RHQ.meta.total) + " agents (relevé DRHFP 2026)",
-      "Deux relevés de la direction, deux périmètres. Instruit dans Ressources humaines, Qualifications."]);
+      "Deux relevés de la direction, deux périmètres. Instruit sous Qualifications."]);
   }
-  if (typeof CCE !== "undefined" && CCE) {
-    rec.push(["Équipements de chaîne du froid", "2 750 (présentation)",
-      c10Nb(CCE.meta.n_equipements) + " (inventaire national)",
-      "Sept appareils d'écart, sans incidence sur les parts."]);
-    rec.push(["Part en bon état", "91 % (présentation)",
-      c10D1(CCE.national.part_fonct) + " % (inventaire national)", "Concordant."]);
-    rec.push(["Formations équipées", "81 %, soit 1 783 sur 2 204 inventoriées (présentation)",
-      c10D1(CCE.meta.n_fosa / 2762 * 100) + " %, soit " + c10Nb(CCE.meta.n_fosa) + " sur 2 762 au parc DIEM",
-      "Même numérateur ou presque, dénominateur différent : les formations inventoriées d'un côté, "
-      + "le parc de structures de l'autre. Les deux taux sont justes et ne répondent pas à la même question."]);
-  }
-  const recTbl = rec.length ? '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr>'
-    + '<th>Grandeur</th><th>Présentation du chantier</th><th>Relevé instruit au tableau de bord</th><th>Lecture</th>'
-    + '</tr></thead><tbody>'
-    + rec.map(r => '<tr>' + r.map(x => '<td style="text-align:left">' + x + '</td>').join("") + '</tr>').join("")
-    + '</tbody></table></div>' : "";
+  const recTbl = rec.length ? c10RecTbl(rec) : "";
 
   return {
     crumbs: crumbs,
     html: et + '<div class="ph-sub">Les financements ont bâti les murs. L\'État a, dans le même temps, recruté et '
       + 'titularisé ceux qui y soignent, et équipé la chaîne qui porte les vaccins jusqu\'à eux.</div></div>'
-      + '<div class="content c10">'
+      + '<div class="content"><div class="c10">'
       + c10Ent()
       + '<div class="c10-head navy">'
       + '<div class="c10-head-n">' + c10Nb(R.total) + '</div>'
@@ -12147,7 +12154,7 @@ VIEWS["c10-moyens"] = function () {
       + '<div class="c10-fin-t">Le chantier continue.</div>'
       + '<div class="c10-fin-s">Ce qui a été promis a été bâti. Ce qui reste à bâtir est déjà engagé.</div>'
       + '</div>'
-      + '</div>'
+      + '</div></div>'
   };
 };
 
