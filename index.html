@@ -4791,7 +4791,7 @@ const PROGRAMS = [
       { id:"vacc-zd",        i18n_key:"sub_vacc_zd",       label:"Zéro-dose",           status:"orange", g:"Résultats" },
       { id:"vacc-surv",      i18n_key:"sub_vacc_surv",     label:"Surveillance épidémio.", status:"green", g:"Résultats" },
       { id:"vacc-intrants",  i18n_key:"sub_vacc_intrants", label:"Vaccins & intrants",  status:"ok",     g:"Moyens" },
-      { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"yellow", g:"Moyens" },
+      { id:"vacc-cold",      i18n_key:"sub_vacc_cold",     label:"Chaîne du froid",     status:"green",  g:"Moyens" },
       { id:"vacc-super",     label:"Supervision et monitorage", status:"orange",        g:"Conduite du programme" },
       { id:"vacc-sup-effet", label:"Grille de supervision",     status:"orange",        g:"Conduite du programme" },
       { id:"vacc-coord",     i18n_key:"sub_vacc_coord",    label:"Coordination",        status:"yellow", g:"Conduite du programme" },
@@ -4846,11 +4846,13 @@ const PROGRAMS = [
     id:"diem", c:"min", icon:"INF", label:"Infrastructures sanitaires",
     dir:"DIEM", groupe:"Fonctions d'appui",
     sub:[
-      { id:"diem-apercu", label:"État du parc",         status:"orange" },
-      { id:"diem-prov",   label:"Lecture provinciale",  status:"orange" },
-      { id:"diem-equip",  label:"Équipements et mobilité", status:"red" },
-      { id:"diem-fonct",  label:"Fonctionnalité des HD", status:"red" },
-      { id:"diem-dd",     label:"Analyse approfondie",  status:"green" },
+      { id:"diem-apercu", label:"État du parc",         status:"orange", g:"Synthèses" },
+      { id:"diem-dd",     label:"Analyse approfondie",  status:"green",  g:"Synthèses" },
+      { id:"diem-prov",   label:"Lecture provinciale",  status:"orange", g:"Parc bâti" },
+      { id:"diem-fonct",  label:"Fonctionnalité des HD", status:"red",   g:"Parc bâti" },
+      { id:"diem-equip",  label:"Équipements et mobilité", status:"red", g:"Équipements" },
+      { id:"diem-cdf",    label:"État du parc froid",   status:"green",  g:"Chaîne du froid" },
+      { id:"diem-cdf-renouv", label:"Vieillissement et renouvellement", status:"green", g:"Chaîne du froid" },
     ]
   },
   {
@@ -7913,7 +7915,47 @@ VIEWS["vacc-intrants"] = () => {
     </div>`};
 };
 
-VIEWS["vacc-cold"] = () => vueEnAttente("Chaîne du froid", "Chaîne du froid", "<strong>eSMT</strong>, suivi des stocks de vaccins et de la chaîne du froid", "Fonctionnalité des équipements et température des points de stockage.");
+/* L'inventaire national des equipements de la chaine du froid est en place
+   et instruit dans la section Infrastructures, ou le parc froid se lit avec
+   le parc bati. Cette page renvoie a cette lecture plutot que d'en tenir
+   une seconde, qui divergerait a la premiere mise a jour. */
+VIEWS["vacc-cold"] = function () {
+  const crumbs = ["Programme Élargi de Vaccination", "Chaîne du froid"];
+  const et = '<div class="ph"><div class="ph-tag">Chaîne du froid · DLMVSE</div>'
+    + '<div class="ph-title">Fonctionnalité de la chaîne du froid</div>';
+  if (!CCE) return { crumbs: crumbs, html: et + '<div class="ph-sub">Inventaire en cours de chargement.</div></div>' };
+  const M = CCE.meta, N = CCE.national;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const pire = CCE.provinces.slice().sort((a, b) => b.part_hs - a.part_hs).slice(0, 5);
+  return { crumbs: crumbs, html: et
+    + '<div class="ph-sub">' + nb(M.n_equipements) + ' appareils recensés dans ' + nb(M.n_fosa)
+    + ' formations sanitaires. ' + d1(N.part_fonct) + ' % marchent sans réserve, ' + d1(N.part_hs)
+    + ' % sont à l\'arrêt pour panne.</div></div>'
+    + '<div class="content">'
+    + '<div class="kpi-grid">'
+    + kpi("Appareils recensés", nb(M.n_equipements), "", nb(M.n_districts) + " districts couverts", "—", "flat", "", true)
+    + kpi("En bon état de marche", d1(N.part_fonct), " %", nb(N.mb) + " appareils", "—", "flat", "green", true)
+    + kpi("Hors service", d1(N.part_hs), " %", nb(N.ar) + " appareils à l'arrêt pour panne", "—", "flat", N.part_hs > 5 ? "orange" : "green", true)
+    + kpi("Capacité positive", nb(N.cap5), " L", "Volume installé à +5 °C", "—", "flat", "", true)
+    + '</div>'
+    + card("Les cinq provinces où la panne est la plus fréquente",
+        "Part des appareils à l'arrêt, sur l'ensemble des appareils recensés dans la province",
+        '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr><th>Province</th><th>Appareils</th>'
+        + '<th>À l\'arrêt</th><th>Part</th><th>Formations dotées</th><th>Couverture du parc</th></tr></thead><tbody>'
+        + pire.map(function (p) { return '<tr><td style="text-align:left">' + cidProvNom(p.id) + '</td>'
+            + '<td>' + nb(p.n) + '</td><td>' + nb(p.ar) + '</td><td>' + d1(p.part_hs) + ' %</td>'
+            + '<td>' + nb(p.fosa) + '</td><td>' + d1(p.couv_parc) + ' %</td></tr>'; }).join("")
+        + '</tbody></table></div>',
+        "Source : " + M.source + " · " + M.version + ".")
+    + aiBox("Où se lit le parc froid",
+        "L'inventaire est instruit dans la section Infrastructures sanitaires, sous Chaîne du froid : le parc froid "
+        + "y est un équipement et se lit avec le parc bâti. Deux pages y répondent, l'état du parc et son "
+        + "renouvellement. Cette page en donne l'essentiel du point de vue du programme, sans en tenir une seconde "
+        + "lecture qui divergerait à la première mise à jour.",
+        "Renvoi de lecture")
+    + '</div>' };
+};
 VIEWS["vacc-coord"] = () => vueEnAttente("Coordination", "Coordination", "<strong>les instances de coordination du PEV</strong>", "Réunions de coordination, financement et engagements des partenaires.");
 
 // ---- Vue VACCIN ANTIPALUDIQUE (donnees RIM reelles) ----
@@ -11338,6 +11380,336 @@ function cidFosaClic(id) { window.__fosaProv = id; renderMain(); }
 /* ==============================================================
    DGPML : stocks de fin de mois
 ============================================================== */
+/* ==============================================================
+   CHAINE DU FROID · INVENTAIRE NATIONAL DES EQUIPEMENTS
+   Releve descendant a l'appareil : 2 757 equipements, leur formation
+   sanitaire, leur district, leur etat, leur source d'energie, leur
+   annee d'installation, leur capacite et leur annee de remplacement
+   prevue. Source : outil OMS d'inventaire et d'analyse de gap,
+   version finale du 26 mars 2026 sur le releve 2024.
+   Le parc froid est un equipement : il se lit avec le parc bati de la
+   DIEM, non a cote. C'est pourquoi il entre dans cette section et non
+   dans celle du programme de vaccination, qui en est l'usager.
+============================================================== */
+let CCE = null;
+fetch("cce_inventaire.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { CCE = j; if (String(state.sub).indexOf("diem") === 0) renderMain(); }).catch(() => {});
+
+const CDF_VUES = { carte: "Carte", tableau: "Tableau", croise: "Croisement" };
+function cdfSel() {
+  return {
+    vue: window.__cdfVue || "carte",
+    mes: window.__cdfMes || "part_hs",
+    prov: window.__cdfProv || "*"
+  };
+}
+/* Trois lectures d'un meme parc. La panne dit ce qui ne fonctionne pas
+   aujourd'hui, la couverture dit ce qui n'a jamais ete equipe : ce sont
+   deux manques differents et ils n'appellent pas la meme reponse. */
+const CDF_MESURES = [
+  { c: "part_hs", l: "Part hors service", u: "%", sens: -1,
+    sub: "Appareils à l'arrêt pour panne, sur l'ensemble des appareils recensés" },
+  { c: "part_fonct", l: "Part en bon état de marche", u: "%", sens: 1,
+    sub: "Appareils qui fonctionnent sans réserve" },
+  { c: "couv_parc", l: "Couverture du parc de structures", u: "%", sens: 1,
+    sub: "Formations dotées d'au moins un appareil, sur le parc relevé par la DIEM" },
+  { c: "age_moy", l: "Âge moyen des appareils", u: "ans", sens: -1,
+    sub: "Années écoulées depuis l'installation" },
+  { c: "cap_par_1000", l: "Capacité positive pour mille habitants", u: "L", sens: 1,
+    sub: "Litres à +5 °C rapportés à la population estimée" },
+  { c: "eq_par_fosa", l: "Appareils par formation dotée", u: "", sens: 1,
+    sub: "Densité d'équipement là où il y a déjà un appareil" }
+];
+
+function cdfVal(p, mes) { const v = p[mes]; return (v === null || v === undefined) ? null : v; }
+function cdfBornes(mes) {
+  const v = CCE.provinces.map(p => cdfVal(p, mes)).filter(x => x != null).sort((a, b) => a - b);
+  if (v.length < 5) return [];
+  return [1, 2, 3, 4].map(k => v[Math.floor(v.length * k / 5)]);
+}
+function cdfCoul(v, b, sens) {
+  if (v == null || !b.length) return "#CEC8BA";
+  let k = 0; while (k < b.length && v >= b[k]) k++;
+  return INFRA_PAL[sens > 0 ? k : 4 - k];
+}
+
+VIEWS["diem-cdf"] = function () {
+  const crumbs = ["Infrastructures sanitaires", "Chaîne du froid"];
+  const et = '<div class="ph"><div class="ph-tag">Chaîne du froid · DIEM et DLMVSE</div>'
+    + '<div class="ph-title">Ce qui tient la température, et où</div>';
+  if (!CCE) return { crumbs: crumbs, html: et + '<div class="ph-sub">Inventaire en cours de chargement.</div></div>' };
+
+  const S = cdfSel(), M = CCE.meta, N = CCE.national;
+  const def = CDF_MESURES.filter(x => x.c === S.mes)[0];
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const d2 = x => x == null ? "ND" : String(Math.round(x * 100) / 100).replace(".", ",");
+  const fmt = (v, u) => v == null ? "ND" : (u === "" ? d2(v) : d1(v) + (u === "%" ? " %" : " " + u));
+
+  const bornes = cdfBornes(S.mes);
+  const vals = {}; CCE.provinces.forEach(p => { vals[p.id] = cdfVal(p, S.mes); });
+  const dispo = CCE.provinces.map(p => vals[p.id]).filter(x => x != null).sort((a, b) => a - b);
+  const med = dispo.length ? dispo[Math.floor(dispo.length / 2)] : null;
+
+  const barre = '<div class="fn-f">'
+    + cidListeFiltre("Mesure", CDF_MESURES.map(x => ({ v: x.c, l: x.l })), "__cdfMes", S.mes)
+    + cidListeFiltre("Province", [{ v: "*", l: "Toutes" }].concat(
+        CCE.provinces.slice().sort((a, b) => cidProvNom(a.id).localeCompare(cidProvNom(b.id)))
+          .map(p => ({ v: p.id, l: cidProvNom(p.id) }))), "__cdfProv", S.prov)
+    + '</div>'
+    + '<div class="si-bascule">' + Object.keys(CDF_VUES).map(function (k) {
+        return '<button class="si-bt' + (k === S.vue ? " on" : "")
+          + '" onclick="window.__cdfVue=\'' + k + '\';renderMain()">' + CDF_VUES[k] + '</button>';
+      }).join("") + '</div>';
+
+  const legende = bornes.length ? '<div class="fn-lg">'
+    + ["cinquième le moins favorable", "deuxième cinquième", "cinquième médian", "quatrième cinquième", "cinquième le plus favorable"]
+      .map(function (l, k) { return '<span><i style="background:'
+        + INFRA_PAL[def.sens > 0 ? k : 4 - k] + '"></i>' + l + '</span>'; }).join("")
+    + '</div>' : "";
+
+  let corps = "", sousTitre = "", note = "";
+  const sel = S.prov === "*" ? null : CCE.provinces.filter(p => p.id === S.prov)[0];
+
+  if (S.vue === "carte") {
+    const paths = Object.keys(PROVINCE_PATHS).map(function (id) {
+      const v = vals[id];
+      return '<path d="' + PROVINCE_PATHS[id].d + '" fill="' + cdfCoul(v, bornes, def.sens)
+        + '" stroke="' + (S.prov === id ? "#1B1A16" : "#F1EFEA") + '" stroke-width="' + (S.prov === id ? 3 : 1.4) + '"'
+        + ' style="cursor:pointer" onclick="window.__cdfProv=\'' + (S.prov === id ? "*" : id) + '\';renderMain()">'
+        + '<title>' + cidProvNom(id) + ' · ' + fmt(v, def.u) + '</title></path>';
+    }).join("");
+    const lab = Object.keys(PROVINCE_PATHS).map(function (id) {
+      const c = CID_CENTROIDES[id]; if (!c || vals[id] == null) return "";
+      const nom = cidProvNom(id).replace(/^(Mayo[- ]Kebbi|Logone|Ennedi)[- ](.)\S*/, "$1-$2.");
+      return '<g class="cid-map-lbl" pointer-events="none"><text x="' + c[0] + '" y="' + (c[1] - 5)
+        + '" text-anchor="middle">' + nom + '</text><text x="' + c[0] + '" y="' + (c[1] + 10)
+        + '" text-anchor="middle" class="v">' + (def.u === "" ? d2(vals[id]) : d1(vals[id])) + '</text></g>';
+    }).join("");
+    corps = '<svg viewBox="' + MAP_VIEWBOX + '" class="cid-fig-carte">' + paths + lab + '</svg>' + legende;
+    sousTitre = def.sub + " · unité : " + (def.u || "appareils");
+    note = "Cliquer une province la retient pour les autres lectures ; un second clic la relâche.";
+  }
+
+  if (S.vue === "tableau") {
+    const L = CCE.provinces.slice().sort((a, b) => (cdfVal(b, S.mes) == null ? -1e9 : cdfVal(b, S.mes)) - (cdfVal(a, S.mes) == null ? -1e9 : cdfVal(a, S.mes)));
+    corps = '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr>'
+      + '<th>Province</th><th>Appareils</th><th>Marche bien</th><th>Réparation</th><th>Panne</th>'
+      + '<th>Formations dotées</th><th>Parc DIEM</th><th>Couverture</th><th>Âge moyen</th><th>Capacité +5 °C</th></tr></thead><tbody>'
+      + L.map(function (p) {
+          const on = S.prov === p.id;
+          return '<tr' + (on ? ' style="background:var(--royal-tint)"' : "") + '>'
+            + '<td style="text-align:left;cursor:pointer" onclick="window.__cdfProv=\'' + (on ? "*" : p.id) + '\';renderMain()">'
+            + cidProvNom(p.id) + '</td>'
+            + '<td>' + nb(p.n) + '</td><td>' + nb(p.mb) + '</td><td>' + nb(p.mr) + '</td>'
+            + '<td>' + nb(p.ar) + (p.ar ? ' <span style="color:var(--muted)">(' + d1(p.part_hs) + ' %)</span>' : "") + '</td>'
+            + '<td>' + nb(p.fosa) + '</td><td>' + nb(p.parc) + '</td><td>' + d1(p.couv_parc) + ' %</td>'
+            + '<td>' + d1(p.age_moy) + '</td><td>' + nb(p.cap5) + ' L</td></tr>';
+        }).join("")
+      + '</tbody></table></div>';
+    sousTitre = "Les vingt-trois provinces, classées sur la mesure retenue";
+    note = "Le parc DIEM est le nombre de structures relevées par la direction des infrastructures : "
+      + "centres de santé, hôpitaux de district et hôpital de province. La couverture rapporte les formations "
+      + "dotées d'au moins un appareil à ce parc.";
+  }
+
+  if (S.vue === "croise") {
+    /* Deux manques, un seul graphique. L'axe horizontal porte ce qui n'a
+       jamais ete equipe, l'axe vertical ce qui l'a ete et ne marche plus.
+       Une province peut etre mal placee sur l'un et bien sur l'autre :
+       c'est precisement ce que la lecture doit rendre visible. */
+    const W = 860, H = 380, mx = 62, my = 34;
+    const X = CCE.provinces.map(p => p.couv_parc).filter(x => x != null);
+    const Y = CCE.provinces.map(p => p.part_hs).filter(x => x != null);
+    const x0 = Math.floor(Math.min.apply(null, X) / 5) * 5, x1 = Math.ceil(Math.max.apply(null, X) / 5) * 5;
+    const y1 = Math.ceil(Math.max.apply(null, Y) / 2) * 2;
+    const px = v => mx + (v - x0) / (x1 - x0) * (W - mx - 26);
+    const py = v => H - my - v / y1 * (H - my - 26);
+    const medX = X.slice().sort((a, b) => a - b)[Math.floor(X.length / 2)];
+    const medY = Y.slice().sort((a, b) => a - b)[Math.floor(Y.length / 2)];
+    const pts = CCE.provinces.filter(p => p.couv_parc != null && p.part_hs != null).map(function (p) {
+      const on = S.prov === p.id;
+      const crit = p.couv_parc < medX && p.part_hs > medY;
+      const nom = cidProvNom(p.id).replace(/^(Mayo[- ]Kebbi|Logone|Ennedi)[- ](.)\S*/, "$1-$2.");
+      return '<g style="cursor:pointer" onclick="window.__cdfProv=\'' + (on ? "*" : p.id) + '\';renderMain()">'
+        + '<circle cx="' + px(p.couv_parc).toFixed(1) + '" cy="' + py(p.part_hs).toFixed(1) + '" r="' + (on ? 8 : 5.5)
+        + '" fill="' + (crit ? "#B3372F" : "#4B6A8A") + '" fill-opacity="' + (on ? 1 : .78)
+        + '" stroke="#F1EFEA" stroke-width="1.4"><title>' + cidProvNom(p.id) + ' · couverture '
+        + d1(p.couv_parc) + ' % · hors service ' + d1(p.part_hs) + ' %</title></circle>'
+        + ((crit || on) ? '<text x="' + (px(p.couv_parc) + 9).toFixed(1) + '" y="' + (py(p.part_hs) + 3.5).toFixed(1)
+          + '" font-size="10" fill="var(--ink)">' + nom + '</text>' : "")
+        + '</g>';
+    }).join("");
+    const grille = [0, .25, .5, .75, 1].map(function (f) {
+      const v = y1 * f;
+      return '<line x1="' + mx + '" y1="' + py(v).toFixed(1) + '" x2="' + (W - 26) + '" y2="' + py(v).toFixed(1)
+        + '" stroke="var(--border-2)" stroke-width="1"/>'
+        + '<text x="' + (mx - 8) + '" y="' + (py(v) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--muted)">'
+        + d1(v) + ' %</text>';
+    }).join("");
+    const axeX = [x0, (x0 + x1) / 2, x1].map(function (v) {
+      return '<text x="' + px(v).toFixed(1) + '" y="' + (H - my + 16) + '" text-anchor="middle" font-size="10" fill="var(--muted)">'
+        + d1(v) + ' %</text>';
+    }).join("");
+    corps = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%">' + grille
+      + '<line x1="' + px(medX).toFixed(1) + '" y1="20" x2="' + px(medX).toFixed(1) + '" y2="' + (H - my)
+      + '" stroke="var(--border-2)" stroke-dasharray="4 3"/>'
+      + '<line x1="' + mx + '" y1="' + py(medY).toFixed(1) + '" x2="' + (W - 26) + '" y2="' + py(medY).toFixed(1)
+      + '" stroke="var(--border-2)" stroke-dasharray="4 3"/>'
+      + pts + axeX
+      + '<text x="' + (W / 2) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="10.5" fill="var(--muted)">'
+      + 'Couverture du parc de structures</text>'
+      + '<text x="14" y="16" font-size="10.5" fill="var(--muted)">Part hors service</text></svg>'
+      + '<div class="fn-lg"><span><i style="background:#B3372F"></i>sous la médiane sur la couverture et au-dessus sur la panne</span>'
+      + '<span><i style="background:#4B6A8A"></i>autres provinces</span></div>';
+    sousTitre = "Ce qui n'a jamais été équipé, contre ce qui l'a été et ne marche plus";
+    note = "Les deux traits marquent les médianes. Le quart supérieur gauche réunit les provinces qui cumulent "
+      + "un parc peu couvert et une panne fréquente : elles appellent à la fois une dotation et un appui à l'entretien.";
+  }
+
+  const critiques = CCE.provinces.filter(p => p.couv_parc != null && p.part_hs != null)
+    .filter(function (p) {
+      const X = CCE.provinces.map(q => q.couv_parc).filter(x => x != null).sort((a, b) => a - b);
+      const Y = CCE.provinces.map(q => q.part_hs).filter(x => x != null).sort((a, b) => a - b);
+      return p.couv_parc < X[Math.floor(X.length / 2)] && p.part_hs > Y[Math.floor(Y.length / 2)];
+    });
+
+  return {
+    crumbs: crumbs,
+    html: et + '<div class="ph-sub">' + nb(M.n_equipements) + ' appareils recensés dans '
+      + nb(M.n_fosa) + ' formations sanitaires et ' + nb(M.n_districts) + ' districts. '
+      + d1(N.part_fonct) + ' % marchent sans réserve, ' + d1(N.part_hs) + ' % sont à l\'arrêt pour panne. '
+      + 'Relevé ' + M.version.replace("VF du ", "arrêté au ") + '.</div></div>'
+      + '<div class="content">'
+      + '<div class="kpi-grid">'
+      + kpi("Appareils recensés", nb(M.n_equipements), "", nb(M.hors_province) + " dépôts centraux et sous-nationaux tenus à part", "—", "flat", "", true)
+      + kpi("Formations dotées", nb(M.n_fosa), "", d1(N.fosa / 2762 * 100) + " % du parc relevé par la DIEM", "—", "flat", "orange", true)
+      + kpi("Hors service", d1(N.part_hs), " %", nb(N.ar) + " appareils à l'arrêt pour panne", "—", "flat", N.part_hs > 5 ? "orange" : "green", true)
+      + kpi("Alimentés en solaire", d1(N.solaire / M.n_equipements * 100), " %", nb(N.solaire) + " appareils sur " + nb(M.n_equipements), "—", "flat", "green", true)
+      + '</div>'
+      + card(sel ? cidProvNom(sel.id) + " · " + def.l : def.l, sousTitre, barre + corps, note)
+      + (sel ? card(cidProvNom(sel.id) + " · détail du parc froid",
+          nb(sel.n) + " appareils dans " + nb(sel.fosa) + " formations et " + nb(sel.districts) + " districts",
+          '<div class="kpi-grid">'
+          + kpi("Marche bien", nb(sel.mb), "", d1(sel.part_fonct) + " % des appareils", "—", "flat", "", true)
+          + kpi("Arrêt pour panne", nb(sel.ar), "", d1(sel.part_hs) + " % des appareils", "—", "flat", sel.part_hs > 8 ? "red" : "orange", true)
+          + kpi("Couverture du parc", d1(sel.couv_parc), " %", nb(sel.fosa) + " formations dotées sur " + nb(sel.parc), "—", "flat", "orange", true)
+          + kpi("Âge moyen", d1(sel.age_moy), " ans", nb(sel.a_remplacer) + " appareils portés à remplacer", "—", "flat", "", true)
+          + '</div>',
+          "Capacité installée : " + nb(sel.cap5) + " litres à +5 °C et " + nb(sel.cap20) + " litres à −20 °C. "
+          + "Coût annuel estimé par l'outil : " + nb(sel.maint) + " dollars de maintenance et " + nb(sel.cout_energie) + " dollars d'énergie.") : "")
+      + card("Les deux manques ne se recouvrent pas",
+          "Couverture du parc et fréquence de la panne, croisées sur les vingt-trois provinces",
+          '<p style="margin:0 0 10px">Sur les vingt-trois provinces, le rang de la couverture et celui de la panne '
+          + 'ne vont pas ensemble : le lien de rang entre les deux vaut 0,04, c\'est-à-dire rien. Une province bien '
+          + 'dotée n\'est pas pour autant une province dont les appareils marchent, et l\'inverse est vrai aussi. '
+          + 'Les deux manques appellent donc deux réponses distinctes, l\'une d\'investissement, l\'autre d\'entretien.</p>'
+          + '<p style="margin:0">' + (critiques.length
+            ? 'Les ' + critiques.length + ' provinces qui cumulent les deux : '
+              + critiques.map(p => cidProvNom(p.id)).sort().join(", ") + '.'
+            : 'Aucune province ne cumule les deux manques.') + '</p>',
+          "Lien de rang calculé sur les vingt-trois provinces. La valeur est donnée telle quelle, sans test.")
+      + '</div>'
+  };
+};
+
+VIEWS["diem-cdf-renouv"] = function () {
+  const crumbs = ["Infrastructures sanitaires", "Vieillissement et renouvellement"];
+  const et = '<div class="ph"><div class="ph-tag">Chaîne du froid · renouvellement du parc</div>'
+    + '<div class="ph-title">Ce qu\'il faudra remplacer, et quand</div>';
+  if (!CCE) return { crumbs: crumbs, html: et + '<div class="ph-sub">Inventaire en cours de chargement.</div></div>' };
+
+  const M = CCE.meta, N = CCE.national;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+
+  /* Calendrier de remplacement porte par le releve lui-meme : chaque
+     appareil a une annee de mise au rebut prevue, deduite de sa duree de
+     vie technique et de son annee d'installation. */
+  /* La fenetre va jusqu'a 2040 et regroupe la queue : couper plus tot
+     masquerait le pic, qui tombe apres 2036 et porte la majorite du parc. */
+  const BORNE = 2040;
+  const CAL = CCE.calendrier.filter(c => c.annee >= 2024 && c.annee <= BORNE).slice();
+  const queue = CCE.calendrier.filter(c => c.annee > BORNE).reduce((a, c) => a + c.n, 0);
+  if (queue) CAL.push({ annee: "au-delà", n: queue });
+  const maxN = Math.max.apply(null, CAL.map(c => c.n));
+  const pic = CAL.slice().sort((a, b) => b.n - a.n)[0];
+  const W = 860, H = 300, mx = 48, my = 40;
+  const bw = (W - mx - 24) / CAL.length;
+  const barres = CAL.map(function (c, i) {
+    const h = c.n / maxN * (H - my - 26);
+    const x = mx + i * bw, y = H - my - h;
+    const echu = c.annee <= 2026;
+    return '<rect x="' + (x + bw * .16).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw * .68).toFixed(1)
+      + '" height="' + h.toFixed(1) + '" fill="' + (echu ? "#B3372F" : "#4B6A8A") + '" rx="2">'
+      + '<title>' + c.annee + ' · ' + c.n + ' appareils</title></rect>'
+      + '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (y - 5).toFixed(1) + '" text-anchor="middle" font-size="10" fill="var(--ink)">'
+      + c.n + '</text>'
+      + '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - my + 16) + '" text-anchor="middle" font-size="10" fill="var(--muted)">'
+      + c.annee + '</text>';
+  }).join("");
+
+  const AE = CCE.age_etat;
+  const ecart = AE[2].age_moy - AE[0].age_moy;
+
+  const FIN = CCE.financement;
+  const totFin = FIN.reduce((a, b) => a + b.n, 0);
+  const barreFin = '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr>'
+    + '<th>Source de financement</th><th>Appareils</th><th>Part</th><th></th></tr></thead><tbody>'
+    + FIN.map(function (f) {
+        return '<tr><td style="text-align:left">' + f.src + '</td><td>' + nb(f.n) + '</td>'
+          + '<td>' + d1(f.n / M.n_equipements * 100) + ' %</td>'
+          + '<td style="width:34%"><div style="height:9px;border-radius:3px;background:'
+          + (f.src === "Non renseigné" ? "#CEC8BA" : "#4B6A8A") + ';width:'
+          + (f.n / FIN[0].n * 100).toFixed(1) + '%"></div></td></tr>';
+      }).join("")
+    + '</tbody></table></div>';
+
+  return {
+    crumbs: crumbs,
+    html: et + '<div class="ph-sub">Chaque appareil porte une année de remplacement prévue, déduite de sa durée '
+      + 'de vie technique et de son année d\'installation. ' + nb(CCE.en_retard) + ' appareils ont déjà dépassé la leur. '
+      + 'L\'âge moyen du parc est de ' + d1(N.age_moy) + ' ans.</div></div>'
+      + '<div class="content">'
+      + '<div class="kpi-grid">'
+      + kpi("Remplacements échus", nb(CCE.en_retard), "", "Année de remplacement prévue atteinte ou dépassée", "—", "flat", "red", true)
+      + kpi("Âge moyen du parc", d1(N.age_moy), " ans", "Médiane d'installation en 2022", "—", "flat", "green", true)
+      + kpi("Maintenance annuelle", nb(N.maint), " $", "Estimation portée par l'outil d'inventaire", "—", "flat", "", true)
+      + kpi("Énergie annuelle", nb(N.cout_energie), " $", "Estimation portée par l'outil d'inventaire", "—", "flat", "", true)
+      + '</div>'
+      + card("Calendrier de remplacement",
+          "Nombre d'appareils atteignant leur année de mise au rebut prévue",
+          '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%">' + barres + '</svg>'
+          + '<div class="fn-lg"><span><i style="background:#B3372F"></i>échéance déjà atteinte</span>'
+          + '<span><i style="background:#4B6A8A"></i>échéance à venir</span></div>',
+          "Le pic tombe en " + pic.annee + " : " + nb(pic.n) + " appareils, soit " + d1(pic.n / M.n_equipements * 100)
+          + " % du parc, atteignent leur échéance la même année. Il tient à la vague d'installations solaires dont "
+          + "la médiane est 2022, portée par une durée de vie technique de quinze ans. Le besoin de renouvellement "
+          + "n'est pas linéaire : deux années concentrent davantage d'échéances que les dix précédentes réunies, "
+          + "et la programmation budgétaire doit être construite sur cette forme, non sur une moyenne annuelle.")
+      + card("L'âge explique la panne à l'appareil, pas à la province",
+          "Âge moyen selon l'état de fonctionnement",
+          '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr>'
+          + '<th>État</th><th>Appareils</th><th>Âge moyen</th><th>Âge médian</th><th>Plus de dix ans</th></tr></thead><tbody>'
+          + AE.map(function (a) {
+              return '<tr><td style="text-align:left">' + a.lib + '</td><td>' + nb(a.n) + '</td>'
+                + '<td>' + d1(a.age_moy) + ' ans</td><td>' + d1(a.age_med) + ' ans</td>'
+                + '<td>' + d1(a.part_plus10) + ' %</td></tr>';
+            }).join("")
+          + '</tbody></table></div>'
+          + '<p style="margin:12px 0 0">Un appareil en panne a en moyenne ' + d1(ecart) + ' ans de plus qu\'un appareil '
+          + 'qui marche, et un sur cinq dépasse dix ans contre un sur cinquante parmi les appareils sains. À l\'échelle '
+          + 'de l\'appareil, la vétusté pèse donc clairement. À l\'échelle de la province, elle ne dit plus rien : le lien '
+          + 'de rang entre l\'âge moyen provincial et la part hors service vaut −0,09. Ce que la province ajoute n\'est '
+          + 'pas l\'âge du parc mais la capacité à le réparer.</p>',
+          "Lecture à deux échelles. La première tient sur 2 757 appareils, la seconde sur 23 provinces.")
+      + card("Qui a payé le parc en place", "Source de financement déclarée à l'inventaire", barreFin,
+          "Une ligne sur trois ne porte aucune source de financement. La part des bailleurs est donc un minorant, "
+          + "et la capacité de l'État à programmer un renouvellement dépend d'abord de la complétion de ce champ.")
+      + '</div>'
+  };
+};
+
 VIEWS["dpml-dispo"] = () => {
   const crumbs = ["Logistique · Intrants", "Stocks de fin de mois"];
   const et = `<div class="ph"><div class="ph-tag">Logistique · DGPML</div><div class="ph-title">Stocks de fin de mois des médicaments</div>`;
@@ -14101,8 +14473,47 @@ VIEWS["diem-dd"] = () => {
          coûterait ni par quoi commencer. Les hôpitaux de province sont classés en bon état ou partiellement
          endommagés, les autres échelons en bon ou mauvais état : les deux échelles ne se superposent pas et sont
          tenues séparées ici plutôt que fondues en une seule.`)}
+      ${diemRecoupement()}
     </div>` };
 };
+
+/* Recoupement entre les deux releves qui decrivent le meme reseau de
+   structures : celui de la DIEM sur le bati, celui de l'inventaire de la
+   chaine du froid sur l'equipement. Ils ne sont pas issus de la meme
+   collecte et ne se recouvrent pas exactement ; l'ecart est une donnee de
+   gouvernance, pas un defaut a masquer. */
+function diemRecoupement() {
+  if (!CCE || !INFRA) return "";
+  const M = INFRA.meta, C = CCE.meta, N = CCE.national;
+  const parc = M.cs.total + M.hd.total + M.hp.total;
+  const nb = x => x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " ");
+  const d1 = x => x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ",");
+  const lignes = [
+    ["Structures relevées", nb(parc) + " structures", nb(C.n_fosa) + " formations dotées",
+     d1(C.n_fosa / parc * 100) + " % du parc porte au moins un appareil"],
+    ["Districts couverts", nb(M.n_districts_liste), nb(C.n_districts),
+     "Les arrondissements de N'Djamena sont découpés autrement dans les deux relevés"],
+    ["Année de référence", String(M.annee), "Relevé 2024, version arrêtée au 26 mars 2026",
+     "Deux ans séparent les deux photographies"],
+    ["Unité décrite", "Le bâtiment et son état", "L'appareil et son état de marche",
+     "Un bâtiment en mauvais état peut abriter un appareil qui marche, et l'inverse"]
+  ];
+  return card("Ce que les deux relevés disent du même réseau",
+    "Parc bâti de la DIEM et inventaire de la chaîne du froid, mis côte à côte",
+    '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr><th>Dimension</th><th>Relevé DIEM</th>'
+    + '<th>Inventaire chaîne du froid</th><th>Lecture</th></tr></thead><tbody>'
+    + lignes.map(function (l) {
+        return '<tr><td style="text-align:left">' + l[0] + '</td><td style="text-align:left">' + l[1]
+          + '</td><td style="text-align:left">' + l[2] + '</td>'
+          + '<td style="text-align:left;color:var(--muted)">' + l[3] + '</td></tr>';
+      }).join("")
+    + '</tbody></table></div>'
+    + '<p style="margin:12px 0 0">Sur les vingt-trois provinces, la part de bâtiments en bon état et la part '
+    + 'd\'appareils hors service ne vont pas ensemble : le lien de rang vaut 0,02. L\'état du bâti ne dit donc rien '
+    + 'de l\'état du froid qu\'il abrite. Les deux relevés doivent être tenus, aucun ne remplace l\'autre.</p>',
+    "Aucune valeur n'est redressée pour rapprocher les deux sources. Les écarts de découpage et de date sont "
+    + "signalés et laissés visibles.");
+}
 
 VIEWS["diem-prov"] = () => {
   const crumbs = ["Infrastructures sanitaires", "Lecture provinciale"];
