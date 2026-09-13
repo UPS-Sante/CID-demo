@@ -4579,6 +4579,125 @@
     .ck2-srcs { display: block; line-height: 1.9; }
   }
 
+
+  /* ==============================================================
+     CHANTIER 10 · RENDU DE LA PRESENTATION
+     Fond creme, chiffres tres grands en graisse serree, ocre pour
+     l'ouvrage, bleu pour l'agent, vert pour le froid. Ce registre est
+     propre a cette section : le reste du tableau de bord sert au
+     pilotage et garde sa sobriete, celle-ci rend compte.
+  ============================================================== */
+  .c10 { --c10-or:#D97B29; --c10-navy:#0C2E5C; --c10-vert:#1E7A4C;
+         --c10-creme:#FBF8F1; --c10-encre:#2B2317; --c10-pale:#EFE7D8; }
+  .c10 { background:var(--c10-creme); border-radius:14px; padding:22px 26px 26px; }
+  .c10-ent { display:flex; justify-content:space-between; font-size:10.5px; font-weight:700;
+             letter-spacing:2.2px; text-transform:uppercase; color:var(--c10-navy);
+             opacity:.7; margin-bottom:22px; }
+  .c10-ent span:last-child { color:var(--c10-or); }
+
+  .c10-hero { display:grid; grid-template-columns:1fr 1fr; gap:34px; align-items:start; }
+  .c10-an-big { font-size:76px; line-height:.92; font-weight:800; color:var(--c10-or);
+                letter-spacing:-2px; display:inline-block; }
+  .c10-an-lib { display:inline-block; margin-left:12px; font-size:14px; color:var(--muted);
+                vertical-align:22px; }
+  .c10-tot { margin-top:20px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .c10-tot-n { font-size:62px; font-weight:800; color:var(--c10-encre); letter-spacing:-1.5px; line-height:1; }
+  .c10-tot-u { font-size:20px; font-weight:700; color:var(--c10-encre); }
+  .c10-tot-r { margin-left:auto; font-size:13px; color:var(--muted); }
+
+  .c10-bar { height:9px; background:var(--c10-pale); border-radius:5px; overflow:hidden; }
+  .c10-bar.big { height:11px; margin:10px 0 22px; }
+  .c10-bar i { display:block; height:100%; background:var(--c10-or); border-radius:5px; }
+  .c10-bar.big.split i { background:linear-gradient(90deg,var(--c10-or) 0%,var(--c10-or) 100%); }
+
+  .c10-lg { display:flex; align-items:center; gap:14px; margin-bottom:13px; }
+  .c10-lg.off { opacity:.36; }
+  .c10-lg-n { font-size:26px; font-weight:800; color:var(--c10-encre); min-width:52px; text-align:right; }
+  .c10-lg-c { flex:1; min-width:0; }
+  .c10-lg-l { font-size:13px; font-weight:700; color:var(--c10-encre); margin-bottom:5px; }
+  .c10-note { margin:22px 0 0; font-size:14px; line-height:1.62; color:#5A5240; }
+  .c10-src { font-size:10.5px; color:var(--muted); margin-top:8px; }
+
+  .c10-annees { display:flex; gap:8px; margin:24px 0 4px; flex-wrap:wrap; }
+  .c10-an { border:1px solid var(--c10-pale); background:#fff; border-radius:22px;
+            padding:7px 20px; font:inherit; font-size:13.5px; font-weight:700;
+            color:var(--muted); cursor:pointer; }
+  .c10-an.on { background:var(--c10-or); border-color:var(--c10-or); color:#fff; }
+
+  .c10-head { display:flex; align-items:baseline; gap:18px; flex-wrap:wrap; margin-bottom:4px; }
+  .c10-head-n { font-size:88px; font-weight:800; line-height:.9; letter-spacing:-3px; color:var(--c10-encre); }
+  .c10-head.navy .c10-head-n { color:var(--c10-navy); }
+  .c10-head-t { font-size:16px; color:#5A5240; max-width:640px; line-height:1.5; }
+  .c10-head-t b { color:var(--c10-encre); }
+
+  .c10-grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:26px 34px; margin:26px 0 6px; }
+  .c10-grid2 { display:grid; grid-template-columns:repeat(2,1fr); gap:30px; }
+  .c10-item i { display:block; width:44px; height:3px; border-radius:2px; margin-bottom:12px; }
+  .c10-item-n { font-size:42px; font-weight:800; line-height:1; color:var(--c10-encre); letter-spacing:-1px; }
+  .c10-item-l { font-size:14.5px; font-weight:700; margin-top:8px; color:var(--c10-encre); }
+  .c10-item-d { font-size:12.5px; color:var(--muted); margin-top:3px; }
+  .c10-sub { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;
+             color:var(--c10-or); margin-bottom:10px; }
+
+  .c10-portee { display:grid; grid-template-columns:repeat(3,1fr); gap:30px; }
+  .c10-p-n { font-size:40px; font-weight:800; color:var(--c10-encre); line-height:1; letter-spacing:-1px; }
+  .c10-p-l { font-size:13px; color:#5A5240; margin-top:8px; line-height:1.5; }
+
+  .c10-fin-r { display:grid; grid-template-columns:230px 1fr 46px; align-items:center; gap:14px; margin-bottom:9px; }
+  .c10-fin-l { font-size:13px; color:#5A5240; text-align:right; }
+  .c10-fin-r.nat .c10-fin-l { font-weight:700; color:var(--c10-encre); }
+  .c10-fin-b { height:14px; background:transparent; }
+  .c10-fin-b i { display:block; height:100%; background:#D6C9AE; border-radius:2px; }
+  .c10-fin-r.nat .c10-fin-b i { background:var(--c10-or); }
+  .c10-fin-n { font-size:16px; font-weight:700; color:#5A5240; }
+  .c10-fin-r.nat .c10-fin-n { color:var(--c10-or); }
+
+  .c10-grid3.vag { align-items:end; }
+  .c10-vag { border-radius:3px; margin-bottom:12px; }
+  .c10-vag-n { font-size:34px; font-weight:800; color:var(--c10-encre); line-height:1; }
+  .c10-vag-l { font-size:13.5px; font-weight:700; margin-top:7px; color:var(--c10-encre); }
+  .c10-vag-d { font-size:12px; color:var(--muted); }
+
+  .c10-fin-bloc { text-align:center; padding:44px 0 18px; }
+  .c10-fin3 { display:flex; justify-content:center; gap:60px; flex-wrap:wrap; margin-bottom:34px; }
+  .c10-fin3 span { display:block; font-size:56px; font-weight:800; line-height:1; letter-spacing:-2px; }
+  .c10-fin3 em { display:block; font-style:normal; font-size:12.5px; color:#5A5240; margin-top:9px; }
+  .c10-fin-t { font-size:26px; font-weight:800; color:var(--c10-encre); }
+  .c10-fin-s { font-size:14px; color:#5A5240; margin-top:8px; }
+
+  /* Le libelle de la province sans ouvrage se pose sur la teinte la plus
+     claire de la carte : il prend l'encre plutot que le blanc cerne du
+     gabarit commun, qui y serait illisible. */
+  /* Dix-sept unites de dessin, non onze : la carte est rendue a environ
+     huit dixiemes de sa zone de dessin, un libelle de onze unites y
+     tomberait a six points et demi. */
+  .c10-map-vide text { font-family:var(--font); font-size:17px; font-weight:700; fill:#8A7F68;
+                       letter-spacing:.3px; }
+  /* La carte accompagne le compteur, elle ne le domine pas : sa hauteur est
+     bornee a celle de la colonne de gauche. */
+  .c10-hero .cid-fig-carte { max-width:none; max-height:560px; width:auto; margin:0 auto; display:block; }
+
+  /* Ecrans etroits : les grands corps de la presentation ne tiennent pas
+     tels quels, ils sont reduits plutot que laisses deborder. */
+  @media (max-width:1100px) {
+    .c10-hero { grid-template-columns:1fr; }
+    .c10-grid2 { grid-template-columns:1fr; }
+  }
+  @media (max-width:820px) {
+    .c10 { padding:16px 14px 20px; }
+    .c10-grid3, .c10-portee { grid-template-columns:1fr; gap:22px; }
+    .c10-head-n { font-size:58px; letter-spacing:-2px; }
+    .c10-an-big { font-size:54px; }
+    .c10-tot-n { font-size:46px; }
+    .c10-item-n, .c10-p-n { font-size:34px; }
+    .c10-fin-r { grid-template-columns:1fr; gap:3px; }
+    .c10-fin-l { text-align:left; }
+    .c10-fin-n { text-align:left; }
+    .c10-fin3 { gap:30px; }
+    .c10-fin3 span { font-size:42px; }
+    .c10-ent { flex-direction:column; gap:3px; }
+  }
+
 </style>
 </head>
 <body>
@@ -4888,6 +5007,15 @@ const PROGRAMS = [
       { id:"rh-form",    label:"Agents en formation",      status:"orange", g:"Compétences" },
       { id:"rh-metier",  label:"Personnel par service",    status:"red",    g:"Effet sur le service" },
       { id:"rh-service", label:"Effectifs et service",     status:"orange", g:"Effet sur le service" },
+    ]
+  },
+  {
+    id:"c10", c:"min", icon:"C10", label:"Chantier 10 · Réalisations",
+    dir:"MSP", groupe:"Fonctions d'appui",
+    sub:[
+      { id:"c10-traj",   label:"Quatre années tenues",   status:"green", g:"Réalisations" },
+      { id:"c10-compo",  label:"Composition et financement", status:"green", g:"Réalisations" },
+      { id:"c10-moyens", label:"Ce qui les fait fonctionner", status:"green", g:"Moyens" },
     ]
   },
   {
@@ -6835,7 +6963,10 @@ const VUE_TITRES = {
   "sao-league":     { en: "Sao Health Challenge", ar: "تحدي ساو الصحي" },
   "diem-cdf":       { en: "What keeps the temperature, and where", ar: "ما الذي يحفظ درجة الحرارة وأين" },
   "diem-cdf-renouv": { en: "What will need replacing, and when", ar: "ما الذي سيلزم استبداله ومتى" },
-  "rh-qualif":      { en: "Which profession behind each staff member", ar: "أي مهنة خلف كل موظف" }
+  "rh-qualif":      { en: "Which profession behind each staff member", ar: "أي مهنة خلف كل موظف" },
+  "c10-traj":       { en: "172 health facilities, four years delivered", ar: "172 منشأة صحية · أربع سنوات مُنجزة" },
+  "c10-compo":      { en: "What the 172 facilities comprise", ar: "ما تتكوّن منه المنشآت الـ172" },
+  "c10-moyens":     { en: "A health centre without staff is a building", ar: "مركز صحي بلا كادر هو مجرّد مبنى" }
 };
 
 /* Surtitres : ils nomment la direction ou le domaine, et se repetent
@@ -6903,7 +7034,8 @@ const VUE_SURTITRES = {
   "◆ Classement de performance": { en: "◆ Performance ranking", ar: "◆ ترتيب الأداء" },
   "Chaîne du froid · DIEM et DLMVSE": { en: "Cold chain · DIEM and DLMVSE", ar: "سلسلة التبريد · إدارة المنشآت وإدارة مكافحة الأمراض" },
   "Chaîne du froid · renouvellement du parc": { en: "Cold chain · fleet renewal", ar: "سلسلة التبريد · تجديد الأسطول" },
-  "Ressources humaines · qualifications": { en: "Human resources · qualifications", ar: "الموارد البشرية · المؤهلات" }
+  "Ressources humaines · qualifications": { en: "Human resources · qualifications", ar: "الموارد البشرية · المؤهلات" },
+  "Grandes réalisations · Chantier 10": { en: "Major achievements · Workstream 10", ar: "الإنجازات الكبرى · الورش العاشر" }
 };
 
 /* Avertissement porte sur chaque page hors francais : le commentaire
@@ -11760,6 +11892,261 @@ VIEWS["diem-cdf-renouv"] = function () {
       + card("Qui a payé le parc en place", "Source de financement déclarée à l'inventaire", barreFin,
           "Une ligne sur trois ne porte aucune source de financement. La part des bailleurs est donc un minorant, "
           + "et la capacité de l'État à programmer un renouvellement dépend d'abord de la complétion de ce champ.")
+      + '</div>'
+  };
+};
+
+/* ==============================================================
+   CHANTIER 10 · GRANDES REALISATIONS SANTE
+   Le rendu reprend celui de la presentation : fond creme, chiffres
+   tres grands en graisse serree, ocre pour l'ouvrage, bleu pour
+   l'agent, vert pour le froid. Les autres sections du tableau de
+   bord servent au pilotage et gardent leur sobriete ; celle-ci rend
+   compte et assume un registre different.
+============================================================== */
+let C10 = null;
+fetch("chantier10.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null)
+  .then(j => { C10 = j; if (String(state.sub).indexOf("c10") === 0) renderMain(); }).catch(() => {});
+
+const C10_COUL = { or: "#D97B29", navy: "#0C2E5C", rouge: "#B3372F", vert: "#1E7A4C", brun: "#8A6A3C" };
+function c10Nb(x) { return x == null ? "ND" : Math.round(x).toLocaleString("fr-FR").replace(/\u202f|,/g, " "); }
+function c10D1(x) { return x == null ? "ND" : String(Math.round(x * 10) / 10).replace(".", ","); }
+function c10Ent() {
+  return '<div class="c10-ent"><span>République du Tchad · Ministère de la Santé publique</span>'
+    + '<span>Chantier 10</span></div>';
+}
+
+VIEWS["c10-traj"] = function () {
+  const crumbs = ["Chantier 10", "Quatre années tenues"];
+  const et = '<div class="ph"><div class="ph-tag">Grandes réalisations · Chantier 10</div>'
+    + '<div class="ph-title">172 ouvrages de santé, quatre années tenues</div>';
+  if (!C10) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé en cours de chargement.</div></div>' };
+
+  const T = C10.trajectoire;
+  const an = Number(window.__c10An || 2026);
+  const cur = T.filter(x => x.annee === an)[0] || T[T.length - 1];
+  const M = C10.meta;
+
+  /* Curseur d'annee : le cumul se lit en avancant, pas en comparant cinq
+     graphiques cote a cote. */
+  const curseur = '<div class="c10-annees">' + T.map(function (t) {
+      return '<button class="c10-an' + (t.annee === an ? " on" : "") + '" onclick="window.__c10An='
+        + t.annee + ';renderMain()">' + t.annee + '</button>';
+    }).join("") + '</div>';
+
+  const lignes = [
+    { l: "Centres de santé", v: cur.cs, m: 118, c: C10_COUL.or },
+    { l: "Centres médicaux", v: cur.cm, m: 21, c: C10_COUL.navy },
+    { l: "Hôpitaux", v: cur.hop, m: 15, c: C10_COUL.rouge },
+    { l: "Plateaux techniques", v: cur.pt, m: 18, c: C10_COUL.vert }
+  ];
+  const barres = lignes.map(function (x) {
+      return '<div class="c10-lg' + (x.v ? "" : " off") + '">'
+        + '<div class="c10-lg-n">' + x.v + '</div>'
+        + '<div class="c10-lg-c"><div class="c10-lg-l">' + x.l + '</div>'
+        + '<div class="c10-bar"><i style="width:' + (x.v / x.m * 100).toFixed(1)
+        + '%;background:' + x.c + '"></i></div></div></div>';
+    }).join("");
+
+  /* Carte de couverture : elle ne porte pas un comptage mais une presence,
+     seule information que le classeur donne sans ambiguite. */
+  const pres = C10.presence;
+  const paths = Object.keys(PROVINCE_PATHS).map(function (id) {
+      const on = !!pres[id];
+      return '<path d="' + PROVINCE_PATHS[id].d + '" fill="' + (on ? "#E8C9A0" : "#F1EDE4")
+        + '" stroke="#FFFFFF" stroke-width="1.4"><title>' + cidProvNom(id)
+        + (on ? " · ouvrages livrés : " + pres[id].join(" et ") : " · aucun ouvrage au classeur")
+        + '</title></path>';
+    }).join("");
+  const lab = Object.keys(PROVINCE_PATHS).filter(id => !pres[id]).map(function (id) {
+      const p = CID_CENTROIDES[id]; if (!p) return "";
+      return '<g class="c10-map-vide" pointer-events="none"><text x="' + p[0] + '" y="' + p[1]
+        + '" text-anchor="middle">' + cidProvNom(id) + '</text></g>';
+    }).join("");
+  const sans = Object.keys(PROVINCE_PATHS).filter(id => !pres[id]).map(cidProvNom);
+
+  return {
+    crumbs: crumbs,
+    html: et + '<div class="ph-sub">Ce qui suit n\'est pas un programme annoncé. C\'est ce qui est sorti de terre '
+      + 'entre 2022 et 2026, province par province. ' + c10Nb(M.construits) + ' ouvrages construits et équipés, '
+      + c10Nb(M.rehabilites) + ' réhabilités et équipés.</div></div>'
+      + '<div class="content c10">'
+      + c10Ent()
+      + '<div class="c10-hero">'
+      + '<div class="c10-hero-l">'
+      + '<div class="c10-an-big">' + cur.annee + '</div>'
+      + '<div class="c10-an-lib">cumul des ouvrages livrés</div>'
+      + '<div class="c10-tot"><span class="c10-tot-n">' + cur.total + '</span>'
+      + '<span class="c10-tot-u">ouvrages</span>'
+      + '<span class="c10-tot-r">sur 172 à horizon 2026</span></div>'
+      + '<div class="c10-bar big"><i style="width:' + (cur.total / 172 * 100).toFixed(1) + '%"></i></div>'
+      + barres
+      + '<p class="c10-note">' + cur.note + '</p>'
+      + '</div>'
+      + '<div class="c10-hero-r">'
+      + '<svg viewBox="' + MAP_VIEWBOX + '" class="cid-fig-carte">' + paths + lab + '</svg>'
+      + '<div class="c10-src">Provinces ayant reçu au moins un ouvrage · source : classeur de détail du Chantier 10</div>'
+      + '</div></div>'
+      + curseur
+      + card("Aucune province laissée de côté, à une près",
+          "Présence d'au moins un ouvrage au classeur de détail",
+          '<p style="margin:0">' + M.n_provinces_servies + ' entités sur les 23 du découpage sanitaire ont reçu au moins '
+          + 'un ouvrage, N\'Djamena comprise. '
+          + (sans.length ? 'La présentation annonce qu\'aucune province ne reste sans ouvrage à horizon 2026 ; le '
+              + 'classeur de détail, lui, n\'en porte aucun pour ' + sans.join(" et ") + '. '
+              + 'L\'écart est signalé et non tranché : soit le classeur est incomplet, soit l\'ouvrage annoncé n\'y '
+              + 'est pas encore enregistré.'
+            : 'Le classeur et la présentation concordent.') + '</p>',
+          "La carte porte une présence, non un comptage. Le nombre d'ouvrages par province n'est pas repris : "
+          + "le classeur mélange, dans une même colonne, des lots d'ouvrages et des lots de machines.")
+      + '</div>'
+  };
+};
+
+VIEWS["c10-compo"] = function () {
+  const crumbs = ["Chantier 10", "Composition et financement"];
+  const et = '<div class="ph"><div class="ph-tag">Grandes réalisations · Chantier 10</div>'
+    + '<div class="ph-title">Ce que recouvrent les 172 ouvrages</div>';
+  if (!C10) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé en cours de chargement.</div></div>' };
+
+  const M = C10.meta, P = C10.portee, F = C10.financement;
+  const maxF = F[0].n;
+  const nat = F.filter(f => f.nat).reduce((a, b) => a + b.n, 0);
+
+  const compo = '<div class="c10-grid3">' + C10.composition.map(function (x) {
+      return '<div class="c10-item"><i style="background:' + C10_COUL[x.coul] + '"></i>'
+        + '<div class="c10-item-n">' + x.n + '</div>'
+        + '<div class="c10-item-l">' + x.lib + '</div>'
+        + '<div class="c10-item-d">' + x.det + '</div></div>';
+    }).join("") + '</div>';
+
+  const finBar = '<div class="c10-fin">' + F.map(function (f) {
+      return '<div class="c10-fin-r' + (f.nat ? " nat" : "") + '">'
+        + '<div class="c10-fin-l">' + f.lib + '</div>'
+        + '<div class="c10-fin-b"><i style="width:' + (f.n / maxF * 100).toFixed(1) + '%"></i></div>'
+        + '<div class="c10-fin-n">' + f.n + '</div></div>';
+    }).join("") + '</div>';
+
+  const recapTbl = ["construction", "rehabilitation"].map(function (k) {
+      const R = C10.recap[k];
+      return '<div><div class="c10-sub">' + (k === "construction" ? "Construction et équipement" : "Réhabilitation et équipement")
+        + ' · ' + R.total + '</div><table class="ec-tbl"><tbody>'
+        + R.lignes.map(l => '<tr><td style="text-align:left">' + l[0] + '</td><td>' + l[1] + '</td></tr>').join("")
+        + '<tr style="font-weight:700"><td style="text-align:left">Total</td><td>' + R.total + '</td></tr>'
+        + '</tbody></table></div>';
+    }).join("");
+
+  return {
+    crumbs: crumbs,
+    html: et + '<div class="ph-sub">' + c10Nb(M.total) + ' ouvrages livrés, dont ' + c10Nb(M.construits)
+      + ' construits et équipés et ' + c10Nb(M.rehabilites) + ' réhabilités et équipés.</div></div>'
+      + '<div class="content c10">'
+      + c10Ent()
+      + '<div class="c10-head">'
+      + '<div class="c10-head-n">' + M.total + '</div>'
+      + '<div class="c10-head-t">ouvrages livrés · <b>' + M.construits + ' construits et équipés</b> · <b>'
+      + M.rehabilites + ' réhabilités et équipés</b></div></div>'
+      + '<div class="c10-bar big split"><i style="width:' + (M.construits / M.total * 100).toFixed(1) + '%"></i></div>'
+      + compo
+      + card("1,28 million de Tchadiens", "Population relevant désormais d'un centre construit ou réhabilité",
+          '<div class="c10-portee">'
+          + '<div><div class="c10-p-n">' + c10D1(P.part_pays) + ' %</div><div class="c10-p-l">de la population du pays</div></div>'
+          + '<div><div class="c10-p-n">' + c10Nb(P.naissances) + '</div><div class="c10-p-l">naissances attendues chaque année dans les aires desservies</div></div>'
+          + '<div><div class="c10-p-n">' + P.aires + '</div><div class="c10-p-l">aires de santé concernées, dans ' + P.provinces + ' provinces et à N\'Djamena</div></div>'
+          + '</div>', P.note)
+      + card("Huit partenaires, une seule maîtrise d'ouvrage",
+          "Nombre d'ouvrages par source de financement",
+          '<p style="margin:0 0 14px">L\'État porte lui-même ' + nat + ' ouvrages sur ressources nationales, dont '
+          + F.filter(f => f.lib.indexOf("Présidence") > 0)[0].n + ' sur fonds propres de la Présidence et '
+          + F.filter(f => f.lib.indexOf("Budget") === 0)[0].n + ' sur budget de l\'État, et en a mobilisé '
+          + (M.total - nat) + ' auprès de ses partenaires. Le programme reste piloté de bout en bout par le ministère.</p>'
+          + finBar,
+          "Ressources nationales en ocre. Somme des sources : " + M.total + " ouvrages, égale au total publié.")
+      + card("Les deux récapitulatifs du classeur",
+          "Ce que le classeur de détail additionne lui-même, ligne à ligne",
+          '<div class="c10-grid2">' + recapTbl + '</div>',
+          "121 et 51 somment à 172 et recoupent la présentation. La ventilation ligne à ligne du classeur, elle, "
+          + "n'est pas reprise : le nombre entre parenthèses y désigne tantôt des ouvrages, tantôt des machines, "
+          + "et une lecture mécanique donne 190 ouvrages au lieu de 172.")
+      + aiBox("Un poste hors décompte",
+          C10.hors_decompte.n + " " + C10.hors_decompte.lib.toLowerCase() + " figurent au classeur sur une ligne "
+          + "multiprovinciale, en " + C10.hors_decompte.annee + ", sur " + C10.hors_decompte.fin.toLowerCase()
+          + ". Elles n'entrent ni dans le récapitulatif de " + M.construits + " ni dans les " + M.total
+          + " publiés. Le poste est réel et important ; il est signalé ici plutôt qu'ajouté à un total qui ne le porte pas.",
+          "Signalement")
+      + '</div>'
+  };
+};
+
+VIEWS["c10-moyens"] = function () {
+  const crumbs = ["Chantier 10", "Ce qui fait fonctionner les ouvrages"];
+  const et = '<div class="ph"><div class="ph-tag">Grandes réalisations · Chantier 10</div>'
+    + '<div class="ph-title">Un centre de santé sans soignant est un bâtiment</div>';
+  if (!C10) return { crumbs: crumbs, html: et + '<div class="ph-sub">Relevé en cours de chargement.</div></div>' };
+
+  const R = C10.rh, V = R.vagues;
+  const maxV = Math.max.apply(null, V.map(v => v.n));
+  const vagues = '<div class="c10-grid3 vag">' + V.map(function (v) {
+      return '<div><div class="c10-vag" style="height:' + (v.n / maxV * 130).toFixed(0) + 'px;background:'
+        + (v.avant ? "#B4C2D8" : (v.lib.indexOf("2025") >= 0 ? C10_COUL.navy : "#B4C2D8")) + '"></div>'
+        + '<div class="c10-vag-n"' + (v.lib.indexOf("2025") >= 0 ? ' style="color:' + C10_COUL.navy + '"' : '') + '>'
+        + c10Nb(v.n) + '</div>'
+        + '<div class="c10-vag-l">' + v.lib + '</div>'
+        + '<div class="c10-vag-d">agents intégrés</div></div>';
+    }).join("") + '</div>';
+
+  /* Recoupements avec les jeux deja instruits dans le tableau de bord.
+     La presentation et les releves ne disent pas toujours la meme chose ;
+     les deux valeurs sont posees cote a cote. */
+  const rec = [];
+  if (typeof RHQ !== "undefined" && RHQ) {
+    rec.push(["Effectif total en poste", "10 870 agents (présentation)",
+      c10Nb(RHQ.meta.total) + " agents (relevé DRHFP 2026)",
+      "Deux relevés de la direction, deux périmètres. Instruit dans Ressources humaines, Qualifications."]);
+  }
+  if (typeof CCE !== "undefined" && CCE) {
+    rec.push(["Équipements de chaîne du froid", "2 750 (présentation)",
+      c10Nb(CCE.meta.n_equipements) + " (inventaire national)",
+      "Sept appareils d'écart, sans incidence sur les parts."]);
+    rec.push(["Part en bon état", "91 % (présentation)",
+      c10D1(CCE.national.part_fonct) + " % (inventaire national)", "Concordant."]);
+    rec.push(["Formations équipées", "81 %, soit 1 783 sur 2 204 inventoriées (présentation)",
+      c10D1(CCE.meta.n_fosa / 2762 * 100) + " %, soit " + c10Nb(CCE.meta.n_fosa) + " sur 2 762 au parc DIEM",
+      "Même numérateur ou presque, dénominateur différent : les formations inventoriées d'un côté, "
+      + "le parc de structures de l'autre. Les deux taux sont justes et ne répondent pas à la même question."]);
+  }
+  const recTbl = rec.length ? '<div class="si-mx-wrap"><table class="ec-tbl"><thead><tr>'
+    + '<th>Grandeur</th><th>Présentation du chantier</th><th>Relevé instruit au tableau de bord</th><th>Lecture</th>'
+    + '</tr></thead><tbody>'
+    + rec.map(r => '<tr>' + r.map(x => '<td style="text-align:left">' + x + '</td>').join("") + '</tr>').join("")
+    + '</tbody></table></div>' : "";
+
+  return {
+    crumbs: crumbs,
+    html: et + '<div class="ph-sub">Les financements ont bâti les murs. L\'État a, dans le même temps, recruté et '
+      + 'titularisé ceux qui y soignent, et équipé la chaîne qui porte les vaccins jusqu\'à eux.</div></div>'
+      + '<div class="content c10">'
+      + c10Ent()
+      + '<div class="c10-head navy">'
+      + '<div class="c10-head-n">' + c10Nb(R.total) + '</div>'
+      + '<div class="c10-head-t">agents de santé intégrés à la fonction publique en trois vagues, dont <b>'
+      + c10Nb(R.depuis_chantier) + ' depuis le lancement du chantier</b></div></div>'
+      + card("Trois vagues d'intégration", "Agents intégrés à la fonction publique",
+          vagues,
+          "La vague de 2025 est la plus large des trois, " + R.hausse_2025 + " % de plus qu'en 2022. "
+          + "Ses 1 724 agents correspondent au relevé de répartition provinciale de la même année. " + R.note)
+      + (recTbl ? card("Ce que la présentation dit, et ce que les relevés disent",
+          "Grandeurs communes aux deux sources, posées côte à côte", recTbl,
+          "Aucune valeur n'est corrigée par l'autre. Les écarts de dénominateur sont explicités plutôt que lissés.") : "")
+      + '<div class="c10-fin-bloc">'
+      + '<div class="c10-fin3">'
+      + '<div><span style="color:' + C10_COUL.or + '">172</span><em>ouvrages livrés</em></div>'
+      + '<div><span style="color:' + C10_COUL.navy + '">' + c10Nb(R.total) + '</span><em>agents intégrés</em></div>'
+      + '<div><span style="color:' + C10_COUL.vert + '">91 %</span><em>de la chaîne du froid en bon état</em></div>'
+      + '</div>'
+      + '<div class="c10-fin-t">Le chantier continue.</div>'
+      + '<div class="c10-fin-s">Ce qui a été promis a été bâti. Ce qui reste à bâtir est déjà engagé.</div>'
+      + '</div>'
       + '</div>'
   };
 };
